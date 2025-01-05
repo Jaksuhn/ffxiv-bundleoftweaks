@@ -214,12 +214,12 @@ public partial class Commands : Tweak<CommandsConfiguration>
         if (CameraObjectCulling.ShouldDrawHook.IsEnabled)
         {
             CameraObjectCulling.ShouldDrawHook.Disable();
-            ModuleMessage("Camera object culling disabled");
+            ModuleMessage("Camera object culling enabled");
         }
         else
         {
             CameraObjectCulling.ShouldDrawHook.Enable();
-            ModuleMessage("Camera object culling enabled");
+            ModuleMessage("Camera object culling disabled");
         }
 
     }

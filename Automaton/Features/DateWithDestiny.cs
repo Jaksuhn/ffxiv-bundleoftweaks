@@ -124,13 +124,14 @@ internal class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
     private ushort nextFateID;
     private byte fateMaxLevel;
 
-    private ushort FateID
+    private ushort FateId
     {
-        get; set
+        get => FateId;
+        set
         {
-            if (field != value)
+            if (FateId != value)
                 SyncFate(value);
-            field = value;
+            FateId = value;
         }
     }
 
@@ -224,7 +225,7 @@ internal class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
         if (cf is not null)
         {
             fateMaxLevel = cf->MaxLevel;
-            FateID = cf->FateId;
+            FateId = cf->FateId;
             if (Svc.Condition[ConditionFlag.Mounted])
                 ExecuteDismount();
 
@@ -232,7 +233,7 @@ internal class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
             if (target != null) TargetAndMoveToEnemy(target);
         }
         else
-            FateID = 0;
+            FateId = 0;
 
         if (cf is null)
         {
@@ -345,14 +346,14 @@ internal class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
         && x.IsHostile()
         && x.ObjectKind == ObjectKind.BattleNpc
         && x.SubKind == (byte)BattleNpcSubKind.Enemy
-        && (x.Struct() != null && x.Struct()->FateId == FateID) && Math.Sqrt(Math.Pow(x.Position.X - CurrentFate->Location.X, 2) + Math.Pow(x.Position.Z - CurrentFate->Location.Z, 2)) < CurrentFate->Radius)
+        && (x.Struct() != null && x.Struct()->FateId == FateId) && Math.Sqrt(Math.Pow(x.Position.X - CurrentFate->Location.X, 2) + Math.Pow(x.Position.Z - CurrentFate->Location.Z, 2)) < CurrentFate->Radius)
         // Prioritize Forlorns if configured
         .OrderByDescending(x => Config.PrioritizeForlorns && ForlornIDs.Contains(x.DataId))
         // Prioritize enemies targeting us
         .ThenByDescending(x => x.IsTargetingPlayer())
         // Deprioritize mobs in combat with other players (hopefully avoid botlike pingpong behavior in trash fates)
         .ThenBy(x => x.GetNameplateKind() == NameplateKind.HostileEngagedOther && !x.IsTargetingPlayer())
-        // Prioritize closest enemy        
+        // Prioritize closest enemy
         .ThenBy(x => Math.Floor(Vector3.Distance(PlayerEx.Position, x.Position)))
         // Prioritize lowest HP enemy
         .ThenBy(x => (x as ICharacter)?.CurrentHp)

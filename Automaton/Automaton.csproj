@@ -10,7 +10,7 @@
         <Platforms>x64</Platforms>
         <LangVersion>preview</LangVersion>
         <PluginName>Automaton</PluginName>
-        <DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\$(PluginName)\</DalamudDevPlugins>
+        <DalamudDevPlugins>/home/peachy/.xlcore/devPlugins/</DalamudDevPlugins>
         <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
         <DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\$(PluginName)\$(version)</DalamudPluginPath>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -33,7 +33,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        <OutputPath>$(DalamudDevPlugins)</OutputPath>
+        <OutputPath>$(DalamudDevPlugins)/Automaton</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">

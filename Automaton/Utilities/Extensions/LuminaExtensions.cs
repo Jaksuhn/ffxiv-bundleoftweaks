@@ -26,4 +26,7 @@ public static class LuminaExtensions
 
         return output;
     }
+
+    public static string Print(this Item item) => $"[{item.RowId}] {item.Name}";
+    public static string Print(this EventItem item) => $"[{item.RowId}] {item.Name}";
 }

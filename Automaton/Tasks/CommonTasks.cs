@@ -133,7 +133,7 @@ public abstract class CommonTasks : AutoTask
         ErrorIf(Player.Mounted, "Failed to dismount");
     }
 
-    protected async Task WaitUntilSkipping(Func<bool> condition, string scopeName, bool skipTalk = false, bool skipYesNo = false)
+    protected async Task WaitUntilSkipping(Func<bool> condition, string scopeName, bool skipTalk = false, bool skipYesNo = false, bool skipRequest = false)
     {
         using var scope = BeginScope(scopeName);
         while (!condition())
@@ -152,6 +152,14 @@ public abstract class CommonTasks : AutoTask
                 {
                     Log("progressing yes/no...");
                     Game.SelectYes();
+                }
+            }
+            if (skipRequest)
+            {
+                if (Game.AddonActive("Request"))
+                {
+                    Log("progressing request...");
+                    Game.TurnInRequests();
                 }
             }
             Log("waiting...");
@@ -192,17 +200,22 @@ public abstract class CommonTasks : AutoTask
         await NextFrame();
     }
 
-    protected async Task InteractWith(DGameObject obj, Func<bool>? waitUntil = null)
+    protected async Task InteractWith(DGameObject obj, Func<bool>? waitUntil = null, bool skipTalk = false, bool skipYesNo = false, bool skipRequest = false)
     {
         using var scope = BeginScope("InteractWith");
         Status = $"Interacting with {obj.GameObjectId}";
+        static unsafe bool IsJumping() => Service.Memory.UnableToExecuteCommandWhileJumping?.Invoke(Player.Object.Character()) != 0;
+        await WaitWhile(IsJumping, "WaitForAbleToInteract");
         const int maxAttempts = 5;
         for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
             if (Game.InteractWith(obj.GameObjectId))
             {
                 if (waitUntil is { } condition)
-                    await WaitUntilSkipping(condition, "WaitingForNpcInteractionToFinish", skipTalk: true, skipYesNo: true);
+                {
+                    await WaitUntilSkipping(condition, "WaitingForNpcInteractionToFinish", skipTalk: skipTalk, skipYesNo: skipYesNo, skipRequest: skipRequest);
+                    return;
+                }
                 else return;
             }
             await NextFrame();

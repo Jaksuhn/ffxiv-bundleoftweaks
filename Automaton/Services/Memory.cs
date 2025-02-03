@@ -45,6 +45,7 @@ public unsafe class Memory
         internal const string RetrieveMateria = "E8 ?? ?? ?? ?? EB 27 48 8B 01"; // Client::UI::Agent::AgentMaterialize.ReceiveEvent	call    sub_140B209C0
         internal const string AgentMateriaAttachReceiveEvent = "E8 ?? ?? ?? ?? 84 C0 74 7E 48 8B CB"; // look around sub_1416B7280
         internal const string CanDismount = "E8 ?? ?? ?? ?? F3 0F 10 74 24 ?? F3 0F 10 3D ?? ?? ?? ??"; // needs more testing, I don't think this actually is useful for dismount checking
+        internal const string UnableToExecuteCommandWhileJumping = "40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 84 C0 75 12"; // xan
     }
 
     public static class Delegates
@@ -69,6 +70,7 @@ public unsafe class Memory
         internal delegate void SalvageItemDelegate(AgentSalvage* thisPtr, InventoryItem* item, int addonId, byte a4);
         internal delegate byte ShouldDrawDelegate(CameraBase* thisPtr, CSGameObject* gameObject, Vector3* sceneCameraPos, Vector3* lookAtVector);
         internal delegate nint WorldTravelSetupInfoDelegate(nint worldTravel, ushort currentWorld, ushort targetWorld);
+        internal delegate byte UnableToExecuteCommandWhileJumpingDelegate(Character* character);
     }
 
     internal Delegates.RidePillionDelegate? RidePillion = EzDelegate.Get<Delegates.RidePillionDelegate>(Signatures.RidePillion);
@@ -78,6 +80,7 @@ public unsafe class Memory
     internal Delegates.WorldTravelSetupInfoDelegate? WorldTravelSetupInfo = EzDelegate.Get<Delegates.WorldTravelSetupInfoDelegate>(Signatures.WorldTravelSetupInfo);
     internal Delegates.RetrieveMateriaDelegate? RetrieveMateria = EzDelegate.Get<Delegates.RetrieveMateriaDelegate>(Signatures.RetrieveMateria);
     internal Delegates.ExecuteCommandDelegate? ExecuteCommand = EzDelegate.Get<Delegates.ExecuteCommandDelegate>(Signatures.ExecuteCommand);
+    internal Delegates.UnableToExecuteCommandWhileJumpingDelegate? UnableToExecuteCommandWhileJumping = EzDelegate.Get<Delegates.UnableToExecuteCommandWhileJumpingDelegate>(Signatures.UnableToExecuteCommandWhileJumping);
 
     public Memory() => EzSignatureHelper.Initialize(this);
 

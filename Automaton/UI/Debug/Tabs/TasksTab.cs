@@ -22,7 +22,6 @@ internal unsafe class TasksTab : DebugTab
             foreach (var fate in fg.AvailableFates)
             {
                 fate.Print();
-                //ImGui.TextUnformatted($"{fate.Stringify()}");
             }
         }
     }

@@ -239,12 +239,12 @@ public static class ImGuiX
         ImGui.TextUnformatted(name);
     }
 
-    public static void FieldAndValue(string field, object value)
+    public static void FieldAndValue(string field, object value, bool? valueCondition = null)
     {
         using (var _ = ImRaii.PushColor(ImGuiCol.Text, (uint)Colors.Field))
             ImGui.TextUnformatted($"{field}:");
         ImGui.SameLine();
         using (var _ = ImRaii.PushColor(ImGuiCol.Text, (uint)Colors.White))
-            ImGui.TextUnformatted($"{value}");
+            ImGui.TextUnformatted($"{(valueCondition is { } condition && condition || valueCondition is not { } ? value : "N/A")}");
     }
 }

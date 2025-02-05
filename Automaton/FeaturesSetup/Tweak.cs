@@ -57,9 +57,6 @@ public abstract partial class Tweak : ITweak
             return;
         }
 
-        if (Requirements.Any(r => r.InternalName == AutoRetainerIPC.Name))
-            AutoRetainer = new(Name);
-
         TaskManager = new();
         Ready = true;
     }
@@ -80,7 +77,6 @@ public abstract partial class Tweak : ITweak
     public string? DisabledReason { get; protected set; }
 
     protected TaskManager TaskManager = null!;
-    protected AutoRetainerApi AutoRetainer = null!;
 
     public virtual void SetupAddressHooks() { }
     public virtual void SetupVTableHooks() { }

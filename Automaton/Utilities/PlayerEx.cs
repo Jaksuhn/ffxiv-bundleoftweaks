@@ -33,6 +33,8 @@ public static unsafe class PlayerEx
     public static bool IsTargetLocked => *(byte*)((nint)TargetSystem.Instance() + 309) == 1;
     public static bool IsCasting => Svc.ClientState.LocalPlayer.IsCasting;
     public static float AnimationLock => ActionManager.Instance()->AnimationLock;
+    public static HaterInfo[] Haters => UIState.Instance()->Hater.Haters.ToArray();
+    public static int HatersWithFullAggro => Haters.Where(h => h.Enmity == 100).Count();
 
     public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarker;
 

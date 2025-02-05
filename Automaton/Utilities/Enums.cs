@@ -84,6 +84,9 @@ public static class Enums
         FateStart = 809,
         FateLoad = 810,
         FateEnter = 812,
+        /// <summary>
+        /// <param><c>a1</c>: FateId <c>a2:</c> (0: unsync, 1: sync)</param>
+        /// </summary>
         FateLevelSync = 813,
         FateMobSpawn = 814,
         TerritoryTransportFinish = 816,

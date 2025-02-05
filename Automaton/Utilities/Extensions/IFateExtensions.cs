@@ -26,8 +26,10 @@ public static class IFateExtensions
         ImGuiX.FieldAndValue("Bonus", fate.HasBonus);
         ImGuiX.FieldAndValue("Distance To", Player.DistanceTo(fate.Position));
         ImGuiX.FieldAndValue("Hand In Count", fate.HandInCount);
-        ImGuiX.FieldAndValue("Event Item", fate.GameData.Value.EventItem.Value.Print(), fate.GameData.Value.EventItem.RowId != 0);
+        ImGuiX.FieldAndValue("Event Item", fate.GameData.ValueNullable?.EventItem.ValueNullable?.Print() ?? "N/A", fate.GameData.ValueNullable?.EventItem.RowId != 0);
         ImGuiX.FieldAndValue("Event Item Count", fate.EventItemInventoryCount());
+        ImGuiX.FieldAndValue("Distance to Aetheryte", Vector3.Distance(fate.Position, Coords.AetherytePosition(Coords.FindClosestAetheryte(fate.TerritoryType.RowId, fate.Position) ?? 0)));
+        ImGuiX.FieldAndValue("Worth Teleporting", Coords.IsTeleportingFaster(fate.Position));
 
         ImGui.Unindent();
     }

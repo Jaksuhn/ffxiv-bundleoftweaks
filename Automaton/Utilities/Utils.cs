@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
 
 namespace Automaton.Utilities;
 public static class Utils
@@ -42,16 +43,22 @@ public static class Utils
         return p;
     }
 
+    public static Vector3 RandomPointInCircle(Vector3 center, float radius, float radiusLimit = 1)
+    {
+        var random = new Random();
+        var angle = random.NextDouble() * 2 * Math.PI;
+        var distance = random.NextFloat(0, radius * radiusLimit);
+        return new(center.X + distance * (float)Math.Cos(angle), center.Y, center.Z + distance * (float)Math.Sin(angle));
+    }
+
     public static unsafe Structs.AgentMJICraftSchedule* Agent = (Structs.AgentMJICraftSchedule*)AgentModule.Instance()->GetAgentByInternalId(AgentId.MJICraftSchedule);
     public static unsafe Structs.AgentMJICraftSchedule.AgentData* AgentData => Agent != null ? Agent->Data : null;
-
     public static unsafe void SetRestCycles(uint mask)
     {
         Svc.Log.Debug($"Setting rest: {mask:X}");
         AgentData->NewRestCycles = mask;
         SynthesizeEvent(5, [new() { Type = AtkValueType.Int, Int = 0 }]);
     }
-
     private static unsafe void SynthesizeEvent(ulong eventKind, Span<AtkValue> args)
     {
         var eventData = stackalloc int[] { 0, 0, 0 };

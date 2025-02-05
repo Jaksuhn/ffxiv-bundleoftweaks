@@ -43,8 +43,8 @@ public class BossModIPC
     /// <remarks> string presetName </remarks>
     [EzIPC("Presets.%m", true)] public readonly Func<string, bool> ClearTransientPresetStrategies;
 
-    static class Modules
+    public class Modules
     {
-        const string AutoFarm = "BossMod.Autorotation.MiscAI.AutoFarm";
+        public const string AutoFarm = "BossMod.Autorotation.MiscAI.AutoFarm";
     }
 }

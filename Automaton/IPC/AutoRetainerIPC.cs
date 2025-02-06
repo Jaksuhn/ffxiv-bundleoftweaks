@@ -3,12 +3,11 @@
 namespace Automaton.IPC;
 
 #nullable disable
-public class AutoRetainerIPC
+public class AutoRetainerIPC : BaseIPC
 {
-    public const string Name = "AutoRetainer";
-    public const string Repo = "https://love.puni.sh/ment.json";
+    public override string Name => "AutoRetainer";
+    public override string Repo => "https://love.puni.sh/ment.json";
     public AutoRetainerIPC() => EzIPC.Init(this, Name);
-    public static bool Installed => Utils.HasPlugin(Name);
 
     [EzIPC("PluginState.%m")] public readonly Func<bool> IsBusy;
     [EzIPC("PluginState.%m")] public readonly Func<int> GetInventoryFreeSlotCount;

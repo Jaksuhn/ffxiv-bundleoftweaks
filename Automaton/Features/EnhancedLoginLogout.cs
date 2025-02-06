@@ -32,7 +32,7 @@ public class EnhancedLoginLogout : Tweak<EnhancedLoginLogoutConfig>
 
         ImGuiX.DrawSection("Login Commands");
 
-        if (AutoRetainerIPC.Installed)
+        if (Service.AutoRetainerIPC.IsLoaded)
             ImGui.Checkbox("Run Commands if AutoRetainer is active", ref Config.RunCommandsWhenARIsActive);
 
         if (Config.Chars.All(c => c.CID != 0))
@@ -81,7 +81,7 @@ public class EnhancedLoginLogout : Tweak<EnhancedLoginLogoutConfig>
     private string ConvertToCommand(string cmd) => cmd.StartsWith('/') ? cmd : $"/{cmd}";
     private void RunCommands()
     {
-        if (AutoRetainerIPC.Installed && !Config.RunCommandsWhenARIsActive && (Service.AutoRetainerIPC.IsBusy() || Service.AutoRetainerIPC.GetMultiModeEnabled())) return;
+        if (Service.AutoRetainerIPC.IsLoaded && !Config.RunCommandsWhenARIsActive && (Service.AutoRetainerIPC.IsBusy() || Service.AutoRetainerIPC.GetMultiModeEnabled())) return;
         foreach (var chr in Config.Chars.Where(x => x.CID == 0 || x.CID == Player.CID).OrderByDescending(x => x.Name == "Global"))
             foreach (var cmd in chr.LoginCommands.Where(c => c.Length >= 3))
             {

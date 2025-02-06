@@ -3,11 +3,12 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace Automaton.Features;
 
-[Tweak, Requirement(AutoRetainerIPC.Name, AutoRetainerIPC.Repo), Requirement(QuestionableIPC.Name, QuestionableIPC.Repo)]
+[Tweak]
 internal class ARQuesting : ARTweak
 {
     public override string Name => "AutoRetainer x Questionable";
     public override string Description => "On CharacterPostProcess, do any seasonal quests that are available.";
+    public override BaseIPC[] Requirements => [Service.AutoRetainerIPC, Service.Questionable];
 
     private List<string> _quests = [];
 

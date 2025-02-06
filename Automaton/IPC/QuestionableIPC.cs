@@ -2,10 +2,10 @@
 
 namespace Automaton.IPC;
 #nullable disable
-public class QuestionableIPC
+public class QuestionableIPC : BaseIPC
 {
-    public const string Name = "Questionable";
-    public const string Repo = "https://git.carvel.li/liza/";
+    public override string Name => "Questionable";
+    public override string Repo => "https://git.carvel.li/liza/";
     public QuestionableIPC() => EzIPC.Init(this, Name);
 
     [EzIPC] public Func<bool> IsRunning;

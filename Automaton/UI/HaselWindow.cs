@@ -207,15 +207,15 @@ public partial class HaselWindow : Window
             }
         }
 
-        if (tweak.Requirements.Any(entry => !entry.IsLoaded))
+        if (tweak.Requirements.Any(r => !r.IsLoaded))
         {
             ImGuiX.DrawSection("Required Dependencies");
             ImGuiX.Icon(60074, 24);
             ImGui.SameLine();
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"Missing {tweak.Requirements.Count(entry => !entry.IsLoaded)} of the required plugins for this feature to work:");
-            foreach (var entry in tweak.Requirements.Where(entry => !entry.IsLoaded))
+            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"Missing {tweak.Requirements.Count(r => !r.IsLoaded)} of the required plugins for this feature to work:");
+            foreach (var entry in tweak.Requirements.Where(r => !r.IsLoaded))
             {
-                ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"{entry.InternalName}:");
+                ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"{entry.Name}:");
                 ImGui.SameLine();
                 ImGuiEx.TextCopy(entry.Repo);
             }

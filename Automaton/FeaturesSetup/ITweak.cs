@@ -5,7 +5,6 @@ public interface ITweak : IDisposable
     Type CachedType { get; }
     string InternalName { get; }
     IncompatibilityWarningAttribute[] IncompatibilityWarnings { get; }
-    RequirementAttribute[] Requirements { get; }
 
     string Name { get; }
     string Description { get; }

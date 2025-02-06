@@ -11,11 +11,12 @@ public class ARTurnInConfiguration
     public List<ulong> ExcludedCharacters = [];
 }
 
-[Tweak, Requirement(NavmeshIPC.Name, NavmeshIPC.Repo), Requirement(AutoRetainerIPC.Name, AutoRetainerIPC.Repo), Requirement(DeliverooIPC.Name, DeliverooIPC.Repo), Requirement(LifestreamIPC.Name, LifestreamIPC.Repo)]
+[Tweak]
 internal class ARTurnIn : ARTweak<ARTurnInConfiguration>
 {
     public override string Name => "AutoRetainer x Deliveroo";
     public override string Description => "On CharacterPostProcess, automatically go to your grand company and turn in your gear when inventory is below a certain threshold.";
+    public override BaseIPC[] Requirements => [Service.AutoRetainerIPC, Service.Navmesh, Service.Deliveroo, Service.Lifestream];
 
     public override void DrawConfig()
     {

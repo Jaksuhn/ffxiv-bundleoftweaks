@@ -44,11 +44,12 @@ public class DateWithDestinyConfiguration
     [BoolConfig] public bool ShowFateBonusIndicator;
 }
 
-[Tweak, Requirement(NavmeshIPC.Name, NavmeshIPC.Repo)]
+[Tweak]
 public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
 {
     public override string Name => "Date with Destiny";
     public override string Description => $"Fate tracker and mover. Doesn't handle combat. Open the menu with /vfate.";
+    public override BaseIPC[] Requirements => [Service.Navmesh];
 
     public bool active = false;
     private static Vector3 TargetPos;

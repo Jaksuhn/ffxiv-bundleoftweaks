@@ -3,12 +3,11 @@ using ECommons.EzIpcManager;
 namespace Automaton.IPC;
 
 #nullable disable
-public class NavmeshIPC
+public class NavmeshIPC : BaseIPC
 {
-    public const string Name = "vnavmesh";
-    public const string Repo = "https://puni.sh/api/repository/veyn";
+    public override string Name => "vnavmesh";
+    public override string Repo => "https://puni.sh/api/repository/veyn";
     public NavmeshIPC() => EzIPC.Init(this, Name);
-    public static bool Installed => Utils.HasPlugin(Name);
 
     [EzIPC("Nav.%m")] public readonly Func<bool> IsReady;
     [EzIPC("Nav.%m")] public readonly Func<float> BuildProgress;

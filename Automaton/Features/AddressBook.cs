@@ -11,11 +11,12 @@ public class AddresBookConfiguration
     public List<(string Name, uint Territory, Vector3 Position)> Locations = [];
 }
 
-[Tweak(outdated: true, disabledReason: "Feature is better supported in the Lifestream alias system."), Requirement(NavmeshIPC.Name, NavmeshIPC.Repo)]
+[Tweak(outdated: true, disabledReason: "Feature is better supported in the Lifestream alias system.")]
 public class AddressBook : Tweak<AddresBookConfiguration>
 {
     public override string Name => "Address Book";
     public override string Description => "Path to your favourite locations.\nUse /goto <name> to path to your location.";
+    public override BaseIPC[] Requirements => [Service.Navmesh];
 
     private string _name = string.Empty;
     public override void DrawConfig()

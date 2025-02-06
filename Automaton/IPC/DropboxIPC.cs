@@ -3,12 +3,11 @@
 namespace SomethingNeedDoing.IPC;
 
 #nullable disable
-public class DropboxIPC
+public class DropboxIPC : BaseIPC
 {
-    public const string Name = "Dropbox";
-    public const string Repo = "https://puni.sh/api/repository/kawaii";
+    public override string Name => "Dropbox";
+    public override string Repo => "https://puni.sh/api/repository/kawaii";
     public DropboxIPC() => EzIPC.Init(this, Name);
-    public static bool IsEnabled => Utils.HasPlugin(Name);
 
     [EzIPC] public readonly Func<bool> IsBusy;
     [EzIPC] public readonly Func<uint, bool, int> GetItemQuantity; // id, hq

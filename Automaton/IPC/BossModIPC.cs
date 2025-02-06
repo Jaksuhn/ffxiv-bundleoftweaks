@@ -4,12 +4,11 @@ namespace Automaton.IPC;
 
 #nullable disable
 #pragma warning disable CS8632
-public class BossModIPC
+public class BossModIPC : BaseIPC
 {
-    public const string Name = "BossMod";
-    public const string Repo = "https://puni.sh/api/repository/veyn";
+    public override string Name => "BossMod";
+    public override string Repo => "https://puni.sh/api/repository/veyn";
     public BossModIPC() => EzIPC.Init(this, Name);
-    public static bool Installed => Utils.HasPlugin(Name);
 
     /// <remarks> string name </remarks>
     [EzIPC("Presets.%m", true)] public readonly Func<string, string?> Get;

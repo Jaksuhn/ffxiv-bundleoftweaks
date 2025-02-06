@@ -22,7 +22,6 @@ public class Plugin : IDalamudPlugin
     private readonly Config Config;
 
     public static readonly HashSet<Tweak> Tweaks = [];
-    internal bool UsingARPostProcess;
 
     public Plugin(IDalamudPluginInterface pluginInterface)
     {

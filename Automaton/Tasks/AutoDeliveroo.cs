@@ -17,6 +17,7 @@ public sealed class AutoDeliveroo : CommonTasks
 
     private async Task GoToGC()
     {
+        using var scope = BeginScope("GoToGC");
         Service.Lifestream.ExecuteCommand("gc");
         await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), $"{nameof(GoToGC)}");
     }
@@ -28,6 +29,7 @@ public sealed class AutoDeliveroo : CommonTasks
      */
     private async Task EquipRecommended()
     {
+        using var scope = BeginScope("EquipRecommended");
         var updating = false;
         unsafe
         {
@@ -72,12 +74,14 @@ public sealed class AutoDeliveroo : CommonTasks
 
     private async Task TurnIn()
     {
+        using var scope = BeginScope("TurnIn");
         Svc.Commands.ProcessCommand("/deliveroo enable");
         await WaitUntilThenFalse(() => Service.Deliveroo.IsTurnInRunning(), $"{nameof(TurnIn)}");
     }
 
     private async Task GoHome()
     {
+        using var scope = BeginScope("GoHome");
         Service.Lifestream.ExecuteCommand("auto");
         await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), $"{nameof(GoHome)}");
     }

@@ -129,6 +129,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
 
     private async Task SummonChocobo()
     {
+        using var scope = BeginScope("SummonChocobo");
         Status = "Summoning Chocobo";
         Game.UseItem(ChocoboSummonItemId);
         await WaitUntil(() => ChocoboTimeLeft > ChocoboMinTime, "WaitingForChocobo");
@@ -137,6 +138,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
     private unsafe DGameObject? FateActivationNpc => Svc.Objects.FirstOrDefault(o => o.Struct()->NamePlateIconId == 60093);
     private async Task ActivateFate()
     {
+        using var scope = BeginScope("ActivateFate");
         if (FateActivationNpc is { } npc)
         {
             Status = "Activating fate";
@@ -148,6 +150,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
     private unsafe DGameObject? FateTurnInNpc => Svc.Objects.FirstOrDefault(o => o.Struct()->NamePlateIconId == 60732);
     private async Task TurnIn()
     {
+        using var scope = BeginScope("TurnIn");
         if (FateTurnInNpc is { } npc)
         {
             await WaitWhile(() => PlayerEx.HatersWithFullAggro > 0, "WaitingForHatersToDie");
@@ -169,6 +172,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
 
     private async Task LeaveFate()
     {
+        using var scope = BeginScope("LeaveFate");
         // since CurrentFate is just an auto field, we need to leave the fate manually. Most natural thing to do would be to mount up and fly in the vague direction of the nearest fate
         Status = "Leaving Fate";
         if (CurrentFate == null) return;
@@ -184,6 +188,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
 
     private async Task Resurrect()
     {
+        using var scope = BeginScope("Resurrect");
         Status = "Reviving";
         (var lastZone, var lastPos) = (Player.Territory, Player.Position);
         Service.Memory.ExecuteCommand?.Invoke((int)ExecuteCommandFlag.Revive, 8); // TODO: it's either 8 or 5 depending on what GameMain.field_4095 is
@@ -195,6 +200,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
     {
         // if we're achievement farming, find the next zone where the achievement isn't completed, otherwise, pick a random zone within the same expac
         // if we're yokai farming, find the next zone where the yokai isn't completed
+        using var scope = BeginScope("SwapZones");
         var zoneId = GetNextAchievementZone() is { } zone ? zone : GetRandomSameExpacZone();
         await TeleportTo(zoneId, default);
     }

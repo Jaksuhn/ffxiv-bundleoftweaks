@@ -15,6 +15,7 @@ public sealed class KillFlag : CommonTasks
 
     private async Task Kill()
     {
+        using var scope = BeginScope("Kill");
         IGameObject? GetHunt() => Svc.Objects
             .Where(o => o is IBattleNpc { NameId: > 0 })
             .Select(o => new { Object = o, Row = FindRow<NotoriousMonster>(x => o.DataId == x.BNpcBase.RowId) })
@@ -34,6 +35,7 @@ public sealed class KillFlag : CommonTasks
 
     private async Task TargetDead(DGameObject target)
     {
+        using var scope = BeginScope("TargetDead");
         while (target != null && !target.IsDead)
             await NextFrame(30);
     }

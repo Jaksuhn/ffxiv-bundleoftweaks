@@ -16,7 +16,6 @@ internal class ItemVendorLocation
                 pl.Call("ShowMultipleVendors", [itemInfo]);
             }
         }
-
     }
 
     public static bool ItemHasVendor(uint itemId)

@@ -5,7 +5,6 @@ using Dalamud.Interface.Utility.Raii;
 using ECommons;
 using ECommons.Configuration;
 using ECommons.ImGuiMethods;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using System.ComponentModel;
 using System.Reflection;
@@ -178,7 +177,7 @@ public static class ImGuiX
         if (ImGuiComponents.IconButton($"###Pathfind{pos}", FontAwesomeIcon.Map))
         {
             if (!nav.IsRunning())
-                nav.PathfindAndMoveTo(pos, Conditions.IsInFlight);
+                nav.PathfindAndMoveTo(pos, Svc.Condition[ConditionFlag.InFlight]);
             else
                 nav.Stop();
         }
@@ -230,8 +229,6 @@ public static class ImGuiX
         }
         return res;
     }
-
-    public static void TaskState() => ImGui.TextUnformatted($"State: {Service.Automation.CurrentTask?.Status ?? "Idle"}");
 
     public static void DrawTableColumn(string name)
     {

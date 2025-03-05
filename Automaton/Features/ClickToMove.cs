@@ -6,7 +6,7 @@ namespace Automaton.Features;
 
 public class ClickToMoveConfiguration
 {
-    [EnumConfig] public Enums.MovementType MovementType;
+    [EnumConfig] public MovementType MovementType;
 }
 
 [Tweak]
@@ -17,15 +17,8 @@ public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration>
 
     private readonly OverrideMovement movement = new();
 
-    public override void Enable()
-    {
-        Svc.Framework.Update += MoveTo;
-    }
-
-    public override void Disable()
-    {
-        Svc.Framework.Update -= MoveTo;
-    }
+    public override void Enable() => Svc.Framework.Update += MoveTo;
+    public override void Disable() => Svc.Framework.Update -= MoveTo;
 
     private bool isPressed = false;
     private Vector3 destination = Vector3.Zero;
@@ -37,9 +30,7 @@ public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration>
         if (IsKeyPressed(ECommons.Interop.LimitedKeys.LeftMouseButton) && Utils.IsClickingInGameWorld())
         {
             if (!isPressed)
-            {
                 isPressed = true;
-            }
         }
         else
         {
@@ -49,7 +40,7 @@ public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration>
                 if (!Framework.Instance()->WindowInactive)
                 {
                     Svc.GameGui.ScreenToWorld(ImGui.GetIO().MousePos, out var pos, 100000f);
-                    if (Config.MovementType == Enums.MovementType.Pathfind)
+                    if (Config.MovementType == MovementType.Pathfind)
                     {
                         if (!Service.Navmesh.IsRunning())
                             Service.Navmesh.PathfindAndMoveTo(pos, false);

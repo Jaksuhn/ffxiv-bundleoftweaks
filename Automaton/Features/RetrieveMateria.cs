@@ -13,13 +13,13 @@ internal class RetrieveMateria : Tweak
 
     private void OnOpenContextMenu(IMenuOpenedArgs args)
     {
-        if (args.MenuType != ContextMenuType.Inventory || args.Target is not MenuTargetInventory inv || inv.TargetItem == null || inv.TargetItem.Value.ItemId == 0) return;
+        if (args is not { MenuType: ContextMenuType.Inventory, Target: MenuTargetInventory { TargetItem: { ItemId: not 0, Materia: var materia } } inv } || materia.ToArray().All(m => m == 0)) return;
         args.AddMenuItem(new MenuItem
         {
             PrefixChar = 'C',
             Name = "Retrieve All Materia",
             OnClicked = (a) => Service.Automation.Start(new RetrieveAllMateria(inv.TargetItem.Value)),
-            IsEnabled = inv.TargetItem.Value.Materia.ToArray().Any(m => m != 0) && !PlayerEx.IsBusy,
+            IsEnabled = !PlayerEx.IsBusy,
         });
     }
 }

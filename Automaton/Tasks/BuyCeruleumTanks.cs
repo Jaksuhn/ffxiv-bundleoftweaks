@@ -14,7 +14,7 @@ public sealed class BuyCeruleumTanks : CommonTasks
     protected override async Task Execute()
     {
         await GoToWorkshop();
-        await WaitUntil(() => IsScreenReady() && Player.Interactable, "WaitingForZoneToFullyLoad");
+        await WaitUntil(Game.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
         var npc = Game.GetNPCInfo(MammetVoyagerENpcId, Player.Territory, CeruleumTankId);
         ErrorIf(npc == null, $"Failed to find NPC {MammetVoyagerENpcId} in {Player.Territory}");
         ErrorIf(npc!.ShopId == 0, $"Failed to find shop for NPC {MammetVoyagerENpcId} in {Player.Territory}");
@@ -43,9 +43,11 @@ public sealed class BuyCeruleumTanks : CommonTasks
         {
             await MoveTo(door.Position, 3);
             await InteractWith(door, () => Player.TerritoryIntendedUse == TerritoryIntendedUseEnum.Housing_Instances, skipYesNo: true);
-            await WaitWhile(() => Player.IsBusy, "WaitingForLoad");
+            await WaitWhile(() => !Game.IsTerritoryLoaded(), "WaitingForTerritoryToLoad");
             await EnterWorkshop();
         }
+        else
+            Error("Failed to find estate hall door");
     }
 
     private async Task EnterWorkshop()
@@ -56,7 +58,10 @@ public sealed class BuyCeruleumTanks : CommonTasks
         {
             await MoveTo(door.Position, 3);
             await InteractWith(door, () => GetRow<TerritoryType>(Player.Territory) is { } t && t.BGM.RowId == 328, 0);
+            await WaitUntil(Game.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
         }
+        else
+            Error("Failed to find workshop door");
     }
 
     private async Task BuyFromFccShop(ulong vendorInstanceId, uint shopId, uint itemId, int count)
@@ -110,7 +115,7 @@ public sealed class BuyCeruleumTanks : CommonTasks
         ipc.FreeCompanyDialogPacketReceiveHook.Disable();
     }
 
-    private unsafe DGameObject? WorkshopDoor => Svc.Objects.FirstOrDefault(o => o?.EventInfo() is { } info && info.EventId.ContentId == EventHandlerType.CustomTalk && info.EventId.Id == 721074, null);
-    private unsafe DGameObject? EstateHallDoor => Svc.Objects.FirstOrDefault(o => o?.EventInfo() is { } info && info.EventId.ContentId == EventHandlerType.Warp && info.EventId.Id == 131148, null);
+    private unsafe DGameObject? EstateHallDoor => Svc.Objects.Where(o => o!.IsTargetable && o.EventInfo() is { EventId.ContentId: EventHandlerType.Warp, EventId.Id: 131148 }).OrderBy(Player.DistanceTo).FirstOrDefault(defaultValue: null);
+    private unsafe DGameObject? WorkshopDoor => Svc.Objects.FirstOrDefault(o => o!.IsTargetable && o.EventInfo() is { EventId.ContentId: EventHandlerType.CustomTalk, EventId.Id: 721074 }, null);
     private int GetAddonTankCount() => TryGetAddonMaster<AddonMaster.FreeCompanyCreditShop>(out var am) ? am.Items.First(x => x.ItemId == CeruleumTankId).QuantityInInventory : 0;
 }

@@ -102,7 +102,7 @@ public abstract class CommonTasks : AutoTask
             await WaitWhile(() => PlayerEx.IsBusy, "TeleportFirmamentFinish");
         }
 
-        ErrorIf(Player.Territory != territoryId, "Failed to teleport to expected zone");
+        ErrorIf(Player.Territory != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Player.Territory})");
     }
 
     protected async Task Mount()

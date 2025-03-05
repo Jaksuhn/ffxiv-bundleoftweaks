@@ -1,5 +1,6 @@
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using ECommons.MathHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -32,16 +33,13 @@ public static class Coords
     public static uint? FindClosestAetheryte(FlagMapMarker flag, bool includeAethernet = true) => FindClosestAetheryte(flag.TerritoryId, FlagToWorld(flag), includeAethernet);
     public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true)
     {
-        if (territoryTypeId == 886)
-        {
-            // firmament special case - just return ishgard main aetheryte
-            // firmament aetherytes are special (see 
-            return 70;
-        }
+        if (territoryTypeId == 886) // Firmament
+            return 70; // Ishgard
         if (territoryTypeId == 478) // Hinterlands
             return 75; // Idyllshire
         List<Sheets.Aetheryte> aetherytes = [.. GetSheet<Sheets.Aetheryte>()?.Where(a => a.Territory.RowId == territoryTypeId && (includeAethernet || a.IsAetheryte))];
-        return aetherytes.Count > 0 ? aetherytes.MinBy(a => (worldPos - AetherytePosition(a)).LengthSquared()).RowId : null;
+        // aetherytes tend to not have a Y whereas gates do. Maps are mostly flat so just equalise and ignore Y
+        return aetherytes.Count > 0 ? aetherytes.MinBy(a => (worldPos.ToVector2() - AetherytePosition(a).ToVector2()).LengthSquared()).RowId : null;
     }
 
     public static Vector3 AetherytePosition(uint aetheryteId) => AetherytePosition(GetRow<Sheets.Aetheryte>(aetheryteId)!.Value);

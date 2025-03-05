@@ -23,18 +23,6 @@ public struct HaselColor
     public HaselColor(Vector4 vec) : this(vec.X, vec.Y, vec.Z, vec.W) { }
     public HaselColor(uint col) : this(ImGui.ColorConvertU32ToFloat4(col)) { }
 
-    public readonly HaselColor WithRed(float r)
-        => new(r, G, B, A);
-
-    public readonly HaselColor WithGreen(float g)
-        => new(R, g, B, A);
-
-    public readonly HaselColor WithBlue(float b)
-        => new(R, G, b, A);
-
-    public readonly HaselColor WithAlpha(float a)
-        => new(R, G, B, a);
-
     public static HaselColor From(float r, float g, float b, float a = 1)
         => new() { R = r, G = g, B = b, A = a };
 
@@ -57,7 +45,7 @@ public struct HaselColor
         => FromABGR(GetRow<UIColor>(id)!.Value.UIGlow);
 
     public static HaselColor FromStain(uint id)
-        => From(GetRow<Stain>(id)!.Value.Color.Reverse() >> 8).WithAlpha(1);
+        => From(GetRow<Stain>(id)!.Value.Color.Reverse() >> 8) with { A = 1 };
 
     public static implicit operator Vector4(HaselColor col)
         => new(col.R, col.G, col.B, col.A);

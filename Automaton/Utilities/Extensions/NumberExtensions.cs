@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Automaton.Utilities.Extensions;
 public static class NumberExtensions
@@ -25,7 +20,6 @@ public static class NumberExtensions
     #region vectors
     public static Vector2 ToVec2(this Point p) => new(p.X, p.Y);
     public static Point ToPoint(this Vector2 v) => new((int)Math.Round(v.X), (int)Math.Round(v.Y));
-    #endregion
-
     public static Vector3 ToVector3(this (float X, float Y, float Z) t) => new(t.X, t.Y, t.Z);
+    #endregion
 }

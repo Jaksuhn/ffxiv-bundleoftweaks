@@ -361,4 +361,6 @@ public unsafe class Game
     }
 
     public static bool IsQuestComplete(uint questId) => QuestManager.IsQuestComplete(questId);
+
+    public static bool IsTerritoryLoaded() => GameMain.Instance()->TerritoryLoadState == 2;
 }

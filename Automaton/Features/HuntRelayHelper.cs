@@ -65,6 +65,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
 
     private DalamudLinkPayload RelayLinkPayload = null!;
     private readonly string InstanceHeuristics = @"\b(?:instance\s*(?<instanceNumber>\d+)|i(?<iNumber>\d+))\b";
+    private RelayPayload LastRelay;
 
     public override void Enable()
     {
@@ -183,44 +184,35 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
     {
         if (sender.TextValue == Player.Name) return;
         var maplink = message.Payloads.FirstOrDefault(x => x is MapLinkPayload, null);
-        if (maplink is null) return;
+        if (maplink is not MapLinkPayload mlp) return;
 
         try
         {
-            if (maplink is MapLinkPayload mlp)
+            var (world, instance, relayType) = DetectWorldInstanceRelayType(message);
+            if ((RelayTypes)relayType == RelayTypes.None)
             {
-                var (world, instance, relayType) = DetectWorldInstanceRelayType(message);
-                if ((RelayTypes)relayType == RelayTypes.None)
-                {
-                    Log($"Failed to detect relay type in {nameof(MapLinkPayload)} message: {message}");
-                    return;
-                }
-                if (world == null && Config.AssumeBlankWorldsAreLocal)
-                {
-                    switch (Config.AssumedLocality)
-                    {
-                        case Locality.PlayerHomeWorld:
-                            world = Player.Object.HomeWorld.Value;
-                            break;
-                        case Locality.PlayerCurrentWorld:
-                            world = Player.Object.CurrentWorld.Value;
-                            break;
-                        case Locality.SenderHomeWorld:
-                            world = sender.Payloads.OfType<TextPayload>()
-                                .Select(p => p.Text!.Contains((char)SeIconChar.CrossWorld) ? FindRow<World>(x => x!.IsPublic && p.Text.Split((char)SeIconChar.CrossWorld)[1].Contains(x.Name.ToString(), StringComparison.OrdinalIgnoreCase)) : Player.Object.CurrentWorld.Value)
-                                .FirstOrDefault(Player.Object.CurrentWorld.Value);
-                            break;
-                    }
-                    //Debug($"Failed to detect world initially, relying on fallback. World is now {world.Value.Name}");
-                }
-                if (world.HasValue)
-                {
-                    //Verbose($"Detected world {world.Value.Name} and instance {instance} in {nameof(MapLinkPayload)} message: {message}");
-                    message.Payloads.AddRange([RelayLinkPayload, new IconPayload(BitmapFontIcon.NotoriousMonster), new RelayPayload(mlp, world.Value.RowId, instance, relayType, (uint)type).ToRawPayload(), RawPayload.LinkTerminator]);
-                }
-                else
-                    Log($"Failed to detect world in {nameof(MapLinkPayload)} message: {message}");
+                Log($"Failed to detect relay type in {nameof(MapLinkPayload)} message: {message}");
+                return;
             }
+            if (world is null && type is XivChatType.NoviceNetwork)
+                world = Player.Object.CurrentWorld.Value;
+            if (world is null && Config.AssumeBlankWorldsAreLocal)
+            {
+                world = Config.AssumedLocality switch
+                {
+                    Locality.PlayerHomeWorld => Player.Object.HomeWorld.Value,
+                    Locality.PlayerCurrentWorld => Player.Object.CurrentWorld.Value,
+                    Locality.SenderHomeWorld => sender.Payloads.OfType<TextPayload>().Select(p => p.Text!.Contains((char)SeIconChar.CrossWorld)
+                        ? FindRow<World>(x => x!.IsPublic && p.Text.Split((char)SeIconChar.CrossWorld)[1].Contains(x.Name.ToString(), StringComparison.OrdinalIgnoreCase))
+                        : Player.Object.CurrentWorld.Value)
+                        .FirstOrDefault(Player.Object.CurrentWorld.Value),
+                    _ => null
+                };
+            }
+            if (world is { RowId: var id })
+                message.Payloads.AddRange([RelayLinkPayload, new IconPayload(BitmapFontIcon.NotoriousMonster), new RelayPayload(mlp, id, instance, relayType, (uint)type).ToRawPayload(), RawPayload.LinkTerminator]);
+            else
+                Log($"Failed to detect world in {nameof(MapLinkPayload)} message: {message}");
         }
         catch (Exception ex)
         {
@@ -234,9 +226,15 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         if (payload == default) { Error($"Failed to parse {nameof(RelayPayload)}"); return; }
         if (Player.TerritoryIntendedUse is TerritoryIntendedUseEnum.Crystalline_Conflict or TerritoryIntendedUseEnum.Crystalline_Conflict_2 or TerritoryIntendedUseEnum.Deep_Dungeon)
         {
-            Log($"Relay link ignored; Player in territory {Player.Territory} ({Player.TerritoryIntendedUse}) where chat is not permitted.");
+            Log($"Relay link ignored. Player in territory {Player.Territory} ({Player.TerritoryIntendedUse}) where chat is not permitted.");
             return;
         }
+        if (payload == LastRelay)
+        {
+            Log("Relay link ignored; same as last relay.");
+            return;
+        }
+
         var relay = BuildRelayMessage(payload.MapLink, payload.World, payload.Instance, payload.RelayType);
         foreach (var (channel, command, islocal, enabled) in Config.Channels)
         {
@@ -260,6 +258,8 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
             });
 #pragma warning restore CS0618 // Type or member is obsolete
         }
+
+        LastRelay = payload;
     }
 
     private Lumina.Text.SeStringBuilder BuildRelayMessage(MapLinkPayload MapLink, World World, uint? Instance, uint RelayType)

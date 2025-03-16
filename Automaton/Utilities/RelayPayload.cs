@@ -49,6 +49,15 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
 
     public override string ToString() => $"{nameof(RelayPayload)}[{mapLink}, {worldId}, {instance}, {relayType}, {originChannel}]";
 
+    public static bool operator ==(RelayPayload? left, RelayPayload? right)
+    {
+        if (left is null) return right is null;
+        return left.World.RowId == right?.World.RowId && left.Instance == right.Instance && left.RelayType == right.RelayType && left.MapLink.TerritoryType.RowId == right.MapLink.TerritoryType.RowId
+            && Vector2.Distance(new(left.MapLink.RawX, left.MapLink.RawY), new(right.MapLink.RawX, right.MapLink.RawY)) < 3;
+    }
+
+    public static bool operator !=(RelayPayload? left, RelayPayload? right) => !(left == right);
+
     public RawPayload ToRawPayload() => new(EncodeImpl());
 
     public static RelayPayload? Parse(RawPayload payload)

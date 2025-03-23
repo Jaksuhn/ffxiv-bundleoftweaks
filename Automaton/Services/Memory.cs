@@ -23,7 +23,6 @@ public unsafe class Memory
         internal const string FollowQuestRecast = "E8 ?? ?? ?? ?? 48 8B 9C 24 ?? ?? ?? ?? 0F 28 74 24 ?? 0F 28 7C 24 ?? 44 0F 28 44 24 ?? 48 81 C4"; // atmo
         internal const string ExecuteCommand = "E8 ?? ?? ?? ?? 8D 46 0A"; // st
         internal const string ExecuteCommandComplexLocation = "E8 ?? ?? ?? ?? EB 1E 48 8B 53 08";
-        internal const string GetGrandCompanyRank = "E8 ?? ?? ?? ?? 3A 43 01"; // cs
         internal const string FlightProhibited = "E8 ?? ?? ?? ?? 85 C0 74 07 32 C0 48 83 C4 38"; // hyperborea
         internal const string KnockbackProc = "E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? FF C6";
         internal const string MoveController = "E8 ?? ?? ?? ?? 48 85 C0 74 AE 83 FD 05";
@@ -58,7 +57,6 @@ public unsafe class Memory
         internal delegate nint ExecuteCommandDelegate(int command, int a1 = 0, int a2 = 0, int a3 = 0, int a4 = 0);
         internal delegate nint ExecuteCommandComplexLocationDelegate(int command, Vector3 position, int param1, int param2, int param3, int param4);
         internal delegate void FreeCompanyDialogPacketReceiveDelegate(InfoProxyInterface* ptr, byte* packetData);
-        internal delegate byte GetGrandCompanyRankDelegate(nint a1);
         internal delegate nint IsFlightProhibited(nint a1);
         internal delegate long IsItemUniqueDelegate(InventoryManager* ptr, uint a1, uint a2, byte a3);
         internal delegate bool FollowQuestRecastDelegate(nint a1, nint a2, nint a3, nint a4, nint a5, nint a6);
@@ -83,48 +81,6 @@ public unsafe class Memory
     internal Delegates.UnableToExecuteCommandWhileJumpingDelegate? UnableToExecuteCommandWhileJumping = EzDelegate.Get<Delegates.UnableToExecuteCommandWhileJumpingDelegate>(Signatures.UnableToExecuteCommandWhileJumping);
 
     public Memory() => EzSignatureHelper.Initialize(this);
-
-    public static class MemoryMap
-    {
-        public static readonly Dictionary<Type, string> Map = new()
-        {
-            { typeof(Delegates.AbandonDutyDelegate), Signatures.AbandonDuty },
-            { typeof(Delegates.AgentReturnReceiveEventDelegate), Signatures.AgentReturnReceiveEvent },
-            { typeof(Delegates.AgentWorldTravelReceiveEventDelegate), Signatures.WorldTravel },
-            { typeof(Delegates.CanDismountDelegate), Signatures.CanDismount },
-            { typeof(Delegates.EnqueueSnipeTaskDelegate), Signatures.EnqueueSnipeTask },
-            { typeof(Delegates.ExecuteCommandDelegate), Signatures.ExecuteCommand },
-            { typeof(Delegates.ExecuteCommandComplexLocationDelegate), Signatures.ExecuteCommandComplexLocation },
-            { typeof(Delegates.FreeCompanyDialogPacketReceiveDelegate), Signatures.FreeCompanyDialogPacketReceive },
-            { typeof(Delegates.GetGrandCompanyRankDelegate), Signatures.GetGrandCompanyRank },
-            { typeof(Delegates.IsFlightProhibited), Signatures.FlightProhibited },
-            { typeof(Delegates.IsItemUniqueDelegate), Signatures.InventoryManagerUniqueItemCheck },
-            { typeof(Delegates.FollowQuestRecastDelegate), Signatures.FollowQuestRecast },
-            { typeof(Delegates.KbProcDelegate), Signatures.KnockbackProc },
-            { typeof(Delegates.NoBewitchActionDelegate), Signatures.BewitchProc },
-            { typeof(Delegates.ReceiveAchievementProgressDelegate), Signatures.ReceiveAchievementProgress },
-            { typeof(Delegates.RetrieveMateriaDelegate), Signatures.RetrieveMateria },
-            { typeof(Delegates.RidePillionDelegate), Signatures.RidePillion },
-            { typeof(Delegates.SalvageItemDelegate), Signatures.SalvageItem },
-            { typeof(Delegates.ShouldDrawDelegate), Signatures.ShouldDraw },
-            { typeof(Delegates.WorldTravelSetupInfoDelegate), Signatures.WorldTravelSetupInfo },
-        };
-
-        public static string GetSignature<T>() where T : Delegate => Map.TryGetValue(typeof(T), out var signature) ? signature
-                : throw new KeyNotFoundException($"No signature mapping found for delegate type {typeof(T).Name}");
-
-        public static T GetDelegate<T>() where T : Delegate, IMappedDelegate => EzDelegate.Get<T>(GetSignature<T>());
-
-        public interface IMappedDelegate { }
-        public class MappedDelegate<T> : IMappedDelegate where T : Delegate
-        {
-            static MappedDelegate()
-            {
-                if (!Map.ContainsKey(typeof(T)))
-                    throw new ArgumentException($"Type {typeof(T)} is not registered in MemoryMap");
-            }
-        }
-    }
 
     public class Hook
     {
@@ -418,15 +374,6 @@ public unsafe class Memory
             Svc.Log.Debug($"[{nameof(ExecuteCommandComplexLocationDetour)}]: cmd:({command}) | pos:{position} | p1:{param1} | p2:{param2} | p3:{param3} | p4:{param4}");
             return ExecuteCommandComplexLocationHook.Original(command, position, param1, param2, param3, param4);
         }
-    }
-    #endregion
-
-    #region Get Grand Company Rank
-    public class GrandCompanyRank : Hook
-    {
-        [EzHook(Signatures.GetGrandCompanyRank, false)]
-        internal readonly EzHook<Delegates.GetGrandCompanyRankDelegate> GCRankHook = null!;
-        internal byte GCRankDetour(nint a1) => 17;
     }
     #endregion
 

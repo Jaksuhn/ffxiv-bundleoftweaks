@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.Inventory;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ public sealed class LoopMelding(GameInventoryItem item) : CommonTasks
             await WaitUntilThenFalse(() => Svc.Condition[ConditionFlag.MeldingMateria], "Melding");
 
             Status = $"Retrieving [{current}/{max}]";
-            Service.Memory.MaterializeAction(item, MaterializeEventId.Retrieve);
+            Service.Memory.MaterializeAction(item, MaterializeEntryId.Retrieve);
             await WaitUntilThenFalse(() => Svc.Condition[ConditionFlag.Occupied39], "Retrieving");
             current++;
         }

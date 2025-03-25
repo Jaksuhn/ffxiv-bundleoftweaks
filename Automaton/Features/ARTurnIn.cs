@@ -8,6 +8,9 @@ public class ARTurnInConfiguration
     [IntConfig(DefaultValue = 50, Min = 0, Max = 140)]
     public int InventoryFreeSlotThreshold = 50;
 
+    [IntConfig(DefaultValue = 50, Min = 1, Max = 65000)]
+    public int VenturesRemaining = 50;
+
     public List<ulong> ExcludedCharacters = [];
 }
 
@@ -15,7 +18,7 @@ public class ARTurnInConfiguration
 internal class ARTurnIn : ARTweak<ARTurnInConfiguration>
 {
     public override string Name => "AutoRetainer x Deliveroo";
-    public override string Description => "On CharacterPostProcess, automatically go to your grand company and turn in your gear when inventory is below a certain threshold.";
+    public override string Description => "On CharacterPostProcess, automatically go to your grand company and turn in gear when below an inventory or venture threshold";
     public override BaseIPC[] Requirements => [Service.AutoRetainerIPC, Service.Navmesh, Service.Deliveroo, Service.Lifestream];
 
     public override void DrawConfig()
@@ -40,7 +43,7 @@ internal class ARTurnIn : ARTweak<ARTurnInConfiguration>
             Log("Skipping post process turn in for character: character excluded.");
         else
         {
-            if (Service.AutoRetainerIPC.GetInventoryFreeSlotCount() <= Config.InventoryFreeSlotThreshold)
+            if (Service.AutoRetainerIPC.GetInventoryFreeSlotCount() <= Config.InventoryFreeSlotThreshold || Inventory.GetItemCount(21072, false) <= Config.VenturesRemaining)
                 AutoRetainer.RequestCharacterPostprocess();
             else
                 Log("Skipping post process for character: inventory above threshold.");

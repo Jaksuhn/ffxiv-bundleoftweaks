@@ -210,8 +210,7 @@ public abstract class CommonTasks : AutoTask
     {
         using var scope = BeginScope("InteractWith");
         Status = $"Interacting with {obj.GameObjectId}";
-        static unsafe bool IsJumping() => Service.Memory.UnableToExecuteCommandWhileJumping?.Invoke(Player.Object.Character()) != 0;
-        await WaitWhile(IsJumping, "WaitForAbleToInteract");
+        await WaitWhile(() => Player.Jumping, "WaitForAbleToInteract");
         const int maxAttempts = 5;
         for (var attempt = 0; attempt < maxAttempts; attempt++)
         {

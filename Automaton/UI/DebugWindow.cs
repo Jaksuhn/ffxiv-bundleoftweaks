@@ -24,7 +24,7 @@ internal class DebugWindow : Window
     private readonly IDebugTab[] Tabs;
     private IDrawableTab? SelectedTab;
 
-    public override bool DrawConditions() => Player.Available && C.ShowDebug;
+    public override bool DrawConditions() => C.ShowDebug;
 
     public override void Draw()
     {

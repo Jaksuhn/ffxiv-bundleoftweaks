@@ -7,8 +7,8 @@ internal unsafe class FlagTab : DebugTab
 {
     public override void Draw()
     {
-        ImGui.TextUnformatted($"IsFlagMarkerSet: {AgentMap.Instance()->IsFlagMarkerSet == 1}");
-        if (AgentMap.Instance()->IsFlagMarkerSet == 0) return;
+        ImGui.TextUnformatted($"IsFlagMarkerSet: {AgentMap.Instance()->IsFlagMarkerSet}");
+        if (!AgentMap.Instance()->IsFlagMarkerSet) return;
 
         ImGui.TextUnformatted($"Territory: {PlayerEx.MapFlag.TerritoryId} {GetRow<TerritoryType>(PlayerEx.MapFlag.TerritoryId)!.Value.Name}");
         var row = GetRow<Map>(PlayerEx.MapFlag.MapId);

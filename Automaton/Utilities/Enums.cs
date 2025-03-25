@@ -170,12 +170,12 @@ public static class Enums
         BgcArmyAction = 1810
     }
 
-    public enum MaterializeEventId
-    {
-        Unk0 = 0x390000, // called in salvage and unk
-        Retrieve = 0x390001,
-        Unk2 = 0x390002, // called in purify
-    }
+    //public enum MaterializeEventId
+    //{
+    //    Unk0 = 0x390000, // called in salvage and unk
+    //    Retrieve = 0x390001,
+    //    Unk2 = 0x390002, // called in purify
+    //}
 
     public enum LinkHandlerId : uint
     {

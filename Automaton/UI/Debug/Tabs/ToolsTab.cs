@@ -50,15 +50,10 @@ internal unsafe class ToolsTab : DebugTab
             }
         }
 
-        if (Dalamud.SafeMemory.ReadBytes(Svc.SigScanner.ScanText(Memory.Signatures.ItemIsUniqueConditionalJump), 2, out var obj))
-        {
-            ImGui.TextUnformatted($"{BitConverter.ToString(obj)}");
-        }
-
         if (ImGui.Button("hg"))
         {
             var player = (FFXIVClientStructs.FFXIV.Client.Game.Character.Character*)GameObjectManager.Instance()->Objects.IndexSorted[0].Value;
-            player->GetStatusManager()->SetStatus(20, 210, 5.0f, 100, 0xE0000000, true);
+            player->GetStatusManager()->SetStatus(20, 149, 5.0f, 0, 0xE0000000, true);
         }
     }
 }

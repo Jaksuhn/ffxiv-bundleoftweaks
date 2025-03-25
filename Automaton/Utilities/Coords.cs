@@ -1,5 +1,3 @@
-using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons.MathHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -84,7 +82,7 @@ public static class Coords
         return (0, default);
     }
 
-    public static unsafe Vector3 FlagToWorld(FlagMapMarker marker) => AgentMap.Instance()->IsFlagMarkerSet == 1 ? new(marker.XFloat, 1024, marker.YFloat) : throw new Exception("Flag not set");
+    public static unsafe Vector3 FlagToWorld(FlagMapMarker marker) => AgentMap.Instance()->IsFlagMarkerSet ? new(marker.XFloat, 1024, marker.YFloat) : throw new Exception("Flag not set");
 
     //public static uint GetNearestAetheryte(MapMarkerData marker) => GetNearestAetheryte(marker.TerritoryTypeId, new Vector3(marker.X, marker.Y, marker.Z));
     //public static uint GetNearestAetheryte(FlagMapMarker flag) => GetNearestAetheryte((int)flag.TerritoryId, new Vector3(flag.XFloat, 0, flag.YFloat));

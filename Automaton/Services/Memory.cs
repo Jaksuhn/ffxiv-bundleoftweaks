@@ -23,7 +23,6 @@ public unsafe class Memory
         internal const string FollowQuestRecast = "E8 ?? ?? ?? ?? 48 8B 9C 24 ?? ?? ?? ?? 0F 28 74 24 ?? 0F 28 7C 24 ?? 44 0F 28 44 24 ?? 48 81 C4"; // atmo
         internal const string ExecuteCommand = "E8 ?? ?? ?? ?? 8D 46 0A"; // st
         internal const string ExecuteCommandComplexLocation = "E8 ?? ?? ?? ?? EB 1E 48 8B 53 08";
-        internal const string FlightProhibited = "E8 ?? ?? ?? ?? 85 C0 74 07 32 C0 48 83 C4 38"; // hyperborea
         internal const string KnockbackProc = "E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? FF C6";
         internal const string MoveController = "E8 ?? ?? ?? ?? 48 85 C0 74 AE 83 FD 05";
         internal const string PacketDispatcher_OnReceivePacketHookSig = "40 53 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 8B F2"; // hyperborea
@@ -33,18 +32,10 @@ public unsafe class Memory
         internal const string ReceiveAchievementProgress = "C7 81 ?? ?? ?? ?? ?? ?? ?? ?? 89 91 ?? ?? ?? ?? 44 89 81"; // cs
         internal const string RidePillion = "48 85 C9 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 56 48 83 EC";
         internal const string SalvageItem = "E8 ?? ?? ?? ?? EB 5A 48 8B 07"; // veyn
-        internal const string ShouldDraw = "E8 ?? ?? ?? ?? 84 C0 75 18 48 8D 0D ?? ?? ?? ?? B3 01"; // hasel
         internal const string WorldTravel = "40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? B8";
         internal const string WorldTravelSetupInfo = "48 8B CB E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B 05 ?? ?? ?? ??";
-        internal const string InventoryManagerUniqueItemCheck = "E8 ?? ?? ?? ?? 44 8B E0 EB 29";
-        internal const string ItemIsUniqueConditionalJump = "75 4D";
         internal const string FreeCompanyDialogPacketReceive = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 42 31"; // xan
-        internal const string SendLogout = "40 53 48 83 EC ?? 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 ?? 48 8B 0D"; // Client::Game::Event::EventSceneModuleUsualImpl.Logout	push    rbx
-        internal const string ProcessSentChat = "E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??";
         internal const string RetrieveMateria = "E8 ?? ?? ?? ?? EB 27 48 8B 01"; // Client::UI::Agent::AgentMaterialize.ReceiveEvent	call    sub_140B209C0
-        internal const string AgentMateriaAttachReceiveEvent = "E8 ?? ?? ?? ?? 84 C0 74 7E 48 8B CB"; // look around sub_1416B7280
-        internal const string CanDismount = "E8 ?? ?? ?? ?? F3 0F 10 74 24 ?? F3 0F 10 3D ?? ?? ?? ??"; // needs more testing, I don't think this actually is useful for dismount checking
-        internal const string UnableToExecuteCommandWhileJumping = "40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 84 C0 75 12"; // xan
     }
 
     public static class Delegates
@@ -52,13 +43,11 @@ public unsafe class Memory
         internal delegate void AbandonDutyDelegate(bool a1);
         internal delegate byte AgentReturnReceiveEventDelegate(AgentInterface* agent);
         internal delegate nint AgentWorldTravelReceiveEventDelegate(Structs.AgentWorldTravel* agent, nint a2, nint a3, nint a4, long eventCase);
-        internal delegate byte CanDismountDelegate(nint a1, float* a2, Vector3* gameObjectPosition);
         internal delegate ulong EnqueueSnipeTaskDelegate(EventSceneModuleImplBase* scene, lua_State* state);
         internal delegate nint ExecuteCommandDelegate(int command, int a1 = 0, int a2 = 0, int a3 = 0, int a4 = 0);
         internal delegate nint ExecuteCommandComplexLocationDelegate(int command, Vector3 position, int param1, int param2, int param3, int param4);
         internal delegate void FreeCompanyDialogPacketReceiveDelegate(InfoProxyInterface* ptr, byte* packetData);
         internal delegate nint IsFlightProhibited(nint a1);
-        internal delegate long IsItemUniqueDelegate(InventoryManager* ptr, uint a1, uint a2, byte a3);
         internal delegate bool FollowQuestRecastDelegate(nint a1, nint a2, nint a3, nint a4, nint a5, nint a6);
         internal delegate long KbProcDelegate(long gameobj, float rot, float length, long a4, char a5, int a6);
         internal delegate nint NoBewitchActionDelegate(CSGameObject* gameObj, float x, float y, float z, int a5, nint a6);
@@ -66,9 +55,7 @@ public unsafe class Memory
         internal delegate void RetrieveMateriaDelegate(EventFramework* framework, int eventID, InventoryType inventoryType, short inventorySlot, int extraParam);
         internal delegate void RidePillionDelegate(BattleChara* target, int seatIndex);
         internal delegate void SalvageItemDelegate(AgentSalvage* thisPtr, InventoryItem* item, int addonId, byte a4);
-        internal delegate byte ShouldDrawDelegate(CameraBase* thisPtr, CSGameObject* gameObject, Vector3* sceneCameraPos, Vector3* lookAtVector);
         internal delegate nint WorldTravelSetupInfoDelegate(nint worldTravel, ushort currentWorld, ushort targetWorld);
-        internal delegate byte UnableToExecuteCommandWhileJumpingDelegate(Character* character);
     }
 
     internal Delegates.RidePillionDelegate? RidePillion = EzDelegate.Get<Delegates.RidePillionDelegate>(Signatures.RidePillion);
@@ -78,7 +65,6 @@ public unsafe class Memory
     internal Delegates.WorldTravelSetupInfoDelegate? WorldTravelSetupInfo = EzDelegate.Get<Delegates.WorldTravelSetupInfoDelegate>(Signatures.WorldTravelSetupInfo);
     internal Delegates.RetrieveMateriaDelegate? RetrieveMateria = EzDelegate.Get<Delegates.RetrieveMateriaDelegate>(Signatures.RetrieveMateria);
     internal Delegates.ExecuteCommandDelegate? ExecuteCommand = EzDelegate.Get<Delegates.ExecuteCommandDelegate>(Signatures.ExecuteCommand);
-    internal Delegates.UnableToExecuteCommandWhileJumpingDelegate? UnableToExecuteCommandWhileJumping = EzDelegate.Get<Delegates.UnableToExecuteCommandWhileJumpingDelegate>(Signatures.UnableToExecuteCommandWhileJumping);
 
     public Memory() => EzSignatureHelper.Initialize(this);
 
@@ -275,35 +261,6 @@ public unsafe class Memory
     }
     #endregion
 
-    #region Flight Prohibited
-    public class FlightProhibited : Hook
-    {
-        /// <remarks>
-        /// This only resolves on the client side, e.g. other people will not see you fly. Packet filter if using.
-        /// </remarks>
-        [EzHook(Signatures.FlightProhibited, false)]
-        internal readonly EzHook<Delegates.IsFlightProhibited> IsFlightProhibitedHook = null!;
-
-        internal unsafe nint IsFlightProhibitedDetour(nint a1)
-        {
-            try
-            {
-                if (!PlayerEx.InFlightAllowedTerritory // don't detour in zones where flight is impossible normally
-                    || PlayerEx.AllowedToFly // don't detour in zones where you can already fly
-                    || !Svc.Condition[ConditionFlag.Mounted]) // don't detour if you aren't mounted
-                    return IsFlightProhibitedHook.Original(a1);
-                else
-                    return 0;
-            }
-            catch (Exception e)
-            {
-                e.Log();
-            }
-            return IsFlightProhibitedHook.Original(a1);
-        }
-    }
-    #endregion
-
     #region Return Receive Event
     public class AgentReturn : Hook
     {
@@ -377,40 +334,6 @@ public unsafe class Memory
     }
     #endregion
 
-    #region Camera Object Culling
-    public class CameraObjectCulling : Hook
-    {
-        [EzHook(Signatures.ShouldDraw, false)]
-        internal readonly EzHook<Delegates.ShouldDrawDelegate> ShouldDrawHook = null!;
-        internal byte ShouldDrawDetour(CameraBase* thisPtr, CSGameObject* gameObject, Vector3* sceneCameraPos, Vector3* lookAtVector) => 1;
-    }
-    #endregion
-
-    #region Unique Item Check Bypass
-    public class AllowUniqueItems : Hook
-    {
-        [EzHook(Signatures.InventoryManagerUniqueItemCheck, false)]
-        internal readonly EzHook<Delegates.IsItemUniqueDelegate> UniqueItemCheckHook = null!;
-        internal long IgnoreUniqueCheckDetour(InventoryManager* ptr, uint a1, uint a2, byte a3)
-        {
-            Svc.Log.Info($"{nameof(IgnoreUniqueCheckDetour)}: [{a1} {a2} {a3}]");
-            return UniqueItemCheckHook.Original(ptr, a1, a2, a3);
-        }
-
-        private byte[] _prePatchData = null!;
-        // 0x90 = no-op
-        internal unsafe void IgnoreUniqueCheck()
-        {
-            Dalamud.SafeMemory.ReadBytes(Svc.SigScanner.ScanModule(Signatures.ItemIsUniqueConditionalJump), 2, out var prePatch);
-            _prePatchData = prePatch;
-            Dalamud.SafeMemory.WriteBytes(Svc.SigScanner.ScanModule(Signatures.ItemIsUniqueConditionalJump), [0x90, 0x90]);
-            //Dalamud.SafeMemory.Write(Svc.SigScanner.ScanText(Signatures.ItemIsUniqueConditionalJump), new byte[] { 0x90, 0x90 });
-        }
-
-        internal unsafe void Reset() => Dalamud.SafeMemory.WriteBytes(Svc.SigScanner.ScanModule(Signatures.ItemIsUniqueConditionalJump), _prePatchData);
-    }
-    #endregion
-
     #region Speed
     // this persists through LocalPlayer going null unlike setting via PMC
     public static void SetSpeed(float speedBase)
@@ -442,7 +365,7 @@ public unsafe class Memory
     #endregion
 
     #region Materia
-    public unsafe void MaterializeAction(GameInventoryItem item, MaterializeEventId eventId)
+    public unsafe void MaterializeAction(GameInventoryItem item, MaterializeEntryId eventId)
     {
         try
         {
@@ -450,20 +373,6 @@ public unsafe class Memory
             RetrieveMateria?.Invoke(EventFramework.Instance(), (int)eventId, _item->Container, _item->Slot, 0);
         }
         catch (Exception e) { e.Log(); }
-    }
-    #endregion
-
-    #region Can Dismount
-    public class DismountCheck : Hook
-    {
-        [EzHook(Signatures.CanDismount, false)]
-        internal readonly EzHook<Delegates.CanDismountDelegate> CanDismountHook = null!;
-
-        private byte CanDismountDetour(nint a1, float* a2, Vector3* a3)
-        {
-            TryExecute(() => Svc.Log.Info($"{nameof(CanDismountDetour)}: [{a1} {*a2} {*a3}]"));
-            return CanDismountHook.Original(a1, a2, a3);
-        }
     }
     #endregion
 }

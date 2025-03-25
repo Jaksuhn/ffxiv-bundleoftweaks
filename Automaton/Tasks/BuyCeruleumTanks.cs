@@ -115,7 +115,7 @@ public sealed class BuyCeruleumTanks : CommonTasks
         ipc.FreeCompanyDialogPacketReceiveHook.Disable();
     }
 
-    private unsafe DGameObject? EstateHallDoor => Svc.Objects.Where(o => o!.IsTargetable && o.EventInfo() is { EventId.ContentId: EventHandlerType.Warp, EventId.Id: 131148 }).OrderBy(Player.DistanceTo).FirstOrDefault(defaultValue: null);
-    private unsafe DGameObject? WorkshopDoor => Svc.Objects.FirstOrDefault(o => o!.IsTargetable && o.EventInfo() is { EventId.ContentId: EventHandlerType.CustomTalk, EventId.Id: 721074 }, null);
+    private unsafe DGameObject? EstateHallDoor => Svc.Objects.Where(o => o!.IsTargetable && o.EventInfo() is { EventId.ContentId: EventHandlerContent.Warp, EventId.Id: 131148 }).OrderBy(Player.DistanceTo).FirstOrDefault(defaultValue: null);
+    private unsafe DGameObject? WorkshopDoor => Svc.Objects.FirstOrDefault(o => o!.IsTargetable && o.EventInfo() is { EventId.ContentId: EventHandlerContent.CustomTalk, EventId.Id: 721074 }, null);
     private int GetAddonTankCount() => TryGetAddonMaster<AddonMaster.FreeCompanyCreditShop>(out var am) ? am.Items.First(x => x.ItemId == CeruleumTankId).QuantityInInventory : 0;
 }

@@ -194,7 +194,7 @@ public unsafe class Game
         return shop->WaitingForTransactionToFinish;
     }
 
-    public static bool IsHandlerAShop(EventHandlerType contentId) => contentId is EventHandlerType.Shop or EventHandlerType.FreeCompanyCreditShop;
+    public static bool IsHandlerAShop(EventHandlerContent contentId) => contentId is EventHandlerContent.Shop or EventHandlerContent.FreeCompanyCreditShop;
 
     public class NPCInfo(ulong id, Vector3 location, uint shopId)
     {
@@ -249,10 +249,10 @@ public unsafe class Game
 
         foreach (var handler in enpcBase.Value.ENpcData)
         {
-            var eventType = (EventHandlerType)(handler.RowId >> 16);
+            var eventType = (EventHandlerContent)(handler.RowId >> 16);
             switch (eventType)
             {
-                case EventHandlerType.Shop:
+                case EventHandlerContent.Shop:
                     var gilItems = GetSubRow<GilShopItem>(handler.RowId);
                     if (gilItems == null)
                         continue;
@@ -264,7 +264,7 @@ public unsafe class Game
                             return (handler.RowId, i);
                     }
                     break;
-                case EventHandlerType.FreeCompanyCreditShop:
+                case EventHandlerContent.FreeCompanyCreditShop:
                     var fccItems = GetRow<FccShop>(handler.RowId);
                     if (fccItems == null)
                         continue;
@@ -299,13 +299,13 @@ public unsafe class Game
     public static bool IsTurnInRequestInProgress(uint itemId)
     {
         var ui = UIState.Instance();
-        var agent = AgentRequest.Instance();
+        var agent = AgentNpcTrade.Instance();
         return agent->IsAgentActive() && ui->NpcTrade.Requests.Count == 1 && ui->NpcTrade.Requests.Items[0].ItemId == itemId;
     }
 
     public static void TurnInRequests()
     {
-        var agent = AgentRequest.Instance();
+        var agent = AgentNpcTrade.Instance();
         if (!agent->IsAgentActive())
         {
             PluginLog.Error("Agent not active...");

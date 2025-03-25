@@ -39,10 +39,10 @@ public struct HaselColor
         => From(abgr.Reverse());
 
     public static HaselColor FromUiForeground(uint id)
-        => FromABGR(GetRow<UIColor>(id)!.Value.UIForeground);
+        => FromABGR(GetRow<UIColor>(id)!.Value.Dark);
 
     public static HaselColor FromUiGlow(uint id)
-        => FromABGR(GetRow<UIColor>(id)!.Value.UIGlow);
+        => FromABGR(GetRow<UIColor>(id)!.Value.Light);
 
     public static HaselColor FromStain(uint id)
         => From(GetRow<Stain>(id)!.Value.Color.Reverse() >> 8) with { A = 1 };

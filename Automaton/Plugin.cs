@@ -3,7 +3,6 @@ using Automaton.UI;
 using Dalamud.Plugin;
 using ECommons;
 using ECommons.Configuration;
-using ECommons.EzEventManager;
 using ECommons.SimpleGui;
 using ECommons.Singletons;
 using System.Collections.Specialized;
@@ -15,7 +14,6 @@ public class Plugin : IDalamudPlugin
 {
     public static string Name => "CBT";
     private const string Command = "/cbt";
-    private const string LegacyCommand = "/automaton";
     public static Plugin P { get; private set; } = null!;
     public static Config C { get; private set; } = null!;
     public Version Version { get; private set; } = null!;
@@ -27,6 +25,13 @@ public class Plugin : IDalamudPlugin
         P = this;
         Version = P.GetType().Assembly.GetName().Version ?? new(0, 0);
         ECommonsMain.Init(pluginInterface, P, ECommons.Module.DalamudReflector, ECommons.Module.ObjectFunctions);
+
+#if LocalCS
+        FFXIVClientStructs.Interop.Generated.Addresses.Register();
+        Resolver.GetInstance.Setup(Svc.SigScanner.SearchBase, Svc.Data.GameData.Repositories["ffxiv"].Version, new(Path.Join(pluginInterface.ConfigDirectory.FullName, "SigCache.json")));
+        Resolver.GetInstance.Resolve();
+#endif
+
         EzConfig.DefaultSerializationFactory = new YamlFactory();
         C = EzConfig.Init<Config>();
 
@@ -44,7 +49,6 @@ public class Plugin : IDalamudPlugin
         }
 
         EzCmd.Add(Command, OnCommand, $"Opens the {Name} menu");
-        EzCmd.Add(LegacyCommand, OnCommand);
         EzConfigGui.Init(new HaselWindow().Draw, nameOverride: $"{Name} v{P.Version.ToString(2)}");
         EzConfigGui.WindowSystem.AddWindow(new DebugWindow());
 
@@ -52,22 +56,7 @@ public class Plugin : IDalamudPlugin
 
         Svc.Framework.RunOnFrameworkThread(InitializeTweaks);
         C.EnabledTweaks.CollectionChanged += OnChange;
-        _ = new EzFrameworkUpdate(EventWatcher);
-    }
-
-    private bool inpvp = false;
-    private void EventWatcher()
-    {
-        if (Player.IsInPvP)
-        {
-            if (!inpvp)
-            {
-                inpvp = true;
-                Events.OnEnteredPvPInstance();
-            }
-        }
-        else
-            inpvp = false;
+        Svc.ClientState.EnterPvP += Events.OnEnteredPvPInstance;
     }
 
     public static void OnChange(object? sender, NotifyCollectionChangedEventArgs e)
@@ -89,6 +78,7 @@ public class Plugin : IDalamudPlugin
             Svc.Log.Debug($"Disposing {tweak.InternalName}");
             TryExecute(tweak.DisposeInternal);
         }
+        Svc.ClientState.EnterPvP -= Events.OnEnteredPvPInstance;
         C.EnabledTweaks.CollectionChanged -= OnChange;
         ECommonsMain.Dispose();
     }

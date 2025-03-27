@@ -34,7 +34,7 @@ jobs:
                 sorted_versions=$(echo "$versions" | sort -r)
                 highest_version=$(echo "$sorted_versions" | head -1)
                 result=$(echo "$yaml" | yq '.tracks | to_entries | map(select(.value.applicableGameVersion == "$highest_version")) | sort_by(.key) | .[0].key')
-                echo "${result:='release'}" >> $GITHUB_OUTPUT
+                echo "${result}" >> $GITHUB_OUTPUT
 
       - name: Download Dalamud Latest
         run: |

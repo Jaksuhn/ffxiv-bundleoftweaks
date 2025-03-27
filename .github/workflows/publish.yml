@@ -24,17 +24,22 @@ jobs:
         with:
           dotnet-version: 9.0.x
           
-      - name: Get Latest Track
+      - name: Download config.yaml
+        run: curl -L https://raw.githubusercontent.com/goatcorp/dalamud-declarative/main/config.yaml -o config.yaml
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.34.1/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Extract Latest Track Name
         id: latest_track
-        uses: mikefarah/yq@master
-        with:
-            cmd: |
-                yaml=$(wget -q -O- https://raw.githubusercontent.com/goatcorp/dalamud-declarative/main/config.yaml)
-                versions=$(echo "$yaml" | yq '.tracks[] | .applicableGameVersion')
-                sorted_versions=$(echo "$versions" | sort -r)
-                highest_version=$(echo "$sorted_versions" | head -1)
-                result=$(echo "$yaml" | yq '.tracks | to_entries | map(select(.value.applicableGameVersion == "$highest_version")) | sort_by(.key) | .[0].key')
-                echo "${result}" >> $GITHUB_OUTPUT
+        run: |
+          latest_entry=$(yq eval '.tracks | to_entries | sort_by(.value.applicableGameVersion) | .[-1]' config.yaml)
+          track_name=$(echo "$latest_entry" | yq eval '.key' -)
+          export HIGHEST_VERSION=$highest_version
+          result=$(echo "$yaml" | yq '.tracks | to_entries | map(select(.value.applicableGameVersion == env(HIGHEST_VERSION))) | sort_by(.key) | .[0].key')
+          echo "$result" >> $GITHUB_OUTPUT
 
       - name: Download Dalamud Latest
         run: |

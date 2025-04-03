@@ -35,7 +35,7 @@ jobs:
       - name: Extract Latest Track Name
         id: latest_track
         run: |
-          latest_entry=$(yq eval '.tracks | to_entries | sort_by(.value.applicableGameVersion, .key | match("release.*") | . == "" | not) | .[-1]' config.yaml)
+          latest_entry=$(yq eval '.tracks | to_entries | sort_by(.value.applicableGameVersion, (.key == "release")) | .[-1]' config.yaml)
           track_name=$(echo "$latest_entry" | yq eval '.key' -)
           echo "result=$track_name" >> $GITHUB_OUTPUT
 

@@ -55,7 +55,7 @@ public class LalaLookup : Tweak
             case "CrossWorldLinkshell":
             case "ContentMemberList": // Eureka/Bozja/...
             case "BeginnerChatList":
-                return menuTargetDefault.TargetName != string.Empty
+                return menuTargetDefault.TargetName != string.Empty && menuTargetDefault is { TargetContentId: not 0 }
                        && (GetSheet<World>()?.FirstOrDefault(x => x.RowId == menuTargetDefault.TargetHomeWorld.RowId).IsPublic ?? false);
             default:
                 break;

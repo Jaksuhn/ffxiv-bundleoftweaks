@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using System.Threading.Tasks;
 
 namespace Automaton.Tasks;
 public sealed class DoQuests(List<string> questIds) : CommonTasks
@@ -9,12 +10,21 @@ public sealed class DoQuests(List<string> questIds) : CommonTasks
         {
             Status = $"Doing quest #{quest}";
             if (Service.Questionable.StartSingleQuest(quest))
-                await WaitWhile(() => !Game.IsQuestComplete(uint.Parse(quest)), $"QuestionableWaitForFinish{quest}", 120);
+                await WaitWhile(() => !IsQuestComplete(quest), $"QuestionableWaitForFinish{quest}", 120);
             else
                 Error($"Failed to start quest #{quest}");
         }
         Status = "Going home";
         Service.Lifestream.ExecuteCommand("auto");
         await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), "LifestreamWaitForFinish");
+    }
+
+    private unsafe bool IsQuestComplete(string questId)
+    {
+        if (uint.TryParse(questId, out var id) && Game.IsQuestComplete(id))
+            return true;
+        if (questId.StartsWith('U') && ushort.TryParse(questId.AsSpan(1), out var unlockLinkId) && UIState.Instance()->IsUnlockLinkUnlocked(unlockLinkId))
+            return true;
+        return false;
     }
 }

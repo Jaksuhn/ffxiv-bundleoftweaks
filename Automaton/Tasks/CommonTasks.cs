@@ -74,7 +74,7 @@ public abstract class CommonTasks : AutoTask
             Status = $"Teleporting to {row.Value.PlaceName.Value.Name}";
             ErrorIf(!Coords.ExecuteTeleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
             await WaitWhile(() => !Player.IsBusy, "TeleportStart");
-            await WaitWhile(() => Player.IsBusy, "TeleportFinish");
+            await WaitWhile(() => Player.IsBusy || !Game.IsTerritoryLoaded(), "TeleportFinish");
         }
 
         if (teleportAetheryteId != closestAetheryteId)
@@ -86,7 +86,7 @@ public abstract class CommonTasks : AutoTask
             await WaitUntilSkipping(() => Game.AddonActive("SelectString"), "WaitSelectAethernet", skipTalk: true);
             Game.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
             await WaitWhile(() => !Player.IsBusy, "TeleportAethernetStart");
-            await WaitWhile(() => Player.IsBusy, "TeleportAethernetFinish");
+            await WaitWhile(() => Player.IsBusy || !Game.IsTerritoryLoaded(), "TeleportAethernetFinish");
         }
 
         if (territoryId == 886)
@@ -99,7 +99,7 @@ public abstract class CommonTasks : AutoTask
             await WaitUntilSkipping(() => Game.AddonActive("SelectString"), "WaitSelectFirmament", skipTalk: true);
             Game.TeleportToFirmament(teleportAetheryteId);
             await WaitWhile(() => !Player.IsBusy, "TeleportFirmamentStart");
-            await WaitWhile(() => Player.IsBusy, "TeleportFirmamentFinish");
+            await WaitWhile(() => Player.IsBusy || !Game.IsTerritoryLoaded(), "TeleportFirmamentFinish");
         }
 
         ErrorIf(Player.Territory != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Player.Territory})");

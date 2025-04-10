@@ -1,5 +1,6 @@
 ﻿using Automaton.Tasks;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Automaton.Features;
 
@@ -14,7 +15,7 @@ internal class ARQuesting : ARTweak
 
     public override void OnCharacterPostProcessStep()
     {
-        if (Service.Questionable.GetCurrentlyActiveEventQuests().Where(q => uint.TryParse(q, out var id) && !QuestManager.IsQuestComplete(id)).ToList() is { Count: > 0 } quests)
+        if (Service.Questionable.GetCurrentlyActiveEventQuests() is { Count: > 0 } quests)
         {
             _quests = quests;
             AutoRetainer.RequestCharacterPostprocess();

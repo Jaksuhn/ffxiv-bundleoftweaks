@@ -12,6 +12,9 @@ internal unsafe class TasksTab : DebugTab
                 Service.Automation.Stop();
         ImGui.TextUnformatted($"{Service.Automation.Name}: {Service.Automation.Status}");
 
+        if (ImGui.Button("deliveroo"))
+            Service.Automation.Start(new AutoDeliveroo(C.Tweaks.ARTurnIn));
+
         if (ImGui.Button($"dwd"))
         {
             Service.Automation.Start(new FateGrind(C.Tweaks.DateWithDestiny));

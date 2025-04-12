@@ -39,7 +39,7 @@ public static unsafe class PlayerEx
     public static List<MapMarkerData> QuestLocations => FFXIVClientStructs.FFXIV.Client.Game.UI.Map.Instance()->QuestMarkers.ToArray().SelectMany(i => i.MarkerData.ToList()).ToList();
 
     private static int EquipAttemptLoops = 0;
-    public static void Equip(uint itemID)
+    public static void Equip(uint itemID, InventoryType? container = null, int? slot = null)
     {
         if (Inventory.HasItemEquipped(itemID)) return;
 
@@ -50,10 +50,13 @@ public static unsafe class PlayerEx
             return;
         }
 
-        var agentId = Inventory.Armory.Contains(pos.Value.inv) ? AgentId.ArmouryBoard : AgentId.Inventory;
+        container ??= pos.Value.inv;
+        slot ??= pos.Value.slot;
+
+        var agentId = Inventory.Armory.Contains(container.Value) ? AgentId.ArmouryBoard : AgentId.Inventory;
         var addonId = AgentModule.Instance()->GetAgentByInternalId(agentId)->GetAddonId();
         var ctx = AgentInventoryContext.Instance();
-        ctx->OpenForItemSlot(pos.Value.inv, pos.Value.slot, addonId);
+        ctx->OpenForItemSlot(container.Value, slot.Value, addonId);
 
         var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu");
         if (contextMenu != null)
@@ -63,7 +66,7 @@ public static unsafe class PlayerEx
                 var firstEntryIsEquip = ctx->EventIds[i] == 25; // i'th entry will fire eventid 7+i; eventid 25 is 'equip'
                 if (firstEntryIsEquip)
                 {
-                    Svc.Log.Debug($"Equipping item #{itemID} from {pos.Value.inv} @ {pos.Value.slot}, index {i}");
+                    Svc.Log.Info($"Equipping item #{itemID} from {container.Value} @ {slot.Value}, index {i}");
                     Callback.Fire(contextMenu, true, 0, i - 7, 0, 0, 0); // p2=-1 is close, p2=0 is exec first command
                 }
             }

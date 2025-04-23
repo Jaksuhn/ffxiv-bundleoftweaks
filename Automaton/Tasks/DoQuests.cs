@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 
 namespace Automaton.Tasks;
-public sealed class DoQuests(List<string> questIds) : CommonTasks
+public sealed class DoQuests(List<string> questIds, bool returnHome) : CommonTasks
 {
     protected override async Task Execute()
     {
@@ -14,9 +14,12 @@ public sealed class DoQuests(List<string> questIds) : CommonTasks
             else
                 Error($"Failed to start quest #{quest}");
         }
-        Status = "Going home";
-        Service.Lifestream.ExecuteCommand("auto");
-        await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), "LifestreamWaitForFinish");
+        if (returnHome)
+        {
+            Status = "Going home";
+            Service.Lifestream.ExecuteCommand("auto");
+            await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), "LifestreamWaitForFinish");
+        }
     }
 
     private unsafe bool IsQuestComplete(string questId)

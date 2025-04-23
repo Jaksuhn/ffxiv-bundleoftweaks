@@ -4,8 +4,13 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Automaton.Features;
 
+public class ARQuestingConfiguration
+{
+    [BoolConfig] public bool EnableReturnHome = true;
+}
+
 [Tweak]
-internal class ARQuesting : ARTweak
+internal class ARQuesting : ARTweak<ARQuestingConfiguration>
 {
     public override string Name => "AutoRetainer x Questionable";
     public override string Description => "On CharacterPostProcess, do any seasonal quests that are available.";
@@ -24,5 +29,5 @@ internal class ARQuesting : ARTweak
             Log("Skipping post process for character: no seasonal quests available.");
     }
 
-    public override void OnCharacterReadyToPostProcess() => Service.Automation.Start(new DoQuests(_quests), AutoRetainer.FinishCharacterPostProcess);
+    public override void OnCharacterReadyToPostProcess() => Service.Automation.Start(new DoQuests(_quests, this.Config.EnableReturnHome), AutoRetainer.FinishCharacterPostProcess);
 }

@@ -131,6 +131,7 @@ public class Plugin : IDalamudPlugin
             catch (Exception ex)
             {
                 Svc.Log.Error($"Failed to initialize {tweakType.Name}", ex);
+                ex.Log();
             }
         }
 

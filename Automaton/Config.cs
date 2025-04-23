@@ -34,6 +34,7 @@ public class TweakConfigs
     public GMAlertConfiguration GMAlert { get; init; } = new();
     public HuntRelayHelperConfiguration HuntRelayHelper { get; init; } = new();
     public SimpleCurrencyAlertConfig SimpleCurrencyAlertConfig { get; init; } = new();
+    public ARQuestingConfiguration ARQuestingConfiguration { get; init; } = new();
 }
 
 public class YamlFactory : ISerializationFactory

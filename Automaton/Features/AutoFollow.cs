@@ -16,6 +16,7 @@ public class AutoFollowConfiguration
     [IntConfig] public int DisableIfFurtherThan;
     [BoolConfig] public bool OnlyInDuty;
     [BoolConfig] public bool MountAndFly;
+    [BoolConfig] public bool ExcludeCombat;
     [StringConfig] public string AutoFollowName = string.Empty;
 }
 
@@ -88,6 +89,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
         if (master == null) { movement.Enabled = false; return; }
         if (Config.DisableIfFurtherThan > 0 && Player.DistanceTo(master) >= Config.DisableIfFurtherThan) { movement.Enabled = false; return; }
         if (Config.OnlyInDuty && !Player.IsInDuty) { movement.Enabled = false; return; }
+        if (Config.ExcludeCombat && Svc.Condition[ConditionFlag.InCombat]) { movement.Enabled = false; return; }
         if (Svc.Condition[ConditionFlag.InFlight]) { TaskManager.Abort(); }
 
         if (master.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Player)

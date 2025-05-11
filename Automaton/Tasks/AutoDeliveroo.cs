@@ -139,7 +139,7 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
                 {
                     Log($"Moving {item} [{item.Container} -> {dest}]");
                     MoveItem(item.Type + page, slot, destSlot, dest.Type);
-                    await WaitUntil(() => item.Container.Contains(item), $"WaitingForSpaceIn{item.Container.Type}");
+                    await WaitUntil(() => item.Container.Contains(item) && dest.EmptySlots > 0, $"WaitingForSpaceIn{item.Container.Type}");
                     await NextFrame();
                     return;
                 }

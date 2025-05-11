@@ -75,7 +75,7 @@ public unsafe class Inventory
                     if (!gm->IsValidGearset(i)) continue;
                     var gearset = gm->GetGearset(i);
                     if (gearset != null && gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
-                        if (gearset->Items.ToArray().Any(x => x.ItemId == ItemId)) return true;
+                        if (gearset->Items.ToArray().Any(x => x.ItemId % 1_000_000 == ItemId)) return true;
                 }
                 return false;
             }

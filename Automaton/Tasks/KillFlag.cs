@@ -39,7 +39,7 @@ public sealed class KillFlag(string world) : CommonTasks
         if (GetHunt() is { } target)
         {
             Svc.Targets.Target = target;
-            Service.BossMod.SetActive("VBM Default");
+            Service.BossMod.SetActiveList(["VBM Default", "VBM AI"]);
             Status = $"Waiting for {target.Name} to die";
             await TargetDead(target);
             Service.BossMod.ClearActive();

@@ -26,6 +26,10 @@ public class BossModIPC : BaseIPC
     [EzIPC("Presets.%m", true)] public readonly Func<bool> ClearActive;
     [EzIPC("Presets.%m", true)] public readonly Func<bool> GetForceDisabled;
     [EzIPC("Presets.%m", true)] public readonly Func<bool> SetForceDisabled;
+    [EzIPC("Presets.%m", true)] public readonly Func<bool> Activate;
+    [EzIPC("Presets.%m", true)] public readonly Func<bool> Deactivate;
+    [EzIPC("Presets.%m", true)] public readonly Func<List<string>> GetActiveList;
+    [EzIPC("Presets.%m", true)] public readonly Func<List<string>, bool> SetActiveList;
 
     /// <remarks> string presetName, string moduleTypeName, string trackName, string value </remarks>
     [EzIPC("Presets.%m", true)] public readonly Func<string, string, string, string, bool> AddTransientStrategy;

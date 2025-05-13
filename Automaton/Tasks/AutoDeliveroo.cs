@@ -14,17 +14,17 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
 {
     protected override async Task Execute()
     {
-        Status = "Going to GC";
-        await GoToGC();
-        //if (equipRecommendations)
-        //{
-        //    Status = "Updating Gearsets";
-        //    await EquipGearsetterUpgrades();
-        //}
-        Status = "Turning in Gear";
-        await TurnIn();
-        Status = "Going Home";
-        await GoHome();
+        //Status = "Going to GC";
+        //await GoToGC();
+        if (equipRecommendations)
+        {
+            Status = "Updating Gearsets";
+            await EquipGearsetterUpgrades();
+        }
+        //Status = "Turning in Gear";
+        //await TurnIn();
+        //Status = "Going Home";
+        //await GoHome();
     }
 
     private async Task GoToGC()
@@ -122,13 +122,11 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
         var dest = new Inventory.InventoryContainerWrapper(InventoryType.EquippedItems);
         if (equipItem.LocationODR is { Page: var page, Slot: var slot })
         {
-            // TODO: why is sourceX different from Location.X?
-            Log($"Equipping {equipItem}");
-            // MoveItem(sourceContainer + page, slot, targetSlot); // no error, nothing happens
-            //MoveItem(equipItem.Location.Value.Container, (uint)equipItem.Location.Value.Slot, targetSlot); // insuffcient space
-            //MoveItem(equipItem.Type + page, slot, targetSlot); // no error, nothing happens
-            IMMoveItem(equipItem.Type + page, slot, targetSlot);
+            Log($"Equipping {equipItem} to slot #{targetSlot}");
+            // TODO: look into this
+            MoveItem(equipItem.Type + page, slot, targetSlot); // no error, nothing happens
             await InventoryChange();
+            //IMMoveItem(sourceContainer, sourceSlot, targetSlot); // works but doesn't trigger an inventorychange
             //await WaitUntil(() => ItemIsEquipped(item.RowId, (int)targetSlot), $"WaitingForEquipped_#{item.RowId}");
         }
     }
@@ -146,7 +144,6 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
                     Log($"Moving {item} [{item.Container} -> {dest}]");
                     MoveItem(item.Type + page, slot, destSlot, dest.Type);
                     await InventoryChange();
-                    //await WaitUntil(() => item.Container.Contains(item) && dest.EmptySlots > 0, $"WaitingForSpaceIn{item.Container.Type}");
                     return;
                 }
             }
@@ -154,7 +151,7 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
         }
     }
 
-    private async Task InventoryChange()
+    private async Task InventoryChange(int timeoutMs = 5000)
     {
         using var scope = BeginScope("InventoryChange");
         var tcs = new TaskCompletionSource();
@@ -167,7 +164,12 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
         Svc.GameInventory.ItemMoved += OnItemMoved;
         try
         {
-            await tcs.Task;
+            using var reg = CancelToken.Register(() => tcs.TrySetCanceled());
+            var timeoutTask = Task.Delay(timeoutMs, CancelToken);
+            var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+            if (completedTask == timeoutTask)
+                Error($"Inventory change timed out after {timeoutMs}ms");
         }
         finally
         {

@@ -14,17 +14,17 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
 {
     protected override async Task Execute()
     {
-        //Status = "Going to GC";
-        //await GoToGC();
+        Status = "Going to GC";
+        await GoToGC();
         if (equipRecommendations)
         {
             Status = "Updating Gearsets";
             await EquipGearsetterUpgrades();
         }
-        //Status = "Turning in Gear";
-        //await TurnIn();
-        //Status = "Going Home";
-        //await GoHome();
+        Status = "Turning in Gear";
+        await TurnIn();
+        Status = "Going Home";
+        await GoHome();
     }
 
     private async Task GoToGC()
@@ -76,6 +76,8 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
             return;
         }
 
+        Log($"Recommendations: {string.Join(", ", recommendations)}");
+
         if (!TryEquipGearset(gearset))
         {
             Error($"Failed to equip gearset #{gearset}");
@@ -123,12 +125,10 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
         if (equipItem.LocationODR is { Page: var page, Slot: var slot })
         {
             Log($"Equipping {equipItem} to slot #{targetSlot}");
-            // TODO: look into this
             MoveItem(equipItem.Type + page, slot, targetSlot);
-            await InventoryChange();
-            //IMMoveItem(sourceContainer, sourceSlot, targetSlot); // works but doesn't trigger an inventorychange
-            //await WaitUntil(() => ItemIsEquipped(item.RowId, (int)targetSlot), $"WaitingForEquipped_#{item.RowId}");
+            await WaitUntil(() => dest.Contains(equipItem), "WaitingForItemInContainer");
         }
+        else Warning($"Failed to find {equipItem} location");
     }
 
     private async Task HandleDiscardFirst(Inventory.InventoryItemWrapper item)
@@ -143,7 +143,7 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
                 {
                     Log($"Moving {item} [{item.Container} -> {dest}]");
                     MoveItem(item.Type + page, slot, destSlot, dest.Type);
-                    await InventoryChange();
+                    await WaitUntil(() => dest.Contains(item), "WaitingForItemInContainer");
                     return;
                 }
             }
@@ -187,7 +187,7 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
 
     private Inventory.InventoryItemWrapper FindItem(Item item, InventoryType sourceContainer, byte sourceSlot, out Inventory.InventoryItemWrapper? discardItem)
     {
-        var wrapper = new Inventory.InventoryItemWrapper(sourceContainer, sourceSlot);
+        var wrapper = new Inventory.InventoryItemWrapper(item); // do not initiate by location, it can wind up with the wrong item
         if (new Inventory.InventoryContainerWrapper(wrapper.ArmouryContainer) is { EmptySlots: 0 } container)
         {
             discardItem = container.FirstNonGearset;
@@ -198,8 +198,6 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
         return wrapper;
     }
 
-    private unsafe void IMMoveItem(InventoryType sourceInventory, uint sourceSlot, uint equipSlot, InventoryType? destInventory = null)
-        => InventoryManager.Instance()->MoveItemSlot(sourceInventory, (ushort)sourceSlot, destInventory ?? InventoryType.EquippedItems, (ushort)equipSlot, 1);
     private unsafe void MoveItem(InventoryType sourceInventory, uint sourceSlot, uint equipSlot, InventoryType? destInventory = null)
     {
         var sourceContainerId = GetContainerId(sourceInventory);
@@ -214,10 +212,13 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
             eis[0].UInt = sourceContainerId;
             eis[1].UInt = sourceSlot;
             eis[2].UInt = destinationContainerId;
-            eis[3].UInt = equipSlot;
+            eis[3].UInt = destinationContainerId == GetContainerId(InventoryType.EquippedItems) && equipSlot > 5 ? equipSlot - 1 : equipSlot; // account for belts not existing anymore
             var atkModule = RaptureAtkModule.Instance();
             if (Service.Memory.MoveItem is { } moveItem)
+            {
+                Log($"MoveItem {eis[0].UInt}:{eis[1].UInt} -> {eis[2].UInt}:{eis[3].UInt}");
                 moveItem.Invoke(atkModule, dropOut, eis);
+            }
             else Error($"MoveItem delegate not found");
         }
     }

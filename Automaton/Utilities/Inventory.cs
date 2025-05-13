@@ -15,7 +15,7 @@ public unsafe class Inventory
         InventoryType.Inventory3,
         InventoryType.Inventory4,
     ];
-    public static readonly InventoryType[] PlayerInventory = [.. PlayerInventoryNoKeyItems, InventoryType.KeyItems,];
+    public static readonly InventoryType[] PlayerInventory = [.. PlayerInventoryNoKeyItems, InventoryType.KeyItems]; // include EquippedItems?
 
     public static readonly InventoryType[] MainOffHand =
     [
@@ -61,7 +61,7 @@ public unsafe class Inventory
         [MemberNotNullWhen(true, nameof(Location))]
         public bool HasItem => Location is not null;
         public (InventoryType Container, int Slot)? Location => GetItemLocationInInventory(ItemId, Equippable);
-        public (uint Page, uint Slot)? LocationODR => HasItem ? GetPageAndSlot(ItemId, IsHq, Location.Value.Container, Sorter) : null;
+        public (uint Page, uint Slot)? LocationODR => HasItem ? GetPageAndSlot(ItemId, IsHq, Type, Sorter) : null;
         public bool IsEquipped => Location?.Container == InventoryType.EquippedItems;
         public bool IsHq => Pointer->Flags == InventoryItem.ItemFlags.HighQuality;
         public bool CanDesynth => Item.Desynth > 0;
@@ -90,6 +90,7 @@ public unsafe class Inventory
         public InventoryContainerWrapper(InventoryContainer* container) => Pointer = container;
         public InventoryContainer* Pointer { get; set; }
         public ItemOrderModuleSorter* Sorter => Pointer->Type.GetSorter();
+        public int Size => (int)Pointer->Size;
         public int Count => Sorter->Items.Count;
         public InventoryType Type => Pointer->Type;
         public uint? FirstEmptySlotODR
@@ -138,7 +139,7 @@ public unsafe class Inventory
         public bool Contains(InventoryItemWrapper item) => Contains(item.ItemId);
         public bool Contains(uint itemId)
         {
-            for (var i = 0; i < Count; i++)
+            for (var i = 0; i < Size; i++)
             {
                 var item = Pointer->Items[i];
                 if (item.ItemId == itemId) return true;

@@ -104,6 +104,7 @@ public abstract class AutoTask
     }
 
     protected void Log(string message) => PluginLog.Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    protected void Warning(string message) => PluginLog.Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
 
     // start a new debug context; should be disposed, so usually should be assigned to RAII variable
     protected DebugContext BeginScope(string name) => new(this, name);

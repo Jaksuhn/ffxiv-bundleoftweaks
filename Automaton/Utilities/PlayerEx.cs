@@ -101,5 +101,5 @@ public static unsafe class PlayerEx
         return true;
     }
 
-    public static void Mount() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 24);
+    public static bool Mount() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 24);
 }

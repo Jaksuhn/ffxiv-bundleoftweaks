@@ -13,6 +13,7 @@ public abstract class CommonTasks : AutoTask
 
     protected async Task MoveTo(FlagMapMarker flag, float tolerance, bool mount = false, bool fly = false)
     {
+        using var scope = BeginScope("MoveToFlag");
         Status = "Waiting for Navmesh";
         await WaitWhile(() => Service.Navmesh.BuildProgress() >= 0, "BuildMesh");
         ErrorIf(!Service.Navmesh.IsReady(), "Failed to build navmesh for the zone");
@@ -42,7 +43,7 @@ public abstract class CommonTasks : AutoTask
         ErrorIf(!Service.Navmesh.PathfindAndMoveTo(dest, fly), "Failed to start pathfinding to destination");
         Status = $"Moving to {dest}";
         using var stop = new OnDispose(Service.Navmesh.Stop);
-        await WaitWhile(() => !(Player.DistanceTo(dest) < tolerance), "Navigate");
+        await WaitWhile(() => !(Player.DistanceTo(dest) < tolerance), "Navigate"); // TODO: investigate rare null here
         if (dismount)
             await Dismount();
     }
@@ -103,7 +104,8 @@ public abstract class CommonTasks : AutoTask
             await WaitWhile(() => Player.IsBusy || !Game.IsTerritoryLoaded(), "TeleportFirmamentFinish");
         }
 
-        ErrorIf(Player.Territory != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Player.Territory})");
+        // I think this check gives more problems than it solves
+        WarningIf(Player.Territory != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Player.Territory})");
     }
 
     protected async Task Mount()
@@ -111,7 +113,7 @@ public abstract class CommonTasks : AutoTask
         using var scope = BeginScope("Mount");
         if (Player.Mounted) return;
         Status = "Mounting";
-        PlayerEx.Mount();
+        await WaitUntil(PlayerEx.Mount, "MountCast");
         await WaitUntil(() => Player.Mounted, "Mounting");
         ErrorIf(!Player.Mounted, "Failed to mount");
     }

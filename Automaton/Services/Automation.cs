@@ -69,12 +69,14 @@ public abstract class AutoTask
     /// <summary>
     /// Wait until condition function returns false, checking once every N frames
     /// </summary>
-    protected async Task WaitWhile(Func<bool> condition, string scopeName, int checkFrequency = 1)
+    protected async Task WaitWhile(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false)
     {
         using var scope = BeginScope(scopeName);
+        Log("waiting...");
         while (condition())
         {
-            Log("waiting...");
+            if (logContinuously)
+                Log("waiting...");
             await NextFrame(checkFrequency);
         }
     }
@@ -82,29 +84,26 @@ public abstract class AutoTask
     /// <summary>
     /// Wait until condition function returns true, checking once every N frames
     /// </summary>
-    protected async Task WaitUntil(Func<bool> condition, string scopeName, int checkFrequency = 1) => await WaitWhile(() => !condition(), scopeName, checkFrequency);
+    protected async Task WaitUntil(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) => await WaitWhile(() => !condition(), scopeName, checkFrequency, logContinuously);
 
     /// <summary>
     /// Wait until a condition function returns true, then wait until it returns false.
     /// </summary>
     /// <remarks> Meant for functions like checking if an ipc is busy then checking til it's not. </remarks>
-    protected async Task WaitUntilThenFalse(Func<bool> condition, string scopeName, int checkFrequency = 1)
+    protected async Task WaitUntilThenFalse(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false)
     {
         using var scope = BeginScope(scopeName);
-        while (!condition())
-        {
-            Log("waiting...");
-            await NextFrame(checkFrequency);
-        }
-        while (condition())
-        {
-            Log("waiting...");
-            await NextFrame(checkFrequency);
-        }
+        await WaitUntil(condition, scopeName, checkFrequency, logContinuously);
+        await WaitWhile(condition, scopeName, checkFrequency, logContinuously);
     }
 
     protected void Log(string message) => PluginLog.Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void Warning(string message) => PluginLog.Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    protected void WarningIf(bool condition, string message)
+    {
+        if (condition)
+            Warning(message);
+    }
 
     // start a new debug context; should be disposed, so usually should be assigned to RAII variable
     protected DebugContext BeginScope(string name) => new(this, name);

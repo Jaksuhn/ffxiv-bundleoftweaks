@@ -16,11 +16,11 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
     {
         Status = "Going to GC";
         await GoToGC();
-        if (equipRecommendations)
-        {
-            Status = "Updating Gearsets";
-            await EquipGearsetterUpgrades();
-        }
+        //if (equipRecommendations)
+        //{
+        //    Status = "Updating Gearsets";
+        //    await EquipGearsetterUpgrades();
+        //}
         Status = "Turning in Gear";
         await TurnIn();
         Status = "Going Home";
@@ -125,8 +125,9 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
         if (equipItem.LocationODR is { Page: var page, Slot: var slot })
         {
             Log($"Equipping {equipItem} to slot #{targetSlot}");
-            MoveItem(equipItem.Type + page, slot, targetSlot);
-            await WaitUntil(() => dest.Contains(equipItem), "WaitingForItemInContainer");
+            await TryUntil(() => MoveItem(equipItem.Type + page, slot, targetSlot), () => dest.Contains(equipItem), "WaitingForItemInContainer");
+            //MoveItem(equipItem.Type + page, slot, targetSlot);
+            //await WaitUntil(() => dest.Contains(equipItem), "WaitingForItemInContainer");
         }
         else Warning($"Failed to find {equipItem} location");
     }
@@ -142,8 +143,9 @@ public sealed class AutoDeliveroo(bool equipRecommendations) : CommonTasks()
                 if (new Inventory.InventoryContainerWrapper(cont) is { EmptySlots: > 1, FirstEmptySlotODR: uint destSlot } dest)
                 {
                     Log($"Moving {item} [{item.Container} -> {dest}]");
-                    MoveItem(item.Type + page, slot, destSlot, dest.Type);
-                    await WaitUntil(() => dest.Contains(item), "WaitingForItemInContainer");
+                    await TryUntil(() => MoveItem(item.Type + page, slot, destSlot, dest.Type), () => dest.Contains(item), "WaitingForItemInContainer");
+                    //MoveItem(item.Type + page, slot, destSlot, dest.Type);
+                    //await WaitUntil(() => dest.Contains(item), "WaitingForItemInContainer");
                     return;
                 }
             }

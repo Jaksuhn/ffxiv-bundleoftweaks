@@ -97,6 +97,57 @@ public abstract class AutoTask
         await WaitWhile(condition, scopeName, checkFrequency, logContinuously);
     }
 
+    /// <summary>
+    /// Attempts to perform an action and wait for a success condition, retrying if the condition isn't met within the timeout.
+    /// </summary>
+    /// <param name="action">The action to perform</param>
+    /// <param name="successCondition">Function that returns true when the action was successful</param>
+    /// <param name="scopeName">Name for debug logging</param>
+    /// <param name="timeoutFrames">Number of frames to wait for success before retrying</param>
+    /// <param name="checkFrequency">How often to check the success condition</param>
+    /// <param name="logContinuously">Whether to log waiting status continuously</param>
+    /// <param name="maxRetries">Maximum number of retry attempts (0 for infinite)</param>
+    protected async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, int timeoutFrames = 60, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0)
+    {
+        using var scope = BeginScope(scopeName);
+        var attempts = 0;
+        while (maxRetries == 0 || attempts < maxRetries)
+        {
+            attempts++;
+            Log($"Attempt {attempts}{(maxRetries > 0 ? $"/{maxRetries}" : "")}...");
+            action();
+
+            // Wait for success condition
+            var success = false;
+            for (var i = 0; i < timeoutFrames; i += checkFrequency)
+            {
+                if (successCondition())
+                {
+                    success = true;
+                    break;
+                }
+                if (logContinuously)
+                    Log("Waiting for success...");
+                await NextFrame(checkFrequency);
+            }
+
+            if (success)
+            {
+                Log("Action succeeded");
+                break;
+            }
+
+            if (maxRetries > 0 && attempts >= maxRetries)
+            {
+                Error($"Action failed after {maxRetries} attempts");
+            }
+            else
+            {
+                Log("Action timed out, retrying...");
+            }
+        }
+    }
+
     protected void Log(string message) => PluginLog.Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void Warning(string message) => PluginLog.Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void WarningIf(bool condition, string message)

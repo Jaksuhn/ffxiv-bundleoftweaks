@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.Addon.Events;
+using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -54,7 +55,15 @@ internal class WondrousTailsClickToOpen : Tweak
             var dutiesForTask = GetInstanceListFromId(bingoData);
             var territoryType = dutiesForTask.FirstOrDefault();
             if (FindRow<ContentFinderCondition>(c => c.TerritoryType.RowId == territoryType) is { } cfc)
-                AgentContentsFinder.Instance()->OpenRegularDuty(cfc.RowId);
+            {
+                if (ImGuiEx.Ctrl)
+                {
+                    //ContentsFinder.Instance()->IsUnrestrictedParty = true;
+                    //ContentsFinder.Instance()->QueueInfo.QueueDuties((uint*)cfc.RowId, 1);
+                }
+                else
+                    AgentContentsFinder.Instance()->OpenRegularDuty(cfc.RowId);
+            }
         }
     }
 

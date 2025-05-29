@@ -1,6 +1,8 @@
 using Automaton.Configuration;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Utility.Raii;
+using ECommons.ImGuiMethods;
+using ImGuiNET;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup;
@@ -32,21 +34,64 @@ public abstract class Tweak<T> : Tweak
             .Where((tuple) => tuple.Attribute != null)
             .Cast<(FieldInfo, BaseConfigAttribute)>();
 
-        if (!configFields.Any())
-            return;
-
-        ImGuiX.DrawSection("Configuration");
-
-        foreach (var (field, attr) in configFields)
+        if (configFields.Any())
         {
-            var hasDependency = !string.IsNullOrEmpty(attr.DependsOn);
-            var isDisabled = hasDependency && (bool?)CachedConfigType.GetField(attr.DependsOn)?.GetValue(Config) == false;
+            ImGuiX.DrawSection("Configuration");
 
-            using var id = ImRaii.PushId(field.Name);
-            using var indent = ImGuiX.ConfigIndent(hasDependency);
-            using var disabled = ImRaii.Disabled(isDisabled);
+            foreach (var (field, attr) in configFields)
+            {
+                var hasDependency = !string.IsNullOrEmpty(attr.DependsOn);
+                var isDisabled = hasDependency && (bool?)CachedConfigType.GetField(attr.DependsOn)?.GetValue(Config) == false;
 
-            attr.Draw(this, Config!, field);
+                using var id = ImRaii.PushId(field.Name);
+                using var indent = ImGuiX.ConfigIndent(hasDependency);
+                using var disabled = ImRaii.Disabled(isDisabled);
+
+                attr.Draw(this, Config!, field);
+            }
+        }
+
+        DrawCommands();
+    }
+
+    protected void DrawCommands()
+    {
+        var commandHandlers = CommandHandlers
+        .Select(m => m.GetCustomAttribute<CommandHandlerAttribute>()!)
+        .Where(attr =>
+            // Show command if it has no config field dependency
+            string.IsNullOrEmpty(attr.ConfigFieldName) ||
+            // Or if the config field is enabled
+            (bool?)CachedConfigType.GetField(attr.ConfigFieldName)?.GetValue(Config) == true)
+        .Where(attr => attr.Commands.Any(cmd => Svc.Commands.Commands.ContainsKey(cmd)));
+
+        if (commandHandlers.Any())
+        {
+            ImGuiX.DrawSection("Available Commands");
+            foreach (var attr in commandHandlers)
+            {
+                foreach (var cmd in attr.Commands.Where(Svc.Commands.Commands.ContainsKey))
+                {
+                    var commandInfo = Svc.Commands.Commands[cmd];
+                    ImGuiEx.Text($"{cmd}");
+                    if (!string.IsNullOrEmpty(commandInfo.HelpMessage))
+                    {
+                        ImGui.SameLine();
+                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, commandInfo.HelpMessage);
+                    }
+
+                    if (attr.SubCommands.Count != 0)
+                    {
+                        foreach (var subCmd in attr.SubCommands)
+                        {
+                            using var subIndent = ImGuiX.ConfigIndent();
+                            ImGui.Text($"{cmd} {subCmd.Subcommand}");
+                            ImGui.SameLine();
+                            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, subCmd.HelpMessage);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -112,7 +157,6 @@ public abstract class Tweak<T> : Tweak
     private void EnableCommand(string command, string helpMessage, MethodInfo methodInfo)
     {
         var handler = methodInfo.CreateDelegate<IReadOnlyCommandInfo.HandlerDelegate>(this);
-
         if (Svc.Commands.AddHandler(command, new CommandInfo(handler) { HelpMessage = helpMessage, DisplayOrder = 1 }))
             Log($"Added CommandHandler for {command}");
         else

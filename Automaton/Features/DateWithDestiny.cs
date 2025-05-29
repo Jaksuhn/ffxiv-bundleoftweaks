@@ -48,7 +48,7 @@ public class DateWithDestinyConfiguration
 public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
 {
     public override string Name => "Date with Destiny";
-    public override string Description => $"Fate tracker and mover. Doesn't handle combat. Open the menu with /vfate.";
+    public override string Description => $"Fate tracker and mover. Doesn't handle combat.";
     public override BaseIPC[] Requirements => [Service.Navmesh];
 
     public bool active = false;
@@ -112,11 +112,10 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
         [Z.CoerthasWesternHighlands, Z.TheDravanianForelands, Z.TheDravanianHinterlands, Z.TheChurningMists, Z.TheSeaofClouds, Z.AzysLla], // Zazel
         [Z.TheFringes, Z.TheRubySea, Z.Yanxia, Z.ThePeaks, Z.TheLochs, Z.TheAzimSteppe], // Damona
     ];
-    private static readonly List<(uint Minion, uint Medal, uint Weapon, Z[] Zones)> Yokai = YokaiMinions
+    private static readonly List<(uint Minion, uint Medal, uint Weapon, Z[] Zones)> Yokai = [.. YokaiMinions
         .Zip(YokaiLegendaryMedals, (x, y) => (Minion: x, Medal: y))
         .Zip(YokaiWeapons, (xy, z) => (xy.Minion, xy.Medal, Weapon: z))
-        .Zip(YokaiZones, (wxy, z) => (wxy.Minion, wxy.Medal, wxy.Weapon, z))
-        .ToList();
+        .Zip(YokaiZones, (wxy, z) => (wxy.Minion, wxy.Medal, wxy.Weapon, z))];
 
     internal static readonly uint[] ForlornIDs = [7586, 7587];
     internal static readonly uint[] TwistOfFateStatusIDs = [1288, 1289];
@@ -136,6 +135,8 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
 
     public override void DrawConfig()
     {
+        DrawCommands();
+
         ImGuiX.DrawSection("Configuration");
         ImGui.Checkbox("Yo-Kai Mode (Very Experimental)", ref yokaiMode);
         ImGui.Checkbox("Prioritize targeting Forlorns", ref Config.PrioritizeForlorns);
@@ -198,7 +199,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
 
     private unsafe void OnUpdate(IFramework framework)
     {
-        if (!active || Svc.Fates.Count == 0 || Svc.Condition[ConditionFlag.Unknown57] || Svc.Condition[ConditionFlag.Casting]) return;
+        if (!active || Svc.Fates.Count == 0 || Svc.Condition[ConditionFlag.MountOrOrnamentTransition] || Svc.Condition[ConditionFlag.Casting]) return;
 
         // Update target position continually so we don't pingpong
         if (Svc.Targets.Target != null)
@@ -352,7 +353,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
         .ThenByDescending(x => x.IsTargetingPlayer())
         // Deprioritize mobs in combat with other players (hopefully avoid botlike pingpong behavior in trash fates)
         .ThenBy(x => x.GetNameplateKind() == NameplateKind.HostileEngagedOther && !x.IsTargetingPlayer())
-        // Prioritize closest enemy        
+        // Prioritize closest enemy
         .ThenBy(x => Math.Floor(Vector3.Distance(PlayerEx.Position, x.Position)))
         // Prioritize lowest HP enemy
         .ThenBy(x => (x as ICharacter)?.CurrentHp)

@@ -15,6 +15,7 @@ public class AutoInviteConfiguration
 {
     [StringConfig] public string Pattern = string.Empty;
     [BoolConfig] public bool IsRegex = false;
+    [BoolConfig] public bool TurnOffOnceFull = true;
 }
 
 [Tweak]
@@ -56,6 +57,7 @@ public class AutoInvite : Tweak<AutoInviteConfiguration>
         if (GroupManager.Instance()->GetGroup()->MemberCount >= 8)
         {
             Log("Skipping invite: party full.");
+            if (Config.TurnOffOnceFull) On = false;
             return;
         }
 
@@ -103,7 +105,7 @@ public class AutoInvite : Tweak<AutoInviteConfiguration>
         }
     }
 
-    [CommandHandler("/cinvite", "Toggle Auto Inviter")]
+    [CommandHandler("/cinvite", "Toggle Auto Inviter", subCommandStrings: ["[0-9]s|Enable for specified seconds", "[0-9]a|Enable for specified number of invites"])]
     private void MainCommand(string command, string arguments)
     {
         if (string.IsNullOrEmpty(arguments))
@@ -116,14 +118,14 @@ public class AutoInvite : Tweak<AutoInviteConfiguration>
         {
             On = true;
             _attempts = attempts;
-            Svc.Chat.Print($"Auto Inviter enabled for {attempts} invites.");
+            Log($"Enabled for {attempts} invites.");
             return;
         }
 
         if (arguments.EndsWith("s", StringComparison.OrdinalIgnoreCase) && int.TryParse(arguments[..^1], out var seconds))
         {
             On = true;
-            Svc.Chat.Print($"Auto Inviter enabled for {seconds} seconds.");
+            Log($"Enabled for {seconds} seconds.");
             Task.Run(async () =>
             {
                 await Task.Delay(seconds * 1000);

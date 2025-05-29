@@ -29,14 +29,14 @@ public static unsafe class PlayerEx
     public static DGameObject Target { get => Svc.Targets.Target; set => Svc.Targets.Target = value; }
     public static bool IsTargetLocked => *(byte*)((nint)TargetSystem.Instance() + 309) == 1;
     public static HaterInfo[] Haters => UIState.Instance()->Hater.Haters.ToArray();
-    public static int HatersWithFullAggro => Haters.Where(h => h.Enmity == 100).Count();
+    public static int HatersWithFullAggro => Haters.Count(h => h.Enmity == 100);
 
     public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarker;
 
     public static unsafe Camera* Camera => CameraManager.Instance()->GetActiveCamera();
     public static unsafe CameraEx* CameraEx => (CameraEx*)CameraManager.Instance()->GetActiveCamera();
 
-    public static List<MapMarkerData> QuestLocations => FFXIVClientStructs.FFXIV.Client.Game.UI.Map.Instance()->QuestMarkers.ToArray().SelectMany(i => i.MarkerData.ToList()).ToList();
+    public static List<MapMarkerData> QuestLocations => [.. FFXIVClientStructs.FFXIV.Client.Game.UI.Map.Instance()->QuestMarkers.ToArray().SelectMany(i => i.MarkerData.ToList())];
 
     private static int EquipAttemptLoops = 0;
     public static void Equip(uint itemID, InventoryType? container = null, int? slot = null)

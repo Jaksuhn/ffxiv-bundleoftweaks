@@ -15,7 +15,7 @@ public abstract partial class Tweak : ITweak
     {
         CachedType = GetType();
         InternalName = CachedType.Name;
-        IncompatibilityWarnings = CachedType.GetCustomAttributes<IncompatibilityWarningAttribute>().ToArray();
+        IncompatibilityWarnings = [.. CachedType.GetCustomAttributes<IncompatibilityWarningAttribute>()];
         Outdated = CachedType.GetCustomAttribute<TweakAttribute>()?.Outdated ?? false;
         Disabled = CachedType.GetCustomAttribute<TweakAttribute>()?.Disabled ?? false;
         DisabledReason = CachedType.GetCustomAttribute<TweakAttribute>()?.DisabledReason;

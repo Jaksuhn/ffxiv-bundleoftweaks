@@ -14,10 +14,9 @@ internal class DebugWindow : Window
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
-        Tabs = typeof(DebugWindow).Assembly.GetTypes()
+        Tabs = [.. typeof(DebugWindow).Assembly.GetTypes()
             .Where(t => typeof(IDebugTab).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-            .Select(t => (IDebugTab)Activator.CreateInstance(t)!)
-            .ToArray();
+            .Select(t => (IDebugTab)Activator.CreateInstance(t)!)];
     }
 
     private const uint SidebarWidth = 250;

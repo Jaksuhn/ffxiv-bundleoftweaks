@@ -25,7 +25,7 @@ internal unsafe class InventoryTab : DebugTab
         }
     }
 
-    private unsafe List<Pointer<InventoryItem>> FilteredItems => InventoryItems.Where(x => GetRow<Item>(x.Value->ItemId)?.Name.ExtractText().ToLowerInvariant().Contains(searchFilter.ToLowerInvariant()) ?? false).ToList();
+    private unsafe List<Pointer<InventoryItem>> FilteredItems => [.. InventoryItems.Where(x => GetRow<Item>(x.Value->ItemId)?.Name.ExtractText().ToLowerInvariant().Contains(searchFilter.ToLowerInvariant()) ?? false)];
     private string searchFilter = "";
 
     public override void Draw()

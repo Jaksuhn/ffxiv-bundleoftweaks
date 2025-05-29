@@ -20,7 +20,7 @@ internal class WondrousTailsClickToOpen : Tweak
     {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyBingo", OnAddonSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddonFinalize);
-        _sheet = GetSheet<ContentFinderCondition>().Where(x => !x.MSQRoulette).ToList();
+        _sheet = [.. GetSheet<ContentFinderCondition>().Where(x => !x.MSQRoulette)];
     }
 
     public override void Disable()
@@ -79,29 +79,26 @@ internal class WondrousTailsClickToOpen : Tweak
         {
             // Specific Duty
             case 0:
-                return _sheet
+                return [.. _sheet
                     .Where(c => c.Content.RowId == bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(c => c.TerritoryType.RowId)
-                    .ToList();
+                    .Select(c => c.TerritoryType.RowId)];
 
             // Specific Level Dungeon
             case 1:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 2)
                     .Where(m => m.ClassJobLevelRequired == bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
 
             // Level Range Dungeon
             case 2:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 2)
                     .Where(m => m.ClassJobLevelRequired >= bingoOrderData.Data.RowId - (bingoOrderData.Data.RowId > 50 ? 9 : 49) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
 
             // Special categories
             case 3:
@@ -132,11 +129,10 @@ internal class WondrousTailsClickToOpen : Tweak
 
                     // Deep Dungeons
                     case 3:
-                        return _sheet
+                        return [.. _sheet
                             .Where(m => m.ContentType.RowId is 21)
                             .OrderBy(row => row.SortKey)
-                            .Select(m => m.TerritoryType.RowId)
-                            .ToList();
+                            .Select(m => m.TerritoryType.RowId)];
                 }
                 return [];
 
@@ -212,44 +208,39 @@ internal class WondrousTailsClickToOpen : Tweak
                 };
             // Levelling Dungeons Range
             case 5:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 2)
                     .Where(m => m.ClassJobLevelRequired >= GetFirstNumber(bingoOrderData.Text.Value.Description.ExtractText()) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
             // High-Level Dungeons (Capstone) Range
             case 6:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 2)
                     .Where(m => m.ClassJobLevelRequired >= GetFirstNumber(bingoOrderData.Text.Value.Description.ExtractText()) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
             // Trials Range
             case 7:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 4)
                     .Where(m => m.ClassJobLevelRequired >= GetFirstNumber(bingoOrderData.Text.Value.Description.ExtractText()) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
             // Alliance Raid Range
             case 8:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 5 && m.ContentMemberType.RowId is 4)
                     .Where(m => m.ClassJobLevelRequired >= GetFirstNumber(bingoOrderData.Text.Value.Description.ExtractText()) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
             // Normal Raid Range
             case 9:
-                return _sheet
+                return [.. _sheet
                     .Where(m => m.ContentType.RowId is 5 && m.ContentMemberType.RowId is 3)
                     .Where(m => m.ClassJobLevelRequired >= GetFirstNumber(bingoOrderData.Text.Value.Description.ExtractText()) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId)
                     .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)
-                    .ToList();
+                    .Select(m => m.TerritoryType.RowId)];
         }
 
         Warning($"[{Name}] Unrecognized ID: {orderDataId}");

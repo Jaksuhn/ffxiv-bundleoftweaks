@@ -1,39 +1,38 @@
+using Dalamud.Interface.Components;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
-using System.Globalization;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup.Attributes;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class IntConfigAttribute : BaseConfigAttribute
+public class ColorConfigAttribute : BaseConfigAttribute
 {
-    public int DefaultValue = 0;
-    public int Min = 0;
-    public int Max = 100;
-    public bool SameLine = false;
+    public Vector4 DefaultValue = Vector4.One;
+    public ImGuiColorEditFlags Flags = ImGuiColorEditFlags.NoAlpha;
 
     public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo)
     {
-        var value = (int)fieldInfo.GetValue(config)!;
+        var value = (Vector4)fieldInfo.GetValue(config)!;
         var attr = fieldInfo.GetCustomAttribute<BaseConfigAttribute>();
 
         ImGuiEx.TextV(fieldInfo.Name.SplitWords());
-        if (SameLine) ImGui.SameLine();
+        ImGui.SameLine();
 
-        using var indent = ImGuiX.ConfigIndent(!SameLine);
-
-        if (ImGui.DragInt("##Input", ref value, 0.01f, Min, Max))
+        var newColor = ImGuiComponents.ColorPickerWithPalette(1, $"##{fieldInfo.Name}", value, Flags);
+        if (!value.Equals(newColor))
         {
-            fieldInfo.SetValue(config, value);
+            fieldInfo.SetValue(config, newColor);
             OnChangeInternal(tweak, fieldInfo);
         }
 
-        if (DrawResetButton(string.Format(CultureInfo.InvariantCulture, "{0:0.00}", DefaultValue)))
+        if (DrawResetButton(DefaultValue.ToString()))
         {
             fieldInfo.SetValue(config, DefaultValue);
             OnChangeInternal(tweak, fieldInfo);
         }
+
+        DrawConfigInfos(fieldInfo);
 
         if (!attr?.Description.IsNullOrEmpty() ?? false)
             ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, attr!.Description);

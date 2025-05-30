@@ -89,7 +89,7 @@ public static unsafe class PlayerEx
         module->InputTimer = 0;
         module->Unk1C = 0;
         if (Player.OnlineStatus == 17) // away from keyboard
-            Chat.Instance.SendMessage("/afk off"); // TODO: find a better way
+            Chat.SendMessage("/afk off"); // TODO: find a better way
     }
 
     public static bool InteractWith(ulong instanceId)

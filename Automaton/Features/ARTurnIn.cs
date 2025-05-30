@@ -1,5 +1,4 @@
 ﻿using Automaton.Tasks;
-using ImGuiNET;
 
 namespace Automaton.Features;
 
@@ -14,6 +13,7 @@ public class ARTurnInConfiguration
     [BoolConfig]
     public bool EquipGearsetterRecs = false;
 
+    [CharacterBlacklistConfig]
     public List<ulong> ExcludedCharacters = [];
 }
 
@@ -23,22 +23,6 @@ internal class ARTurnIn : ARTweak<ARTurnInConfiguration>
     public override string Name => "AutoRetainer x Deliveroo";
     public override string Description => "On CharacterPostProcess, automatically go to your grand company and turn in gear when below an inventory or venture threshold";
     public override BaseIPC[] Requirements => [Service.AutoRetainerIPC, Service.Navmesh, Service.Deliveroo, Service.Lifestream];
-
-    public override void DrawConfig()
-    {
-        base.DrawConfig();
-
-        if (!Config.ExcludedCharacters.Contains(Svc.ClientState.LocalContentId))
-        {
-            if (ImGui.Button("Exclude Current Character"))
-                Config.ExcludedCharacters.Add(Svc.ClientState.LocalContentId);
-        }
-        else
-        {
-            if (ImGui.Button("Remove Character Exclusion"))
-                Config.ExcludedCharacters.Remove(Svc.ClientState.LocalContentId);
-        }
-    }
 
     public override void OnCharacterPostProcessStep()
     {

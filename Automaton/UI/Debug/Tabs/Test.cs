@@ -1,6 +1,4 @@
-﻿using ECommons.GameFunctions;
-using ECommons.ImGuiMethods;
-using FFXIVClientStructs.FFXIV.Client.Game;
+﻿using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using ImGuiNET;
 

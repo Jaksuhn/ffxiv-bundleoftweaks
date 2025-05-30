@@ -25,7 +25,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
 {
     public override string Name => "Auto Follow";
     public override string Description
-        => "True Auto Follow. Trigger with /autofollow while targeting someone. Use it with no target to wipe the current master.\n" +
+        => "True Auto Follow. Trigger with command while targeting someone. Use it with no target to wipe the current master.\n" +
         "If multiboxing, you can send \"autofollow\" to chat and anyone in the party with this feature enabled will follow.\n" +
         "You can also add a number argument to specify the distance to keep, or add the off argument to clear the current master.";
 

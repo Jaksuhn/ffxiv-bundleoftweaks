@@ -1,44 +1,22 @@
 using Automaton.UI;
-using Dalamud.Interface.Components;
-using ECommons.ImGuiMethods;
 using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiNET;
 
 namespace Automaton.Features;
 
 public class AchievementTrackerConfiguration
 {
     public List<AchievementTracker.Achv> Achievements = [];
-    public Vector4 BarColour = Vector4.One;
-    public int UpdateFrequency = 60;
-    public bool AutoRemoveCompleted = false;
+    [ColorConfig] public Vector4 BarColour = Vector4.One;
+    [IntConfig(DefaultValue = 60, SameLine = true)] public int UpdateFrequency = 60;
+    [BoolConfig] public bool AutoRemoveCompleted = false;
 }
 
 [Tweak]
 public unsafe class AchievementTracker : Tweak<AchievementTrackerConfiguration>
 {
     public override string Name => "Achievement Tracker";
-    public override string Description => $"Adds an achievement tracker. Open menu with /atracker.";
-
-    public override void DrawConfig()
-    {
-        ImGuiX.DrawSection("Configuration");
-        var edited = false;
-        ImGuiEx.TextV("Bar Colour: ");
-        ImGui.SameLine();
-        var newColor = ImGuiComponents.ColorPickerWithPalette(1, "##color", Config.BarColour, ImGuiColorEditFlags.NoAlpha);
-
-        edited |= !Config.BarColour.Equals(newColor);
-
-        if (edited)
-        {
-            Config.BarColour = newColor;
-        }
-
-        ImGui.SliderInt("Update Frequency (s)", ref Config.UpdateFrequency, 60, 600, "%d", ImGuiSliderFlags.AlwaysClamp);
-        ImGui.Checkbox("Auto Remove Completed", ref Config.AutoRemoveCompleted);
-    }
+    public override string Description => $"Adds an achievement tracker";
 
     public class Achv
     {

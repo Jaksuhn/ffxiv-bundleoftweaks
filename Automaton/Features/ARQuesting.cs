@@ -1,6 +1,4 @@
 ﻿using Automaton.Tasks;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Automaton.Features;
 

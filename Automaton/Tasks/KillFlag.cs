@@ -4,7 +4,6 @@ using ECommons.Automation;
 using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;
 using Lumina.Excel.Sheets;
 using System.Threading.Tasks;
-using System.Numerics;
 
 namespace Automaton.Tasks;
 public sealed class KillFlag(string world) : CommonTasks

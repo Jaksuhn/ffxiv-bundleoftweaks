@@ -1,5 +1,4 @@
 ﻿using Automaton.Utilities.Movement;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using System.Threading.Tasks;

@@ -2,6 +2,7 @@
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using ImGuiNET;
 
 namespace Automaton.UI.Debug.Tabs;
 internal unsafe class TestTab : DebugTab
@@ -10,11 +11,14 @@ internal unsafe class TestTab : DebugTab
     {
         var x = *((byte*)InfoProxyNoviceNetwork.Instance() + 0x18);
         ImGuiEx.Text($"nn: {x} {x >> 8}");
-        if (Svc.Targets.Target is { } target)
-        {
-            ImGuiEx.Text($"{ActionManager.GetActionInRangeOrLoS(15989, Player.GameObject, target.Struct())}");
-            ImGuiEx.Text($"{Player.DistanceTo(target)}:{(*target.Struct()->GetPosition() - *Player.GameObject->GetPosition()).Magnitude}");
-            ImGuiEx.Text($"{Vector3.Normalize(target.Position - Player.Position)}{(*target.Struct()->GetPosition() - *Player.GameObject->GetPosition()) / (*target.Struct()->GetPosition() - *Player.GameObject->GetPosition()).Magnitude}");
-        }
+
+        ImGuiEx.Text($"{green:X}");
+        ImGuiEx.Text($"{AppendAlpha(green):X}");
+        ImGuiEx.Text($"{EzColor.Green}");
+        if (ImGui.Button("copy"))
+            ImGui.SetClipboardText(EzColor.Green.ToString());
     }
+
+    private static uint green = 0xFF0000;
+    private static uint AppendAlpha(uint col) => (col & 0xFFFFFF) == col ? (col << 8) | 0xFF : col;
 }

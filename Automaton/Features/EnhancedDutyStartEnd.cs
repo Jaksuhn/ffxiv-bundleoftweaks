@@ -86,9 +86,9 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration>
         if (!Config.StartMsg.IsNullOrEmpty())
         {
             if (Config.StartMsg.StartsWith('/'))
-                ECommons.Automation.Chat.Instance.SendMessage(Config.StartMsg);
+                ECommons.Automation.Chat.SendMessage(Config.StartMsg);
             else
-                ECommons.Automation.Chat.Instance.SendMessage($"/p {Config.StartMsg}");
+                ECommons.Automation.Chat.SendMessage($"/p {Config.StartMsg}");
         }
 
         var allPlayersInParty = Config.Players.Count > 0 && Config.Players.IsSubsetOf(Svc.Party.Select(p => p.Name.TextValue));
@@ -104,9 +104,9 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration>
         if (!Config.EndMsg.IsNullOrEmpty())
         {
             if (Config.EndMsg.StartsWith('/'))
-                ECommons.Automation.Chat.Instance.SendMessage(Config.EndMsg);
+                ECommons.Automation.Chat.SendMessage(Config.EndMsg);
             else
-                ECommons.Automation.Chat.Instance.SendMessage($"/p {Config.EndMsg}");
+                ECommons.Automation.Chat.SendMessage($"/p {Config.EndMsg}");
         }
 
         if (Config.AutoLeaveOnEnd)

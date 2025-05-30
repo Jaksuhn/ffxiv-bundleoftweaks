@@ -13,7 +13,7 @@ namespace Automaton.Features;
 
 public class AutoInviteConfiguration
 {
-    [StringConfig] public string Pattern = string.Empty;
+    [StringConfig(IsRegex = nameof(IsRegex))] public string Pattern = string.Empty;
     [BoolConfig] public bool IsRegex = false;
     [BoolConfig] public bool TurnOffOnceFull = true;
 }
@@ -80,7 +80,24 @@ public class AutoInvite : Tweak<AutoInviteConfiguration>
         }
 
         var message = SeString.Parse(rawMessage.AsSpan()).TextValue;
-        if ((Config.IsRegex && Regex.Match(message, Config.Pattern, RegexOptions.IgnoreCase).Success) || (!Config.IsRegex && message.Contains(Config.Pattern, StringComparison.OrdinalIgnoreCase)))
+        var matches = false;
+
+        if (Config.IsRegex)
+        {
+            try
+            {
+                matches = Regex.Match(message, Config.Pattern, RegexOptions.IgnoreCase).Success;
+            }
+            catch (Exception ex)
+            {
+                Warning(ex, "Skipping invite: invalid regex pattern.");
+                return;
+            }
+        }
+        else
+            matches = message.Contains(Config.Pattern, StringComparison.OrdinalIgnoreCase);
+
+        if (matches)
         {
             if (SeString.Parse(sender.AsSpan()).Payloads.FirstOrDefault(p => p is PlayerPayload) is PlayerPayload playerPayload)
             {
@@ -97,10 +114,13 @@ public class AutoInvite : Tweak<AutoInviteConfiguration>
                         InfoProxyPartyInvite.Instance()->InviteToParty(contentId, namePtr, (ushort)playerPayload.World.RowId);
                 }
 
-                if (_attempts-- > 0)
+                if (_attempts > 0)
+                {
+                    _attempts--;
                     Log($"Invites remaining: {_attempts}");
-                else
-                    On = false;
+                    if (_attempts == 0)
+                        On = false;
+                }
             }
         }
     }

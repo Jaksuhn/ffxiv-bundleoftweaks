@@ -83,11 +83,15 @@ public static class ImGuiX
             EzConfig.Save();
     }
 
-    public static void Icon(FontAwesomeIcon icon, uint? col = null)
+    public static void Icon(FontAwesomeIcon icon, EzColor? col = null, string? tooltip = null)
     {
-        using var color = col != null ? ImRaii.PushColor(ImGuiCol.Text, (uint)col) : null;
-        using (ImRaii.PushFont(UiBuilder.IconFont))
-            ImGui.Text(icon.ToIconString());
+        using (col is { } c ? ImRaii.PushColor(ImGuiCol.Text, c.Vector4) : null)
+        {
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+                ImGui.TextUnformatted(icon.ToIconString());
+        }
+        if (tooltip is { } && ImGui.IsItemHovered())
+            ImGui.SetTooltip(tooltip);
     }
 
     public static void Icon(ushort iconID, int size) => Icon(Utils.GetIcon(iconID), size.Vec2());

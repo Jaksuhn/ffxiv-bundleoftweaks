@@ -1,4 +1,5 @@
-﻿using Dalamud.Game.Text.SeStringHandling;
+﻿using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons.EzHookManager;
 using FFXIVClientStructs.FFXIV.Client.Game.Group;
@@ -16,6 +17,7 @@ public class AutoInviteConfiguration
     [StringConfig(IsRegex = nameof(IsRegex))] public string Pattern = string.Empty;
     [BoolConfig] public bool IsRegex = false;
     [BoolConfig] public bool TurnOffOnceFull = true;
+    [ChatChannelConfig(Mode = ChatChannelConfigAttribute.ChatChannelMode.PlayerChat)] public List<XivChatType> Channels = [];
 }
 
 [Tweak]
@@ -53,6 +55,18 @@ public class AutoInvite : Tweak<AutoInviteConfiguration>
     private unsafe void Detour(RaptureLogModule* thisPtr, ulong contentId, ulong accountId, int messageIndex, ushort worldId, ushort chatType)
     {
         if (!On) return;
+
+        if (Config.Pattern.IsNullOrEmpty())
+        {
+            Log("Skipping invite: no pattern.");
+            return;
+        }
+
+        if (!Config.Channels.Contains((XivChatType)chatType))
+        {
+            Log("Skipping invite: not in valid chat channel.");
+            return;
+        }
 
         if (GroupManager.Instance()->GetGroup()->MemberCount >= 8)
         {

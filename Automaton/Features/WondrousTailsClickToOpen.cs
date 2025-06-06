@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using System.Text.RegularExpressions;
+using static FFXIVClientStructs.FFXIV.Client.Game.UI.ContentsFinderQueueInfo.QueueStates;
 
 namespace Automaton.Features;
 
@@ -13,9 +14,10 @@ namespace Automaton.Features;
 internal class WondrousTailsClickToOpen : Tweak
 {
     public override string Name => "Wondrous Tails Click To Open";
-    public override string Description => "Click the duties in the Wondrous Tails to open it to a duty. It was removed from another plugin for no good reason.";
+    public override string Description => "Click on a WT duty to open the duty finder to it. Ctrl+click to queue into the duty semi-smartly.";
 
     private List<ContentFinderCondition> _sheet = null!;
+    private unsafe ContentsFinderQueueInfo QueueInfo => ContentsFinder.Instance()->QueueInfo;
 
     public override void Enable()
     {
@@ -41,6 +43,47 @@ internal class WondrousTailsClickToOpen : Tweak
         }
     }
 
+    private unsafe void QueueDuty(uint dutyId, bool roulette = false)
+    {
+        if (roulette)
+        {
+            if (ImGuiEx.Ctrl)
+            {
+                ContentsFinder.Instance()->ResetFlags();
+                QueueInfo.QueueRoulette((byte)dutyId);
+            }
+            else
+                AgentContentsFinder.Instance()->OpenRouletteDuty((byte)dutyId);
+        }
+        else
+        {
+            if (ImGuiEx.Ctrl)
+            {
+                ContentsFinder.Instance()->IsUnrestrictedParty = true;
+                QueueInfo.QueueDuties(&dutyId, 1);
+            }
+            else
+                AgentContentsFinder.Instance()->OpenRegularDuty(dutyId);
+        }
+    }
+
+    private unsafe void QueueDuty(List<uint> duties)
+    {
+        if (duties.Count == 0) return;
+        if (QueueInfo.QueueState is Pending or Queued) QueueInfo.CancelQueue();
+        if (ImGuiEx.Ctrl)
+        {
+            ContentsFinder.Instance()->ResetFlags();
+            var array = stackalloc uint[duties.Count];
+            for (var i = 0; i < duties.Count; i++)
+                array[i] = duties[i];
+            Log($"Queueing [{string.Join(", ", duties)}] [{string.Join(", ", new Span<uint>(array, duties.Count).ToArray())}]");
+            QueueInfo.QueueDuties(array, duties.Count);
+        }
+        else
+            AgentContentsFinder.Instance()->OpenRegularDuty(duties.FirstOrDefault());
+    }
+
     private void OnAddonFinalize(AddonEvent type, AddonArgs args) => ResetEventHandles();
 
     private unsafe void OnDutySlotClick(AddonEventType atkEventType, nint atkUnitBase, nint atkResNode)
@@ -54,16 +97,10 @@ internal class WondrousTailsClickToOpen : Tweak
         {
             var dutiesForTask = GetInstanceListFromId(bingoData);
             var territoryType = dutiesForTask.FirstOrDefault();
-            if (FindRow<ContentFinderCondition>(c => c.TerritoryType.RowId == territoryType) is { } cfc)
-            {
-                if (ImGuiEx.Ctrl)
-                {
-                    //ContentsFinder.Instance()->IsUnrestrictedParty = true;
-                    //ContentsFinder.Instance()->QueueInfo.QueueDuties((uint*)cfc.RowId, 1);
-                }
-                else
-                    AgentContentsFinder.Instance()->OpenRegularDuty(cfc.RowId);
-            }
+            if (FindRow<ContentFinderCondition>(c => c.TerritoryType.RowId == territoryType) is { ClassJobLevelRequired: < 80 } cfc)
+                QueueDuty(cfc.RowId);
+            else
+                QueueDuty(dutiesForTask);
         }
     }
 
@@ -123,15 +160,15 @@ internal class WondrousTailsClickToOpen : Tweak
                         {
                             // Crystalline Conflict
                             case 52:
-                                AgentContentsFinder.Instance()->OpenRouletteDuty(40); // Casual Match
+                                QueueDuty(40, true); // Casual Match
                                 break;
                             // Frontlines
                             case 54:
-                                AgentContentsFinder.Instance()->OpenRouletteDuty(7);
+                                QueueDuty(7, true);
                                 break;
                             // Rival Wings
                             case 67:
-                                AgentContentsFinder.Instance()->OpenRegularDuty(599); // Hidden Gorge
+                                QueueDuty(599, true); // Hidden Gorge
                                 break;
                         }
                         return [];
@@ -257,5 +294,5 @@ internal class WondrousTailsClickToOpen : Tweak
     }
 
     // The bingoOrderData.Data.RowId will always be the upper limit of the level range. There's no known way of getting the lower so just extract the number.
-    int GetFirstNumber(string str) => int.TryParse(Regex.Match(str, @"\d+").Value, out var number) ? number : 0;
+    private int GetFirstNumber(string str) => int.TryParse(Regex.Match(str, @"\d+").Value, out var number) ? number : 0;
 }

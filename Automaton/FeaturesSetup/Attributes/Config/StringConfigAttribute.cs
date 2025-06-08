@@ -19,7 +19,7 @@ public class StringConfigAttribute : BaseConfigAttribute
 
         ImGui.TextUnformatted(fieldInfo.Name.SplitWords());
 
-        if (ImGui.InputText("##Input", ref value, 50))
+        if (ImGui.InputText("##Input", ref value, 200))
         {
             fieldInfo.SetValue(config, value);
             OnChangeInternal(tweak, fieldInfo);

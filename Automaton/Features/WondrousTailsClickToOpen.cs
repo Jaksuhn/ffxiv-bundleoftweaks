@@ -17,7 +17,7 @@ internal class WondrousTailsClickToOpen : Tweak
     public override string Description => "Click on a WT duty to open the duty finder to it. Ctrl+click to queue into the duty semi-smartly.";
 
     private List<ContentFinderCondition> _sheet = null!;
-    private unsafe ContentsFinderQueueInfo QueueInfo => ContentsFinder.Instance()->QueueInfo;
+    private unsafe ContentsFinderQueueInfo* QueueInfo => ContentsFinder.Instance()->GetQueueInfo();
 
     public override void Enable()
     {
@@ -43,43 +43,33 @@ internal class WondrousTailsClickToOpen : Tweak
         }
     }
 
-    private unsafe void QueueDuty(uint dutyId, bool roulette = false)
-    {
-        if (roulette)
-        {
-            if (ImGuiEx.Ctrl)
-            {
-                ContentsFinder.Instance()->ResetFlags();
-                QueueInfo.QueueRoulette((byte)dutyId);
-            }
-            else
-                AgentContentsFinder.Instance()->OpenRouletteDuty((byte)dutyId);
-        }
-        else
-        {
-            if (ImGuiEx.Ctrl)
-            {
-                ContentsFinder.Instance()->IsUnrestrictedParty = true;
-                QueueInfo.QueueDuties(&dutyId, 1);
-            }
-            else
-                AgentContentsFinder.Instance()->OpenRegularDuty(dutyId);
-        }
-    }
-
-    private unsafe void QueueDuty(List<uint> duties)
+    private unsafe void QueueDuty(List<uint> duties, bool roulette)
     {
         if (duties.Count == 0) return;
-        if (QueueInfo.QueueState is Pending or Queued) QueueInfo.CancelQueue();
-        if (ImGuiEx.Ctrl)
+        if (QueueInfo->QueueState is Pending or Queued) QueueInfo->CancelQueue();
+
+        if (GetRow<ContentFinderCondition>(duties.First())?.ClassJobLevelRequired < PlayerState.Instance()->MaxLevel - 20)
+        {
+            ContentsFinder.Instance()->IsUnrestrictedParty = true;
+            var d = duties.First();
+            QueueInfo->QueueDuties(&d, 1);
+        }
+        else
         {
             ContentsFinder.Instance()->ResetFlags();
             var array = stackalloc uint[duties.Count];
             for (var i = 0; i < duties.Count; i++)
                 array[i] = duties[i];
             Log($"Queueing [{string.Join(", ", duties)}] [{string.Join(", ", new Span<uint>(array, duties.Count).ToArray())}]");
-            QueueInfo.QueueDuties(array, duties.Count);
+            QueueInfo->QueueDuties(array, duties.Count);
         }
+    }
+
+    private unsafe void OpenDuty(List<uint> duties, bool roulette)
+    {
+        if (duties.Count == 0) return;
+        if (roulette)
+            AgentContentsFinder.Instance()->OpenRouletteDuty((byte)duties.FirstOrDefault());
         else
             AgentContentsFinder.Instance()->OpenRegularDuty(duties.FirstOrDefault());
     }
@@ -96,11 +86,16 @@ internal class WondrousTailsClickToOpen : Tweak
         if (selectedTask is PlayerState.WeeklyBingoTaskStatus.Open)
         {
             var dutiesForTask = GetInstanceListFromId(bingoData);
-            var territoryType = dutiesForTask.FirstOrDefault();
-            if (FindRow<ContentFinderCondition>(c => c.TerritoryType.RowId == territoryType) is { ClassJobLevelRequired: < 80 } cfc)
-                QueueDuty(cfc.RowId);
+            var duties = FindRows<ContentFinderCondition>(c => dutiesForTask.Contains(c.RowId)).Select(x => x.RowId).ToList();
+            if (ImGuiEx.Ctrl)
+            {
+                if (GetRow<ContentFinderCondition>(duties.First())?.ClassJobLevelRequired < PlayerState.Instance()->MaxLevel - 20)
+                    QueueDuty([duties.First()], false);
+                else
+                    QueueDuty(duties, false);
+            }
             else
-                QueueDuty(dutiesForTask);
+                OpenDuty(duties, false);
         }
     }
 
@@ -160,15 +155,24 @@ internal class WondrousTailsClickToOpen : Tweak
                         {
                             // Crystalline Conflict
                             case 52:
-                                QueueDuty(40, true); // Casual Match
+                                if (ImGuiEx.Ctrl)
+                                    QueueDuty([40], true); // Casual Match
+                                else
+                                    OpenDuty([40], true);
                                 break;
                             // Frontlines
                             case 54:
-                                QueueDuty(7, true);
+                                if (ImGuiEx.Ctrl)
+                                    QueueDuty([7], true);
+                                else
+                                    OpenDuty([7], true);
                                 break;
                             // Rival Wings
                             case 67:
-                                QueueDuty(599, true); // Hidden Gorge
+                                if (ImGuiEx.Ctrl)
+                                    QueueDuty([599], true); // Hidden Gorge
+                                else
+                                    OpenDuty([599], true);
                                 break;
                         }
                         return [];

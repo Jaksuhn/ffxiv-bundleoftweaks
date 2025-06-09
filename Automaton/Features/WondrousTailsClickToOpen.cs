@@ -68,6 +68,7 @@ internal class WondrousTailsClickToOpen : Tweak
     private unsafe void OpenDuty(List<uint> duties, bool roulette)
     {
         if (duties.Count == 0) return;
+        Log($"Opening {duties.FirstOrDefault()} from [{string.Join(", ", duties)}]");
         if (roulette)
             AgentContentsFinder.Instance()->OpenRouletteDuty((byte)duties.FirstOrDefault());
         else
@@ -86,7 +87,7 @@ internal class WondrousTailsClickToOpen : Tweak
         if (selectedTask is PlayerState.WeeklyBingoTaskStatus.Open)
         {
             var dutiesForTask = GetInstanceListFromId(bingoData);
-            var duties = FindRows<ContentFinderCondition>(c => dutiesForTask.Contains(c.RowId)).Select(x => x.RowId).ToList();
+            var duties = FindRows<ContentFinderCondition>(c => dutiesForTask.Contains(c.TerritoryType.RowId)).Select(x => x.RowId).ToList();
             if (ImGuiEx.Ctrl)
             {
                 if (GetRow<ContentFinderCondition>(duties.First())?.ClassJobLevelRequired < PlayerState.Instance()->MaxLevel - 20)

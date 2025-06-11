@@ -20,8 +20,15 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig>
     {
         public uint ItemId;
         public int Threshold;
+        public Level Level;
         public ushort Icon => GetRow<Item>(ItemId)?.Icon ?? 0;
         public string Name => GetRow<Item>(ItemId)?.Name.ToString() ?? string.Empty;
+    }
+
+    public enum Level
+    {
+        Over,
+        Under,
     }
 
     public override void DrawConfig()
@@ -37,6 +44,9 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig>
             ImGui.SetNextItemWidth(100);
             ImGui.InputInt($"Threshold##{i.ItemId}", ref i.Threshold, 0);
             ImGui.SameLine();
+            ImGui.SetNextItemWidth(100);
+            ImGuiEx.EnumCombo($"##Level{i.ItemId}", ref i.Level);
+            ImGui.SameLine();
             if (ImGuiX.IconButton(FontAwesomeIcon.Trash, $"##Trash{i.ItemId}"))
                 Config.Alerts.Remove(i);
         }
@@ -47,7 +57,8 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig>
     private unsafe void OnTerritoryChanged(ushort obj)
     {
         foreach (var currency in Config.Alerts)
-            if (InventoryManager.Instance()->GetInventoryItemCount(currency.ItemId) >= currency.Threshold)
-                ModuleMessage($"{currency.Name} above threshold");
+            if (currency.Level == Level.Over && InventoryManager.Instance()->GetInventoryItemCount(currency.ItemId) >= currency.Threshold
+                || currency.Level == Level.Under && InventoryManager.Instance()->GetInventoryItemCount(currency.ItemId) <= currency.Threshold)
+                ModuleMessage($"{currency.Name} {(currency.Level == Level.Over ? "above" : "under")} threshold");
     }
 }

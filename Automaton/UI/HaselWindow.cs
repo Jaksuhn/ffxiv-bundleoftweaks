@@ -14,11 +14,8 @@ public partial class HaselWindow : Window
     // https://github.com/Haselnussbomber/HaselTweaks
     public HaselWindow() : base($"{Name} v{P.Version.ToString(2)}###{nameof(HaselWindow)}")
     {
-        var width = SidebarWidth * 3 + ImGui.GetStyle().ItemSpacing.X + ImGui.GetStyle().FramePadding.X * 2;
-        Size = new(width, 600);
-        SizeConstraints = new() { MinimumSize = new(width, 600), MaximumSize = new(4096, 2160) };
-        SizeCondition = ImGuiCond.Always;
-        Flags |= ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings;
+        Size = new(SidebarWidth * 3.5f + ImGui.GetStyle().ItemSpacing.X + ImGui.GetStyle().FramePadding.X * 2, 500);
+        Flags |= ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings;
         AllowClickthrough = false;
         AllowPinning = false;
     }
@@ -31,26 +28,6 @@ public partial class HaselWindow : Window
     private const float _logoScale = 0.3f;
 
     private Tweak? SelectedTweak => Tweaks.FirstOrDefault(t => t.Name == _selectedTweak);
-
-    public static void SetWindowProperties()
-    {
-        var width = SidebarWidth * 3 + ImGui.GetStyle().ItemSpacing.X + ImGui.GetStyle().FramePadding.X * 2;
-
-        EzConfigGui.Window.Size = new Vector2(width, 600);
-        EzConfigGui.Window.SizeConstraints = new()
-        {
-            MinimumSize = new Vector2(width, 600),
-            MaximumSize = new Vector2(4096, 2160)
-        };
-
-        EzConfigGui.Window.SizeCondition = ImGuiCond.Always;
-
-        EzConfigGui.Window.Flags |= ImGuiWindowFlags.AlwaysAutoResize;
-        EzConfigGui.Window.Flags |= ImGuiWindowFlags.NoSavedSettings;
-
-        EzConfigGui.Window.AllowClickthrough = false;
-        EzConfigGui.Window.AllowPinning = false;
-    }
 
     public override void Draw()
     {

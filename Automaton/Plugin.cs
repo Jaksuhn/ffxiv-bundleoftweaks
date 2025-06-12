@@ -49,7 +49,7 @@ public class Plugin : IDalamudPlugin
         }
 
         EzCmd.Add(Command, OnCommand, $"Opens the {Name} menu");
-        EzConfigGui.Init(new HaselWindow().Draw, nameOverride: $"{Name} v{P.Version.ToString(2)}");
+        EzConfigGui.Init(new HaselWindow(), nameOverride: $"{Name} v{P.Version.ToString(2)}");
         EzConfigGui.WindowSystem.AddWindow(new DebugWindow());
 
         SingletonServiceManager.Initialize(typeof(Service));

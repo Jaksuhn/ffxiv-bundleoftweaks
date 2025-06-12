@@ -24,6 +24,9 @@ internal unsafe class TasksTab : DebugTab
             Service.Automation.Start(new FateGrind(C.Tweaks.DateWithDestiny));
         }
 
+        if (ImGui.Button("void all weeaboos"))
+            Service.Automation.Start(new VoidMatches("weeaboo"));
+
         if (Service.Automation.CurrentTask is FateGrind fg)
         {
             foreach (var fate in fg.AvailableFates)

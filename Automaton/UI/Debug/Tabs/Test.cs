@@ -1,4 +1,5 @@
-﻿using ECommons.ImGuiMethods;
+﻿using ECommons.Automation;
+using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using ImGuiNET;
 
@@ -9,12 +10,6 @@ internal unsafe class TestTab : DebugTab
     {
         var x = *((byte*)InfoProxyNoviceNetwork.Instance() + 0x18);
         ImGuiEx.Text($"nn: {x} {x >> 8}");
-
-        ImGuiEx.Text($"{green:X}");
-        ImGuiEx.Text($"{AppendAlpha(green):X}");
-        ImGuiEx.Text($"{EzColor.Green}");
-        if (ImGui.Button("copy"))
-            ImGui.SetClipboardText(EzColor.Green.ToString());
     }
 
     private static uint green = 0xFF0000;

@@ -5,7 +5,7 @@ using ECommons.Configuration;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.IO;
 
 namespace Automaton.UI.Debug.Tabs;
@@ -16,7 +16,7 @@ internal unsafe class TestTab : DebugTab
         var x = *((byte*)InfoProxyNoviceNetwork.Instance() + 0x18);
         ImGuiEx.Text($"nn: {x} {x >> 8}");
 
-        ImGuiEx.Text($"{Path.Combine(Svc.PluginInterface.ConfigDirectory.Parent?.GetDirectories("SomethingNeedDoing").FirstOrDefault().FullName, EzConfig.DefaultSerializationFactory.DefaultConfigFileName)}");
+        ImGuiEx.Text($"{Path.Combine(Svc.PluginInterface.ConfigDirectory.Parent?.GetDirectories("SomethingNeedDoing").FirstOrDefault()?.FullName ?? throw new Exception(), EzConfig.DefaultSerializationFactory.DefaultConfigFileName)}");
 
         if (TryGetAddonByName<AtkUnitBase>("SelectYesno", out var addon))
         {

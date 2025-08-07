@@ -1,7 +1,7 @@
 ﻿using Dalamud.Game.ClientState.Fates;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Automaton.Utilities;
 public static class IFateExtensions

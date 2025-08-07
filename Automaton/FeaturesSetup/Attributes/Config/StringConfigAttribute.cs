@@ -1,6 +1,6 @@
 using Dalamud.Interface;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -51,6 +51,6 @@ public class StringConfigAttribute : BaseConfigAttribute
         }
 
         if (!attr?.Description.IsNullOrEmpty() ?? false)
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, attr!.Description);
+            ImGui.TextColoredWrapped(Colors.Grey, attr!.Description);
     }
 }

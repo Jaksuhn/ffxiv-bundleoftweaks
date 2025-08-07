@@ -17,25 +17,19 @@ public unsafe class Memory
 {
     public static class Signatures
     {
-        internal const string AgentReturnReceiveEvent = "E8 ?? ?? ?? ?? 41 8D 5E 0D";
-        internal const string AbandonDuty = "E8 ?? ?? ?? ?? 48 8B 43 28 41 B2 01";
+        internal const string AgentReturnReceiveEvent = "48 8B CE E8 ?? ?? ?? ?? 66 0F 1F 84 00 ?? ?? ?? ??";
         internal const string BewitchProc = "40 53 48 83 EC 50 45 33 C0";
         internal const string EnqueueSnipeTask = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 50 48 8B F1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ??"; // xan
-        internal const string FollowQuestRecast = "E8 ?? ?? ?? ?? 48 8B 9C 24 ?? ?? ?? ?? 0F 28 74 24 ?? 0F 28 7C 24 ?? 44 0F 28 44 24 ?? 48 81 C4"; // atmo
+        internal const string FollowQuestRecast = "F3 0F 11 7C 24 ?? E8 ?? ?? ?? ?? 48 8B 9C 24 ?? ?? ?? ??"; // atmo
         internal const string ExecuteCommand = "E8 ?? ?? ?? ?? 8D 46 0A"; // st
-        internal const string ExecuteCommandComplexLocation = "E8 ?? ?? ?? ?? EB 1E 48 8B 53 08";
+        internal const string ExecuteCommandComplexLocation = "E8 ?? ?? ?? ?? 48 8B 7B 08 45 33 C0";
         internal const string KnockbackProc = "E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? FF C6";
         internal const string MoveController = "E8 ?? ?? ?? ?? 48 85 C0 74 AE 83 FD 05";
-        internal const string MoveItem = "48 89 5C 24 ?? 55 56 57 41 55 41 56 48 8B EC 48 83 EC 40"; // st
-        internal const string PacketDispatcher_OnReceivePacketHookSig = "40 53 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 8B F2"; // hyperborea
-        internal const string PacketDispatcher_OnSendPacketHook = "48 89 5C 24 ?? 48 89 74 24 ?? 4C 89 64 24 ?? 55 41 56 41 57 48 8B EC 48 83 EC 70"; // hyperborea
-        internal const string PlayerController = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 3C 01 75 1E 48 8D 0D"; // bossmod
-        internal const string PlayerGroundSpeed = "F3 0F 59 05 ?? ?? ?? ?? F3 0F 59 05 ?? ?? ?? ?? F3 0F 58 05 ?? ?? ?? ?? 44 0F 28 C8";
+        internal const string MoveItem = "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8B EC 48 83 EC 40 4C 8B F1"; // st
+        internal const string PlayerController = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 3C 01 75 1E 48 8D 0D"; // bossmod TODO
+        internal const string PlayerGroundSpeed = "F3 44 0F 59 0D ?? ?? ?? ?? F3 44 0F 59 0D ?? ?? ?? ??";
         internal const string ReceiveAchievementProgress = "C7 81 ?? ?? ?? ?? ?? ?? ?? ?? 89 91 ?? ?? ?? ?? 44 89 81"; // cs
         internal const string RidePillion = "48 85 C9 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 56 48 83 EC";
-        internal const string SalvageItem = "E8 ?? ?? ?? ?? EB 5A 48 8B 07"; // veyn
-        internal const string WorldTravel = "40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? B8";
-        internal const string WorldTravelSetupInfo = "48 8B CB E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B 05 ?? ?? ?? ??";
         internal const string FreeCompanyDialogPacketReceive = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 42 31"; // xan
         internal const string RetrieveMateria = "E8 ?? ?? ?? ?? EB 27 48 8B 01"; // Client::UI::Agent::AgentMaterialize.ReceiveEvent	call    sub_140B209C0
         internal const string ProcessPacketUpdateClassInfo = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B DA 48 8D 0D ?? ?? ?? ??";
@@ -64,10 +58,6 @@ public unsafe class Memory
     }
 
     internal Delegates.RidePillionDelegate? RidePillion = EzDelegate.Get<Delegates.RidePillionDelegate>(Signatures.RidePillion);
-    internal Delegates.SalvageItemDelegate? SalvageItem = EzDelegate.Get<Delegates.SalvageItemDelegate>(Signatures.SalvageItem);
-    internal Delegates.AbandonDutyDelegate? AbandonDuty = EzDelegate.Get<Delegates.AbandonDutyDelegate>(Signatures.AbandonDuty);
-    internal Delegates.AgentWorldTravelReceiveEventDelegate? WorldTravel = EzDelegate.Get<Delegates.AgentWorldTravelReceiveEventDelegate>(Signatures.WorldTravel);
-    internal Delegates.WorldTravelSetupInfoDelegate? WorldTravelSetupInfo = EzDelegate.Get<Delegates.WorldTravelSetupInfoDelegate>(Signatures.WorldTravelSetupInfo);
     internal Delegates.RetrieveMateriaDelegate? RetrieveMateria = EzDelegate.Get<Delegates.RetrieveMateriaDelegate>(Signatures.RetrieveMateria);
     internal Delegates.ExecuteCommandDelegate? ExecuteCommand = EzDelegate.Get<Delegates.ExecuteCommandDelegate>(Signatures.ExecuteCommand);
     internal Delegates.MoveItem? MoveItem = EzDelegate.Get<Delegates.MoveItem>(Signatures.MoveItem);
@@ -196,9 +186,9 @@ public unsafe class Memory
             if (Svc.Party.Length > 1)
             {
                 if (Svc.Party[0]?.Name == Svc.ClientState.LocalPlayer?.Name)
-                    Chat.Instance.SendMessage("/partycmd breakup");
+                    Chat.SendMessage("/partycmd breakup");
                 else
-                    Chat.Instance.SendMessage("/leave");
+                    Chat.SendMessage("/leave");
             }
 
             ExecuteCommands.ExecuteCommand(ExecuteCommandFlag.InstantReturn);

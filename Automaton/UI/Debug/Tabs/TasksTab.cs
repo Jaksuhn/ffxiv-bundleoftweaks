@@ -1,7 +1,7 @@
 ﻿using Automaton.Tasks;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Automaton.UI.Debug.Tabs;
 internal unsafe class TasksTab : DebugTab

@@ -1,5 +1,5 @@
 ﻿using Dalamud.Interface.Textures;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Text.RegularExpressions;
 
 namespace Automaton.UI.Debug.Tabs;
@@ -76,7 +76,7 @@ public abstract partial class DebugTab : IDebugTab
 
         if (Svc.Texture.TryGetFromGameIcon(new GameIconLookup(iconId, isHq), out var tex) && tex.TryGetWrap(out var texture, out _))
         {
-            ImGui.Image(texture.ImGuiHandle, drawInfo.Value);
+            ImGui.Image(texture.Handle, drawInfo.Value);
 
             if (ImGui.IsItemHovered())
             {
@@ -89,7 +89,7 @@ public abstract partial class DebugTab : IDebugTab
                     if (canCopy)
                         ImGui.TextUnformatted("Click to copy IconId");
                     ImGui.TextUnformatted($"ID: {iconId} – Size: {texture.Width}x{texture.Height}");
-                    ImGui.Image(texture.ImGuiHandle, new(texture.Width, texture.Height));
+                    ImGui.Image(texture.Handle, new(texture.Width, texture.Height));
                     ImGui.EndTooltip();
                 }
             }

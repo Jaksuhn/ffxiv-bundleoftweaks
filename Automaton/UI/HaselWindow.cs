@@ -1,7 +1,7 @@
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
 using System.Drawing;
 using System.Reflection;
 
@@ -130,7 +130,7 @@ public partial class HaselWindow : Window
                 var scaledLogoSize = _logoSize.ToVec2() * _logoScale;
 
                 ImGui.SetCursorPos(contentAvail / 2 - scaledLogoSize / 2 + new Vector2(ImGui.GetStyle().ItemSpacing.X, 0));
-                ImGui.Image(logo.ImGuiHandle, scaledLogoSize);
+                ImGui.Image(logo.Handle, scaledLogoSize);
             }
 
             //var welcomeStr = "still working on updating a few things, hope you're enjoying the new toys";
@@ -167,11 +167,11 @@ public partial class HaselWindow : Window
 
         ImGui.SameLine(windowX - textSize.X);
 
-        ImGuiEx.Text((uint)color, status);
+        ImGuiEx.Text(color.Vector4, status);
 
         if (tweak.DisabledReason is { } reason)
         {
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, reason);
+            ImGui.TextColoredWrapped(Colors.Grey2, reason);
             return;
         }
         else
@@ -179,7 +179,7 @@ public partial class HaselWindow : Window
             if (!string.IsNullOrEmpty(tweak.Description))
             {
                 ImGuiX.DrawPaddedSeparator();
-                ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, tweak.Description);
+                ImGui.TextColoredWrapped(Colors.Grey2, tweak.Description);
             }
         }
 
@@ -188,10 +188,10 @@ public partial class HaselWindow : Window
             ImGuiX.DrawSection("Required Dependencies");
             ImGuiX.Icon(60074, 24);
             ImGui.SameLine();
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"Missing {tweak.Requirements.Count(r => !r.IsLoaded)} of the required plugins for this feature to work:");
+            ImGui.TextColoredWrapped(Colors.Grey2, $"Missing {tweak.Requirements.Count(r => !r.IsLoaded)} of the required plugins for this feature to work:");
             foreach (var entry in tweak.Requirements.Where(r => !r.IsLoaded))
             {
-                ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"{entry.Name}:");
+                ImGui.TextColoredWrapped(Colors.Grey2, $"{entry.Name}:");
                 ImGui.SameLine();
                 ImGuiEx.TextCopy(entry.Repo);
             }
@@ -215,23 +215,23 @@ public partial class HaselWindow : Window
                 {
                     if (entry.ConfigNames.Length == 0)
                     {
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {pluginName} is disabled.");
+                        ImGui.TextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {pluginName} is disabled.");
                     }
                     else if (entry.ConfigNames.Length == 1)
                     {
                         var configName = getConfigName(entry.InternalName, entry.ConfigNames[0]);
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {configName} is disabled in {pluginName}.");
+                        ImGui.TextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {configName} is disabled in {pluginName}.");
                     }
                     else if (entry.ConfigNames.Length > 1)
                     {
                         var configNames = entry.ConfigNames.Select((configName) => $"{configName}");
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {pluginName} is disabled." + $"\n - {string.Join("\n- ", configNames)}");
+                        ImGui.TextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {pluginName} is disabled." + $"\n - {string.Join("\n- ", configNames)}");
                     }
                 }
             }
             else if (tweak.IncompatibilityWarnings.Length > 1)
             {
-                ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, "In order for this tweak to work properly, please make sure");
+                ImGui.TextColoredWrapped(Colors.Grey2, "In order for this tweak to work properly, please make sure");
 
                 foreach (var entry in tweak.IncompatibilityWarnings.Where(entry => entry.IsLoaded))
                 {
@@ -240,19 +240,19 @@ public partial class HaselWindow : Window
                     if (entry.ConfigNames.Length == 0)
                     {
                         ImGui.SetCursorPosX(cursorPosX);
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"{pluginName} is disabled");
+                        ImGui.TextColoredWrapped(Colors.Grey2, $"{pluginName} is disabled");
                     }
                     else if (entry.ConfigNames.Length == 1)
                     {
                         ImGui.SetCursorPosX(cursorPosX);
                         var configName = $"HaselTweaks.Config.IncompatibilityWarning.Plugin.{entry.InternalName}.Config.{entry.ConfigNames[0]}";
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, $"{configName} is disabled in {pluginName}");
+                        ImGui.TextColoredWrapped(Colors.Grey2, $"{configName} is disabled in {pluginName}");
                     }
                     else if (entry.ConfigNames.Length > 1)
                     {
                         ImGui.SetCursorPosX(cursorPosX);
                         var configNames = entry.ConfigNames.Select((configName) => $"{configName}");
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey2, ("{pluginName} is disabled", pluginName) + $"\n    - {string.Join("\n    - ", configNames)}");
+                        ImGui.TextColoredWrapped(Colors.Grey2, ("{pluginName} is disabled", pluginName) + $"\n    - {string.Join("\n    - ", configNames)}");
                     }
                 }
             }

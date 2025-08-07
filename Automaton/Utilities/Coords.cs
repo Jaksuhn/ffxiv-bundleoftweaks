@@ -82,7 +82,7 @@ public static class Coords
         return (0, default);
     }
 
-    public static unsafe Vector3 FlagToWorld(FlagMapMarker marker) => AgentMap.Instance()->IsFlagMarkerSet ? new(marker.XFloat, 1024, marker.YFloat) : throw new Exception("Flag not set");
+    public static unsafe Vector3 FlagToWorld(FlagMapMarker marker) => AgentMap.Instance()->FlagMarkerCount > 0 ? new(marker.XFloat, 1024, marker.YFloat) : throw new Exception("Flag not set");
 
     //public static uint GetNearestAetheryte(MapMarkerData marker) => GetNearestAetheryte(marker.TerritoryTypeId, new Vector3(marker.X, marker.Y, marker.Z));
     //public static uint GetNearestAetheryte(FlagMapMarker flag) => GetNearestAetheryte((int)flag.TerritoryId, new Vector3(flag.XFloat, 0, flag.YFloat));

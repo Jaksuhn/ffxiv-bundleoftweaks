@@ -31,7 +31,7 @@ public static unsafe class PlayerEx
     public static HaterInfo[] Haters => UIState.Instance()->Hater.Haters.ToArray();
     public static int HatersWithFullAggro => Haters.Count(h => h.Enmity == 100);
 
-    public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarker;
+    public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarkers[0];
 
     public static unsafe Camera* Camera => CameraManager.Instance()->GetActiveCamera();
     public static unsafe CameraEx* CameraEx => (CameraEx*)CameraManager.Instance()->GetActiveCamera();
@@ -56,9 +56,9 @@ public static unsafe class PlayerEx
         var agentId = Inventory.Armory.Contains(container.Value) ? AgentId.ArmouryBoard : AgentId.Inventory;
         var addonId = AgentModule.Instance()->GetAgentByInternalId(agentId)->GetAddonId();
         var ctx = AgentInventoryContext.Instance();
-        ctx->OpenForItemSlot(container.Value, slot.Value, addonId);
+        ctx->OpenForItemSlot(container.Value, slot.Value, 0, addonId);
 
-        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu");
+        var contextMenu = Svc.GameGui.GetAddonByName("ContextMenu").ToPtr();
         if (contextMenu != null)
         {
             for (var i = 0; i < contextMenu->AtkValuesCount; i++)

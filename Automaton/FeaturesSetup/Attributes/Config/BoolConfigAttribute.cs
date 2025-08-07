@@ -1,5 +1,5 @@
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup.Attributes;
@@ -29,7 +29,7 @@ public class BoolConfigAttribute : BaseConfigAttribute
         {
             ImGuiEx.PushCursorY(-3);
             using var descriptionIndent = ImGuiX.ConfigIndent();
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, desc);
+            ImGui.TextColoredWrapped(Colors.Grey, desc);
             ImGuiEx.PushCursorY(3);
         }
     }

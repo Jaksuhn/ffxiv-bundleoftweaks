@@ -7,7 +7,7 @@ using YamlDotNet.Serialization;
 
 namespace Automaton.Configuration;
 
-public class Config : IEzConfig
+public class Config
 {
     [JsonIgnore]
     public const int CURRENT_CONFIG_VERSION = 4;
@@ -38,17 +38,11 @@ public class TweakConfigs
     public ARQuestingConfiguration ARQuestingConfiguration { get; init; } = new();
 }
 
-public class YamlFactory : ISerializationFactory
+public class YamlFactory : DefaultSerializationFactory, ISerializationFactory
 {
-    public string DefaultConfigFileName => $"ezAutomaton.yaml";
-
-    public bool IsBinary => false;
-
-    public T Deserialize<T>(string inputData) => new DeserializerBuilder().IgnoreUnmatchedProperties().Build().Deserialize<T>(inputData);
-    public T? Deserialize<T>(byte[] inputData) => Deserialize<T>(Encoding.UTF8.GetString(inputData));
-    public string Serialize(object s, bool prettyPrint) => new SerializerBuilder().Build().Serialize(s);
-    public string? Serialize(object config) => Serialize(config, false);
-    public byte[]? SerializeAsBin(object config) => Encoding.UTF8.GetBytes(Serialize(config) ?? "");
+    public new string DefaultConfigFileName => $"ezAutomaton.yaml";
+    public new T Deserialize<T>(string inputData) => new DeserializerBuilder().IgnoreUnmatchedProperties().Build().Deserialize<T>(inputData);
+    public new string Serialize(object s, bool prettyPrint) => new SerializerBuilder().Build().Serialize(s);
 }
 
 public interface IMigration

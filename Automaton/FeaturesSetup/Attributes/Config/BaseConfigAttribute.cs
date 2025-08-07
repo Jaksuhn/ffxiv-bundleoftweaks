@@ -1,6 +1,6 @@
 using Dalamud.Interface;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup.Attributes;

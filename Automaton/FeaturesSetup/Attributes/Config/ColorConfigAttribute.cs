@@ -1,6 +1,6 @@
 using Dalamud.Interface.Components;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup.Attributes;
@@ -35,6 +35,6 @@ public class ColorConfigAttribute : BaseConfigAttribute
         DrawConfigInfos(fieldInfo);
 
         if (!attr?.Description.IsNullOrEmpty() ?? false)
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, attr!.Description);
+            ImGui.TextColoredWrapped(Colors.Grey, attr!.Description);
     }
 }

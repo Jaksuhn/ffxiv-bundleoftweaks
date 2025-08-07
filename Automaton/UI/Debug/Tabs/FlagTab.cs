@@ -1,5 +1,5 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 
 namespace Automaton.UI.Debug.Tabs;
@@ -7,11 +7,11 @@ internal unsafe class FlagTab : DebugTab
 {
     public override void Draw()
     {
-        ImGui.TextUnformatted($"IsFlagMarkerSet: {AgentMap.Instance()->IsFlagMarkerSet}");
-        if (!AgentMap.Instance()->IsFlagMarkerSet) return;
+        ImGui.TextUnformatted($"IsFlagMarkerSet: {AgentMap.Instance()->FlagMarkerCount > 0}");
+        if (!(AgentMap.Instance()->FlagMarkerCount > 0)) return;
 
         ImGui.TextUnformatted($"Territory: {PlayerEx.MapFlag.TerritoryId} {GetRow<TerritoryType>(PlayerEx.MapFlag.TerritoryId)!.Value.Name}");
-        var row = GetRow<Map>(PlayerEx.MapFlag.MapId);
+        var row = GetRow<Sheets.Map>(PlayerEx.MapFlag.MapId);
         if (row is { } map)
             ImGui.TextUnformatted($"[{map.RowId}] Size: {map.SizeFactor}, Offset: {map.OffsetX}, {map.OffsetY} Territory: {map.TerritoryType.Value.Name}");
 

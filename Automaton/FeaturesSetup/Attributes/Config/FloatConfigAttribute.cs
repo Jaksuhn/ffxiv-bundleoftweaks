@@ -1,4 +1,4 @@
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Globalization;
 using System.Reflection;
 
@@ -33,6 +33,6 @@ public class FloatConfigAttribute : BaseConfigAttribute
         }
 
         if (!attr?.Description.IsNullOrEmpty() ?? false)
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, attr!.Description);
+            ImGui.TextColoredWrapped(Colors.Grey, attr!.Description);
     }
 }

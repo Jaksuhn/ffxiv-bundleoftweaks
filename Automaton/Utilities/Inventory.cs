@@ -90,7 +90,7 @@ public unsafe class Inventory
         public InventoryContainerWrapper(InventoryContainer* container) => Pointer = container;
         public InventoryContainer* Pointer { get; set; }
         public ItemOrderModuleSorter* Sorter => Pointer->Type.GetSorter();
-        public int Size => (int)Pointer->Size;
+        public int Size => Pointer->Size;
         public int Count => Sorter->Items.Count;
         public InventoryType Type => Pointer->Type;
         public uint? FirstEmptySlotODR

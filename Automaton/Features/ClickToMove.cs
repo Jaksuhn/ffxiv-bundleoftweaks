@@ -1,6 +1,6 @@
 using Automaton.Utilities.Movement;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Automaton.Features;
 

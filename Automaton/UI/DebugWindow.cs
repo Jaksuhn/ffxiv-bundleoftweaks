@@ -1,7 +1,7 @@
 using Automaton.UI.Debug.Tabs;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Automaton.UI;
 

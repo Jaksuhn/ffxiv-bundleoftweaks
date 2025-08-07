@@ -24,3 +24,4 @@ global using AtkValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 global using CSGameObject = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 global using DGameObject = Dalamud.Game.ClientState.Objects.Types.IGameObject;
 global using Sheets = Lumina.Excel.Sheets;
+global using Callback = ECommons.Automation.Callback;

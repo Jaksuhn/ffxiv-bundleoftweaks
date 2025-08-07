@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup.Attributes;
@@ -47,6 +47,6 @@ public class StringListConfigAttribute : BaseConfigAttribute
         }
 
         if (!attr?.Description.IsNullOrEmpty() ?? false)
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, attr!.Description);
+            ImGui.TextColoredWrapped(Colors.Grey, attr!.Description);
     }
 }

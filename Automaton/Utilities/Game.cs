@@ -367,6 +367,6 @@ public unsafe class Game
     public static bool IsCastingTeleport()
     {
         var info = Player.Character->GetCastInfo();
-        return info is not null && info->IsCasting != 0 && info->ActionType == ActionType.Action && info->ActionId == 5;
+        return info is not null && info->IsCasting && info->ActionType == ActionType.Action && info->ActionId == 5;
     }
 }

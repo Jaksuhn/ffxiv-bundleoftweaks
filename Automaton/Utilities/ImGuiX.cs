@@ -5,7 +5,7 @@ using Dalamud.Interface.Utility.Raii;
 using ECommons;
 using ECommons.Configuration;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.ComponentModel;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -101,7 +101,7 @@ public static class ImGuiX
     public static void Icon(IDalamudTextureWrap? icon, Vector2 size)
     {
         if (icon != null)
-            ImGui.Image(icon.ImGuiHandle, size);
+            ImGui.Image(icon.Handle, size);
         else
             ImGui.Dummy(size);
     }

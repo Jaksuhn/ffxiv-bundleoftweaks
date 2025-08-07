@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup.Attributes;
@@ -45,6 +45,6 @@ public class EnumConfigAttribute : BaseConfigAttribute
         }
         combo?.Dispose();
         if (!attr?.Description.IsNullOrEmpty() ?? false)
-            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, attr!.Description);
+            ImGui.TextColoredWrapped(Colors.Grey, attr!.Description);
     }
 }

@@ -8,7 +8,7 @@ using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using static ECommons.GameFunctions.ObjectFunctions;
 
@@ -258,7 +258,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
                         var minion = Yokai.FirstOrDefault(x => CompanionUnlocked(x.Minion) && GetItemCount(x.Medal) < 10 && GetItemCount(x.Weapon) < 1).Minion;
                         if (Config.SwapMinions && minion != default)
                         {
-                            ECommons.Automation.Chat.Instance.SendMessage($"/minion {GetRow<Companion>(minion)?.Singular}");
+                            ECommons.Automation.Chat.SendMessage($"/minion {GetRow<Companion>(minion)?.Singular}");
                             return;
                         }
                     }
@@ -385,10 +385,10 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
 
     private unsafe void SyncFate(ushort value)
     {
-        if (value != 0 && PlayerState.Instance()->IsLevelSynced == 0)
+        if (value != 0 && !PlayerState.Instance()->IsLevelSynced)
         {
             if (Player.Level > fateMaxLevel)
-                ECommons.Automation.Chat.Instance.SendMessage("/lsync");
+                ECommons.Automation.Chat.SendMessage("/lsync");
         }
     }
 }

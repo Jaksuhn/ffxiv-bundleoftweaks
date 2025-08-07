@@ -2,7 +2,7 @@ using Automaton.Configuration;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Utility.Raii;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup;
@@ -77,7 +77,7 @@ public abstract class Tweak<T> : Tweak
                     if (!string.IsNullOrEmpty(commandInfo.HelpMessage))
                     {
                         ImGui.SameLine();
-                        ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, commandInfo.HelpMessage);
+                        ImGui.TextColoredWrapped(Colors.Grey, commandInfo.HelpMessage);
                     }
 
                     if (attr.SubCommands.Count != 0)
@@ -87,7 +87,7 @@ public abstract class Tweak<T> : Tweak
                             using var subIndent = ImGuiX.ConfigIndent();
                             ImGui.Text($"{cmd} {subCmd.Subcommand}");
                             ImGui.SameLine();
-                            ImGuiHelpers.SafeTextColoredWrapped(Colors.Grey, subCmd.HelpMessage);
+                            ImGui.TextColoredWrapped(Colors.Grey, subCmd.HelpMessage);
                         }
                     }
                 }

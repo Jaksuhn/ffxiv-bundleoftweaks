@@ -4,7 +4,7 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 
 namespace Automaton.Features;
@@ -156,7 +156,7 @@ public unsafe class GettingTooAttached : Tweak<GettingTooAttachedConfiguration>
     public void ConfirmMateriaDialog(AddonEvent type, AddonArgs args)
     {
         if (!active) return;
-        var addon = new AddonMaster.MateriaAttachDialog((AtkUnitBase*)args.Addon);
+        var addon = new AddonMaster.MateriaAttachDialog(args.ToPtr());
         if (addon.Base->AtkValues[48].Type != 0)
         {
             CancelLoop();
@@ -181,7 +181,7 @@ public unsafe class GettingTooAttached : Tweak<GettingTooAttachedConfiguration>
     private static bool RetrieveMateriaContextMenu()
     {
         if (!Svc.Condition[ConditionFlag.Occupied39])
-            Callback.Fire((AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu"), true, 0, 1, 0u, 0, 0);
+            Callback.Fire(Svc.GameGui.GetAddonByName("ContextMenu").ToPtr(), true, 0, 1, 0u, 0, 0);
         return !Svc.Condition[ConditionFlag.Occupied39];
     }
 

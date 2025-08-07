@@ -70,7 +70,7 @@ public class AutoMerge : Tweak
                 for (var i = 1; i < item.Count(); i++)
                 {
                     var slot = item.ToList()[i];
-                    inv->MoveItemSlot(slot.Container, slot.Slot, firstSlot.Container, firstSlot.Slot, 1);
+                    inv->MoveItemSlot(slot.Container, slot.Slot, firstSlot.Container, firstSlot.Slot, true);
                 }
             }
         }

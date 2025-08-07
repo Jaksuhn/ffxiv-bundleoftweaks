@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+﻿using Dalamud.Bindings.ImGui;
 
 namespace Automaton.UI.Debug.Tabs;
 internal unsafe class PlayerExTab : DebugTab

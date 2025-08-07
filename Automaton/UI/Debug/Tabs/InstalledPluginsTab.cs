@@ -1,5 +1,5 @@
 ﻿using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Automaton.UI.Debug.Tabs;
 internal class InstalledPluginsTab : DebugTab

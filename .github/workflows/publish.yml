@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-publish:
-    uses: "Jaksuhn/DynamisPublishAction@main"
+    uses: Jaksuhn/DynamisPublishAction@main
     with:
       plugin_id: 34
       internal_name: 'Automaton'

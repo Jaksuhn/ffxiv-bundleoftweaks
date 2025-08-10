@@ -5,7 +5,6 @@
     "Description": "Tweaks that are sometimes simple, sometimes not.",
     "InternalName": "Automaton",
     "ApplicableVersion": "any",
-    "DalamudApiLevel": 12,
     "IconUrl": "https://i.imgur.com/AVSzkMB.png",
     "RepoUrl": "https://github.com/Jaksuhn/Automaton",
     "Tags": [

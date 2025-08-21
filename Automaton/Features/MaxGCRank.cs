@@ -11,11 +11,11 @@ internal class MaxGCRank : Tweak
 
     public override unsafe void Enable()
     {
-        Hook = new((nint)PlayerState.MemberFunctionPointers.GetGrandCompanyRank, Detour, false);
+        Hook ??= new((nint)PlayerState.MemberFunctionPointers.GetGrandCompanyRank, Detour, false);
         Hook.Enable();
     }
 
-    public override void Disable() => Hook?.Disable();
+    public override void Disable() => Hook?.Pause();
 
     internal unsafe EzHook<PlayerState.Delegates.GetGrandCompanyRank>? Hook;
     internal unsafe byte Detour(PlayerState* thisPtr)

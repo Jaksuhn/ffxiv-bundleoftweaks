@@ -1,9 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.Automation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Automaton.Tasks;

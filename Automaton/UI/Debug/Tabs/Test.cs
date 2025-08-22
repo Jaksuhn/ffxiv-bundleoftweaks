@@ -1,11 +1,9 @@
 ﻿using Dalamud.Game.Text;
 using Dalamud.Utility;
-using ECommons.Automation;
 using ECommons.Configuration;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Bindings.ImGui;
 using System.IO;
 
 namespace Automaton.UI.Debug.Tabs;

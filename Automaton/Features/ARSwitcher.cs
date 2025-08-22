@@ -98,7 +98,7 @@ public class ARSwitcher : Tweak
             if (index < 0)
             {
                 if (showError)
-                    Svc.Chat.PrintError("[KitchenSink] Current character not known.");
+                    ModuleMessage("Current character not known.");
                 return null;
             }
 
@@ -110,7 +110,7 @@ public class ARSwitcher : Tweak
                 if (target?.CID == Svc.ClientState.LocalContentId)
                 {
                     if (showError)
-                        Svc.Chat.PrintError("[KitchenSink] No character to switch to found.");
+                        ModuleMessage("No character to switch to found.");
                     return null;
                 }
 
@@ -122,7 +122,7 @@ public class ARSwitcher : Tweak
         }
         catch (IpcError)
         {
-            Svc.Chat.PrintError("Could not switch character, AutoRetainer API isn't available.");
+            ModuleMessage("Could not switch character, AutoRetainer API isn't available.");
             return null;
         }
     }
@@ -138,7 +138,7 @@ public class ARSwitcher : Tweak
     {
         if (string.IsNullOrEmpty(arguments))
         {
-            Svc.Chat.PrintError("[KitchenSink] Usage: /ks <world/name> [index]");
+            ModuleMessage("Usage: /ks <world/name> [index]");
             return;
         }
 
@@ -157,7 +157,7 @@ public class ARSwitcher : Tweak
             var target = targets.Where(x => x.World.StartsWith(args[0], StringComparison.OrdinalIgnoreCase)).Skip(index - 1).FirstOrDefault() ?? targets.FirstOrDefault(x => x.Name.Contains(arguments, StringComparison.OrdinalIgnoreCase));
             if (target == null)
             {
-                Svc.Chat.PrintError($"[KitchenSink] No character found on world {args[0]} with #{index}.");
+                ModuleMessage($"No character found on world {args[0]} with #{index}.");
                 return;
             }
 
@@ -165,7 +165,7 @@ public class ARSwitcher : Tweak
         }
         catch (IpcError)
         {
-            Svc.Chat.PrintError("Could not switch character, AutoRetainer API isn't available.");
+            ModuleMessage("Could not switch character, AutoRetainer API isn't available.");
         }
     }
 
@@ -185,7 +185,7 @@ public class ARSwitcher : Tweak
         {
             Svc.NotificationManager.AddNotification(new Notification
             {
-                Title = "KitchenSink",
+                Title = $"{Plugin.Name} - {Name}",
                 Content = "Can't switch characters (bound by duty or occupied)",
                 Type = NotificationType.Error
             });
@@ -194,7 +194,7 @@ public class ARSwitcher : Tweak
 
         Svc.NotificationManager.AddNotification(new Notification
         {
-            Title = "KitchenSink",
+            Title = $"{Plugin.Name} - {Name}",
             Content = $"Switch to {target}.",
             Type = NotificationType.Success,
         });

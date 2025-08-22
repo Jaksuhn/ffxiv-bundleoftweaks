@@ -13,6 +13,7 @@ using System.Data;
 using System.Text;
 using System.Text.RegularExpressions;
 using static Dalamud.Game.Text.XivChatType;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
 namespace Automaton.Features;
 public class HuntRelayHelperConfiguration
@@ -224,7 +225,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         }
     }
 
-    private void HandleRelayLink(uint _, SeString link)
+    private unsafe void HandleRelayLink(uint _, SeString link)
     {
         var payload = link.Payloads.OfType<RawPayload>().Select(RelayPayload.Parse).FirstOrDefault(x => x != default);
         if (payload == default) { Error($"Failed to parse {nameof(RelayPayload)}"); return; }
@@ -248,14 +249,14 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
             if (channelName.StartsWith("Linkshell") && Player.CurrentWorld != Player.HomeWorld) continue; // don't send to linkshells when off homeworld
             if (Config.OnlySendLocalHuntsToLocalChannels && islocal && !channelName.StartsWith("Novice") && Player.HomeWorldId != payload.World.RowId) continue; // don't send to non-novice local channels when off homeworld
             if (channelName.StartsWith("Novice") && Player.Object.CurrentWorld.Value.RowId != payload.World.RowId) continue; // don't send offworld relays to NN
-            // TODO: add a check to see if the player is in novice network before sending
+            if (channelName.StartsWith("Novice") && InfoProxyNoviceNetwork.Instance()->Flags != 1) // 1 = joined
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            TaskManager.Enqueue(() =>
+                TaskManager.Enqueue(() =>
             {
                 if (Player.Available) // messages can't be sent when travelling between zones where your player goes null
                 {
-                    Chat.Instance.SendMessageUnsafe([.. Encoding.UTF8.GetBytes($"/{command} "), .. channelName.StartsWith("Novice") ? nnRelay.ToArray() : relay.ToArray()]);
+                    Chat.SendMessageUnsafe([.. Encoding.UTF8.GetBytes($"/{command} "), .. channelName.StartsWith("Novice") ? nnRelay.ToArray() : relay.ToArray()]);
                     return true;
                 }
                 else return false;

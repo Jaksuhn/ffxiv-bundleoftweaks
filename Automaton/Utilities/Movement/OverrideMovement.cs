@@ -117,7 +117,7 @@ public unsafe class OverrideMovement
         var dirV = allowVertical ? Angle.FromDirection(new(dist.Y, new Vector2(dist.X, dist.Z).Length())) : default;
 
         var refDir = _legacyMode
-            ? ((CameraEx*)CameraManager.Instance()->GetActiveCamera())->DirH.Radians() + 180.Degrees()
+            ? CameraManager.Instance()->GetActiveCamera()->DirH.Radians() + 180.Degrees()
             : player.Rotation.Radians();
         return (dirH - refDir, dirV);
     }

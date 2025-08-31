@@ -1,5 +1,4 @@
-﻿using Automaton.Utilities.Movement;
-using ECommons.Automation;
+﻿using ECommons.Automation;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -33,7 +32,6 @@ public static unsafe class PlayerEx
     public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarkers[0];
 
     public static unsafe Camera* Camera => CameraManager.Instance()->GetActiveCamera();
-    public static unsafe CameraEx* CameraEx => (CameraEx*)CameraManager.Instance()->GetActiveCamera();
 
     public static List<MapMarkerData> QuestLocations => [.. FFXIVClientStructs.FFXIV.Client.Game.UI.Map.Instance()->QuestMarkers.ToArray().SelectMany(i => i.MarkerData.ToList())];
 

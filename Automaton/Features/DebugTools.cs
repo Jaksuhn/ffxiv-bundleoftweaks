@@ -142,26 +142,26 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
             }
             if (Utils.KeybindIsPressed(MovementKeys.Forward))
             {
-                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.CameraEx->DirH, Player.Object.Position + new Vector3(0, 0, Config.NoClipSpeed));
+                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(0, 0, Config.NoClipSpeed));
                 Utils.ResetKeybind(MovementKeys.Forward);
                 PlayerEx.Position = newPoint;
             }
             if (Utils.KeybindIsPressed(MovementKeys.Backward))
             {
-                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.CameraEx->DirH, Player.Object.Position + new Vector3(0, 0, -Config.NoClipSpeed));
+                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(0, 0, -Config.NoClipSpeed));
                 Utils.ResetKeybind(MovementKeys.Backward);
                 PlayerEx.Position = newPoint;
             }
             if (Utils.KeybindIsPressed(MovementKeys.Left) || Utils.KeybindIsPressed(MovementKeys.Strife_L))
             {
-                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.CameraEx->DirH, Player.Object.Position + new Vector3(Config.NoClipSpeed, 0, 0));
+                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(Config.NoClipSpeed, 0, 0));
                 Utils.ResetKeybind(MovementKeys.Left);
                 Utils.ResetKeybind(MovementKeys.Strife_L);
                 PlayerEx.Position = newPoint;
             }
             if (Utils.KeybindIsPressed(MovementKeys.Right) || Utils.KeybindIsPressed(MovementKeys.Strife_R))
             {
-                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.CameraEx->DirH, Player.Object.Position + new Vector3(-Config.NoClipSpeed, 0, 0));
+                var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(-Config.NoClipSpeed, 0, 0));
                 Utils.ResetKeybind(MovementKeys.Right);
                 Utils.ResetKeybind(MovementKeys.Strife_R);
                 PlayerEx.Position = newPoint;

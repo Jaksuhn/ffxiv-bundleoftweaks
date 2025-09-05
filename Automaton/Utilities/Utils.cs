@@ -64,48 +64,48 @@ public static class Utils
         Agent->AgentInterface.ReceiveEvent((AtkValue*)eventData, args.GetPointer(0), (uint)args.Length, eventKind);
     }
 
-    public static bool KeybindIsPressed(string name)
-    {
-        var key = KeybindToKey(name);
-        if (!key.HasValue || !Svc.KeyState.IsVirtualKeyValid((int)key)) return false;
-        return Svc.KeyState.GetRawValue((int)key) != 0 || IsKeyPressed((int)key);
-    }
+    //public static bool KeybindIsPressed(string name)
+    //{
+    //    var key = KeybindToKey(name);
+    //    if (!key.HasValue || !Svc.KeyState.IsVirtualKeyValid((int)key)) return false;
+    //    return Svc.KeyState.GetRawValue((int)key) != 0 || IsKeyPressed((int)key);
+    //}
 
-    public static void ResetKeybind(string name)
-    {
-        var key = KeybindToKey(name);
-        if (!key.HasValue || !Svc.KeyState.IsVirtualKeyValid((int)key)) return;
-        Svc.KeyState.SetRawValue((int)key, 0);
-    }
+    //public static void ResetKeybind(string name)
+    //{
+    //    var key = KeybindToKey(name);
+    //    if (!key.HasValue || !Svc.KeyState.IsVirtualKeyValid((int)key)) return;
+    //    Svc.KeyState.SetRawValue((int)key, 0);
+    //}
 
-    public static unsafe VirtualKey? KeybindToKey(string name)
-    {
-        VirtualKey? key = null;
-        var keybind = new UIInputData.Keybind();
-        var keyName = Utf8String.FromString(name);
-        var inputData = UIInputData.Instance();
-        inputData->GetKeybind(keyName, &keybind);
-        List<List<nint>?> availableKeys = [GetKeysToPress(keybind.Key, keybind.Modifier), GetKeysToPress(keybind.AltKey, keybind.AltModifier)];
-        var realKeys = availableKeys.Where(x => x != null).Select(x => x!).MinBy(x => x.Count);
-        key = (VirtualKey?)realKeys?.FirstOrDefault();
-        return key == null ? null : key;
-    }
+    //public static unsafe VirtualKey? KeybindToKey(string name)
+    //{
+    //    VirtualKey? key = null;
+    //    var keybind = new UIInputData.Keybind();
+    //    var keyName = Utf8String.FromString(name);
+    //    var inputData = UIInputData.Instance();
+    //    inputData->GetKeybind(keyName, &keybind);
+    //    List<List<nint>?> availableKeys = [GetKeysToPress(keybind.Key, keybind.Modifier), GetKeysToPress(keybind.AltKey, keybind.AltModifier)];
+    //    var realKeys = availableKeys.Where(x => x != null).Select(x => x!).MinBy(x => x.Count);
+    //    key = (VirtualKey?)realKeys?.FirstOrDefault();
+    //    return key == null ? null : key;
+    //}
 
-    public static List<nint>? GetKeysToPress(SeVirtualKey key, ModifierFlag modifier)
-    {
-        List<nint> keys = [];
-        if (modifier.HasFlag(ModifierFlag.Ctrl))
-            keys.Add(0x11); // VK_CONTROL
-        if (modifier.HasFlag(ModifierFlag.Shift))
-            keys.Add(0x10); // VK_SHIFT
-        if (modifier.HasFlag(ModifierFlag.Alt))
-            keys.Add(0x12); // VK_MENU
+    //public static List<nint>? GetKeysToPress(SeVirtualKey key, ModifierFlag modifier)
+    //{
+    //    List<nint> keys = [];
+    //    if (modifier.HasFlag(ModifierFlag.Ctrl))
+    //        keys.Add(0x11); // VK_CONTROL
+    //    if (modifier.HasFlag(ModifierFlag.Shift))
+    //        keys.Add(0x10); // VK_SHIFT
+    //    if (modifier.HasFlag(ModifierFlag.Alt))
+    //        keys.Add(0x12); // VK_MENU
 
-        var mappedKey = (nint)key;
-        if (mappedKey == 0)
-            return null;
+    //    var mappedKey = (nint)key;
+    //    if (mappedKey == 0)
+    //        return null;
 
-        keys.Add(mappedKey);
-        return keys;
-    }
+    //    keys.Add(mappedKey);
+    //    return keys;
+    //}
 }

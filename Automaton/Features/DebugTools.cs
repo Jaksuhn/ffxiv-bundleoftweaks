@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Dalamud.Bindings.ImGui;
+using Lumina.Excel.Sheets;
 
 namespace Automaton.Features;
 
@@ -35,6 +36,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
 
     public override void Enable()
     {
+        _keys = GetSheet<ConfigKey>().Where(x => x.RowId is >= 12 and <= 18).ToDictionary(x => x.Label.ToString(), x => x);
         Svc.Framework.Update += OnUpdate;
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MJICraftSchedule", OnSetup);
         Events.EnteredPvPInstance += OnEnterPvP;
@@ -97,12 +99,15 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
         public const string Strife_L = "MOVE_STRIFE_L";
         public const string Strife_R = "MOVE_STRIFE_R";
         public const string Jump = "JUMP";
+        public static ConfigKey JumpKey => (ConfigKey)GetRow<ConfigKey>(18)!;
+        public static ConfigKey ForwardKey => (ConfigKey)GetRow<ConfigKey>(12)!;
     }
 
     public static bool ShowMouseOverlay;
     private bool IsLButtonPressed;
     private bool tpActive;
     private bool ncActive;
+    private Dictionary<string, ConfigKey> _keys = null!;
     private unsafe void OnUpdate(IFramework framework)
     {
         if (!Player.Available || IsOccupied()) return;
@@ -130,9 +135,9 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
 
         if (Config.EnableNoClip && ncActive && !Framework.Instance()->WindowInactive)
         {
-            if (Utils.KeybindIsPressed(MovementKeys.Jump))
+            if (_keys["JUMP"].IsHeld())
             {
-                Utils.ResetKeybind(MovementKeys.Jump);
+                _keys["JUMP"].ResetKeyState();
                 PlayerEx.Position = (Player.Object.Position.X, Player.Object.Position.Y + Config.NoClipSpeed, Player.Object.Position.Z).ToVector3();
             }
             if (Svc.KeyState.GetRawValue(VirtualKey.LSHIFT) != 0 || IsKeyPressed(LimitedKeys.LeftShiftKey))
@@ -140,30 +145,30 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
                 Svc.KeyState.SetRawValue(VirtualKey.LSHIFT, 0);
                 PlayerEx.Position = (Player.Object.Position.X, Player.Object.Position.Y - Config.NoClipSpeed, Player.Object.Position.Z).ToVector3();
             }
-            if (Utils.KeybindIsPressed(MovementKeys.Forward))
+            if (_keys["MOVE_FORE"].IsHeld())
             {
                 var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(0, 0, Config.NoClipSpeed));
-                Utils.ResetKeybind(MovementKeys.Forward);
+                _keys["MOVE_FORE"].ResetKeyState();
                 PlayerEx.Position = newPoint;
             }
-            if (Utils.KeybindIsPressed(MovementKeys.Backward))
+            if (_keys["MOVE_BACK"].IsHeld())
             {
                 var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(0, 0, -Config.NoClipSpeed));
-                Utils.ResetKeybind(MovementKeys.Backward);
+                _keys["MOVE_BACK"].ResetKeyState();
                 PlayerEx.Position = newPoint;
             }
-            if (Utils.KeybindIsPressed(MovementKeys.Left) || Utils.KeybindIsPressed(MovementKeys.Strife_L))
+            if (_keys["MOVE_LEFT"].IsHeld() || _keys["MOVE_STRIFE_L"].IsHeld())
             {
                 var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(Config.NoClipSpeed, 0, 0));
-                Utils.ResetKeybind(MovementKeys.Left);
-                Utils.ResetKeybind(MovementKeys.Strife_L);
+                _keys["MOVE_LEFT"].ResetKeyState();
+                _keys["MOVE_STRIFE_L"].ResetKeyState();
                 PlayerEx.Position = newPoint;
             }
-            if (Utils.KeybindIsPressed(MovementKeys.Right) || Utils.KeybindIsPressed(MovementKeys.Strife_R))
+            if (_keys["MOVE_RIGHT"].IsHeld() || _keys["MOVE_STRIFE_R"].IsHeld())
             {
                 var newPoint = Utils.RotatePoint(Player.Object.Position.X, Player.Object.Position.Z, MathF.PI - PlayerEx.Camera->DirH, Player.Object.Position + new Vector3(-Config.NoClipSpeed, 0, 0));
-                Utils.ResetKeybind(MovementKeys.Right);
-                Utils.ResetKeybind(MovementKeys.Strife_R);
+                _keys["MOVE_RIGHT"].ResetKeyState();
+                _keys["MOVE_STRIFE_R"].ResetKeyState();
                 PlayerEx.Position = newPoint;
             }
         }

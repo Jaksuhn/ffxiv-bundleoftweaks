@@ -92,6 +92,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
     {
         _masterId = null;
         _masterName = null;
+        movement.Enabled = false;
         Svc.Toasts.ShowNormal("Auto following off");
     }
 

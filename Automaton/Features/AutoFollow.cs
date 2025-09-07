@@ -30,21 +30,23 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
         "You can also add a number argument to specify the distance to keep, or add the off argument to clear the current master.";
 
     private readonly OverrideMovement movement = new();
-    private DGameObject? master;
-    private uint? masterObjectID;
+    private uint? _masterId;
+    private string? _masterName;
 
     [CommandHandler("/autofollow", "Enable AutoFollow")]
     internal void OnCommand(string command, string arguments)
     {
         if (!arguments.IsNullOrEmpty())
         {
-            var obj = Svc.Objects.FirstOrDefault(o => o.Name.TextValue.ToLowerInvariant().Contains(arguments, StringComparison.InvariantCultureIgnoreCase));
-            if (obj != null)
+            if (Svc.Objects.FirstOrDefault(o => o.Name.TextValue.ToLowerInvariant().Contains(arguments, StringComparison.InvariantCultureIgnoreCase)) is { } obj)
             {
-                master = obj;
-                masterObjectID = obj.EntityId;
+                _masterId = obj.EntityId;
+                _masterName = obj.Name.TextValue;
+                Svc.Toasts.ShowNormal($"Auto following {obj.Name}");
                 return;
             }
+            else
+                Svc.Toasts.ShowError($"Unable to find object to follow named {arguments}");
         }
         if (Svc.Targets.Target != null)
             SetMaster();
@@ -68,23 +70,34 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
     {
         try
         {
-            master = Svc.Targets.Target;
-            masterObjectID = Svc.Targets.Target?.EntityId;
+            if (Svc.Targets.Target is { } target)
+            {
+                _masterId = target.EntityId;
+                _masterName = target.Name.TextValue;
+                Svc.Toasts.ShowNormal($"Auto following {Svc.Targets.Target.Name}");
+            }
+            else
+            {
+                _masterId = null;
+                Svc.Toasts.ShowNormal("Auto following off");
+            }
         }
         catch { return; }
     }
 
     private void ClearMaster()
     {
-        master = null;
-        masterObjectID = null;
+        _masterId = null;
+        _masterName = null;
+        Svc.Toasts.ShowNormal("Auto following off");
     }
 
     private void Follow(IFramework framework)
     {
-        if (master == null || !Player.Available || TaskManager.IsBusy) return;
+        if (!Player.Available || TaskManager.IsBusy) return;
+        if (_masterId == null && Config.AutoFollowName.IsNullOrEmpty() && string.IsNullOrEmpty(_masterName)) return; // always try to follow if temp or permanent name is set
 
-        master = Svc.Objects.FirstOrDefault(x => x.EntityId == masterObjectID || !Config.AutoFollowName.IsNullOrEmpty() && x.Name.TextValue.Equals(Config.AutoFollowName, StringComparison.InvariantCultureIgnoreCase));
+        var master = Svc.Objects.FirstOrDefault(x => x.EntityId == _masterId || !Config.AutoFollowName.IsNullOrEmpty() && x.Name.TextValue.Equals(Config.AutoFollowName, StringComparison.InvariantCultureIgnoreCase));
 
         if (master == null) { movement.Enabled = false; return; }
         if (Config.DisableIfFurtherThan > 0 && Player.DistanceTo(master) >= Config.DisableIfFurtherThan) { movement.Enabled = false; return; }
@@ -122,7 +135,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
 
             // Mount:
             // mount
-            if (master.Character()->IsMounted() && CanMount())
+            if (master.Character()->IsMounted() && Player.CanMount)
             {
                 movement.Enabled = false;
                 ActionManager.Instance()->UseAction(ActionType.GeneralAction, 9);
@@ -153,8 +166,6 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
         movement.Enabled = true;
         movement.DesiredPosition = master.Position;
     }
-
-    private static bool CanMount() => !Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.Mounting] && !Svc.Condition[ConditionFlag.InCombat] && !Svc.Condition[ConditionFlag.Casting];
 
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {

@@ -99,7 +99,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
 
         var master = Svc.Objects.FirstOrDefault(x => x.EntityId == _masterId
             || (!Config.AutoFollowName.IsNullOrEmpty() && x.Name.TextValue.Equals(Config.AutoFollowName, StringComparison.InvariantCultureIgnoreCase))
-            || (!string.IsNullOrEmpty(_masterName) && x.Name.TextValue.Equals(_masterName, StringComparison.InvariantCultureIgnoreCase));
+            || (!string.IsNullOrEmpty(_masterName) && x.Name.TextValue.Equals(_masterName, StringComparison.InvariantCultureIgnoreCase)));
 
         if (master == null) { movement.Enabled = false; return; }
         if (Config.DisableIfFurtherThan > 0 && Player.DistanceTo(master) >= Config.DisableIfFurtherThan) { movement.Enabled = false; return; }

@@ -46,7 +46,10 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
                 return;
             }
             else
-                Svc.Toasts.ShowError($"Unable to find object to follow named {arguments}");
+            {
+                _masterName = arguments;
+                return;
+            }
         }
         if (Svc.Targets.Target != null)
             SetMaster();

@@ -21,7 +21,6 @@ public class TweakConfigs
 {
     public AchievementTrackerConfiguration AchievementTrackerConfiguration { get; init; } = new();
     public AddresBookDebugConfiguration AddresBookDebug { get; init; } = new();
-    public ARTurnInConfiguration ARTurnIn { get; init; } = new();
     public AutoFollowConfiguration AutoFollow { get; init; } = new();
     public AutoInviteConfiguration AutoInvite { get; init; } = new();
     public ClickToMoveConfiguration ClickToMove { get; init; } = new();

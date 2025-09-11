@@ -139,9 +139,8 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
             //    }
             //}
 
-            // Mount:
             // mount
-            if (master.Character()->IsMounted() && Player.CanMount)
+            if (master.Character()->IsMounted() && CanMount())
             {
                 movement.Enabled = false;
                 ActionManager.Instance()->UseAction(ActionType.GeneralAction, 9);
@@ -172,6 +171,8 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration>
         movement.Enabled = true;
         movement.DesiredPosition = master.Position;
     }
+
+    private static bool CanMount() => !Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.Mounting] && !Svc.Condition[ConditionFlag.InCombat] && !Svc.Condition[ConditionFlag.Casting];
 
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {

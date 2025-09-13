@@ -1,5 +1,6 @@
 ﻿using Dalamud.Hooking;
 using ECommons.EzHookManager;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -37,9 +38,12 @@ public class InstantLogout : Tweak
     private unsafe void SentChatDetour(ShellCommandModule* commandModule, Utf8String* rawMessage, UIModule* uiModule)
     {
         if (string.IsNullOrEmpty(rawMessage->ToString()) || !rawMessage->ToString().StartsWith('/'))
+        {
             SentChatHook!.Original(commandModule, rawMessage, uiModule);
+            return;
+        }
 
-        if (GetRow<TextCommand>(172) is { Command: var cmd, Alias: var alias } && (cmd == rawMessage->ToString() || alias == rawMessage->ToString()))
+        if (GetRow<TextCommand>(172) is { Command: var cmd, Alias: var alias } && (cmd == rawMessage->ToString() || alias == rawMessage->ToString()) && ShouldLogout())
             Logout();
 
         SentChatHook!.Original(commandModule, rawMessage, uiModule);
@@ -51,7 +55,7 @@ public class InstantLogout : Tweak
         {
             switch (a3)
             {
-                case 23:
+                case 23 when ShouldLogout():
                     Logout();
                     return false;
                     // 24 is for shutdown but I don't want to override that one
@@ -61,6 +65,8 @@ public class InstantLogout : Tweak
         return _systemMenuHook!.Original(agentHud, a2, a3, a4, a5);
     }
 
+    // only trigger instant when the 20s would trigger since this causes "the selected character was not logged out properly" and I'd like to do that as infrequently as possible
+    private unsafe bool ShouldLogout() => !Player.IsInDuty && !TerritoryInfo.Instance()->InSanctuary;
     private unsafe void Logout()
     {
         for (var i = 0; i < Svc.Condition.MaxEntries; i++)

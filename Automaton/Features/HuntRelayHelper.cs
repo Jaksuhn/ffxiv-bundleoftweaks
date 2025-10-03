@@ -264,7 +264,6 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
             {
                 if (Player.Available) // messages can't be sent when travelling between zones where your player goes null
                 {
-                    Svc.Log.Info("sending message");
                     Chat.SendMessageUnsafe([.. Encoding.UTF8.GetBytes($"/{command} "), .. channelName.StartsWith("Novice") ? nnRelay.ToArray() : relay.ToArray()]);
                     return true;
                 }

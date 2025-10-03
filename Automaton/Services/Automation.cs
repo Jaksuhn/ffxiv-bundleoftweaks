@@ -189,6 +189,7 @@ public sealed class Automation : IDisposable
     {
         CurrentTask?.Cancel();
         CurrentTask = null;
+        Service.Navmesh.Stop(); // I don't know why OnDispose methods aren't called from a cancel
     }
 
     // if any other task is running, it's cancelled

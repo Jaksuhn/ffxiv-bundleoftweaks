@@ -35,11 +35,13 @@ public class AutoMerge : Tweak
         public bool ItemHQ { get; set; }
     }
 
+    private bool CanMoveItems => Service.Memory.HasPermission is { } func && func(134) && func(136) && func(137); // it at least checks these in MoveItemSlot
+
     private unsafe void OnSetup(string addonName)
     {
         try
         {
-            if (Player.IsBusy || !inventoryAddonNames.Contains(addonName)) return;
+            if (Player.IsBusy || !inventoryAddonNames.Contains(addonName) || !CanMoveItems) return;
 
             inventorySlots.Clear();
             var inv = InventoryManager.Instance();

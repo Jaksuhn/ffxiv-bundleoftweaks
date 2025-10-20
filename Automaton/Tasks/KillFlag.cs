@@ -57,7 +57,7 @@ public sealed class KillFlag(string world) : CommonTasks
 
     private IGameObject? FindHuntTarget() => Svc.Objects
         .Where(o => Player.DistanceTo(o) < HUNT_DETECTION_RADIUS && o is IBattleNpc { NameId: > 0 })
-        .Select(o => new { Object = o, Row = FindRow<NotoriousMonster>(x => o.DataId == x.BNpcBase.RowId) })
+        .Select(o => new { Object = o, Row = FindRow<NotoriousMonster>(x => o.BaseId == x.BNpcBase.RowId) })
         .Where(x => x.Row.HasValue)
         .OrderByDescending(x => x.Row?.Rank)
         .Select(x => x.Object)

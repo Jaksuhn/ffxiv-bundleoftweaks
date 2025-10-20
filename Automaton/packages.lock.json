@@ -16,9 +16,9 @@
       },
       "ECommons": {
         "type": "Direct",
-        "requested": "[3.0.1.3, )",
-        "resolved": "3.0.1.3",
-        "contentHash": "EmI3VUDSR8BOPFTCiEm0s/N3iSHg3u9iolyOys/lsJF0b3OtI3NvqxLLbrSlACOrtSSohOVVf7FnXupKKNLN/Q=="
+        "requested": "[3.0.1.22, )",
+        "resolved": "3.0.1.22",
+        "contentHash": "MT7fdS3XN0lDEPbCl9BQDS59XPDYDJd9XA6YACxMc0RAXFnDblOCU7WGtXBOkAQ4FLnZTAruwpQcnBJA2Pv31Q=="
       },
       "NetStone": {
         "type": "Direct",

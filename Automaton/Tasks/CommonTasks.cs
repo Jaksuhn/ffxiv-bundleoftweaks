@@ -22,7 +22,7 @@ public enum PathingStrategy
     Direct = 2,
 }
 
-public readonly record struct MovementConfig(float? Tolerance, MovementOptions Options, PathingStrategy Strategy)
+public readonly record struct MovementConfig(float? Tolerance, MovementOptions Movement, PathingStrategy Pathing)
 {
     public static MovementConfig Default => new(null, MovementOptions.None, PathingStrategy.Auto);
     public static MovementConfig Everything => new(null, MovementOptions.Mount | MovementOptions.Fly | MovementOptions.Dismount, PathingStrategy.Auto);
@@ -30,8 +30,8 @@ public readonly record struct MovementConfig(float? Tolerance, MovementOptions O
     public static MovementConfig InteractRange => new(3, MovementOptions.None, PathingStrategy.Auto);
 
     public MovementConfig WithTolerance(float? tolerance) => this with { Tolerance = tolerance };
-    public MovementConfig WithOptions(MovementOptions options) => this with { Options = options };
-    public MovementConfig WithStrategy(PathingStrategy strategy) => this with { Strategy = strategy };
+    public MovementConfig WithOptions(MovementOptions movement) => this with { Movement = movement };
+    public MovementConfig WithStrategy(PathingStrategy pathing) => this with { Pathing = pathing };
 }
 
 [Flags]
@@ -77,15 +77,15 @@ public abstract class CommonTasks : AutoTask
             await TeleportTo(Player.Territory, dest, allowSameZoneTeleport: true);
         }
 
-        if (config.Options.HasFlag(MovementOptions.Mount) || config.Options.HasFlag(MovementOptions.Fly))
+        if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
             await Mount();
 
-        if (config.Strategy == PathingStrategy.Direct)
+        if (config.Pathing == PathingStrategy.Direct)
             await MoveToDirectly(dest, tolerance);
         else
         {
             await NavmeshReady();
-            ErrorIf(!Service.Navmesh.PathfindAndMoveTo(dest, config.Options.HasFlag(MovementOptions.Fly)), "Failed to start pathfinding to destination");
+            ErrorIf(!Service.Navmesh.PathfindAndMoveTo(dest, config.Movement.HasFlag(MovementOptions.Fly)), "Failed to start pathfinding to destination");
             Status = $"Moving to {dest}";
             using var stop = new OnDispose(Service.Navmesh.Stop);
 
@@ -99,7 +99,7 @@ public abstract class CommonTasks : AutoTask
             }
         }
 
-        if (config.Options.HasFlag(MovementOptions.Dismount))
+        if (config.Movement.HasFlag(MovementOptions.Dismount))
             await Dismount();
     }
 

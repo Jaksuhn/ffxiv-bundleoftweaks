@@ -16,10 +16,13 @@ public abstract partial class Tweak : ITweak
         CachedType = GetType();
         InternalName = CachedType.Name;
         IncompatibilityWarnings = [.. CachedType.GetCustomAttributes<IncompatibilityWarningAttribute>()];
-        Outdated = CachedType.GetCustomAttribute<TweakAttribute>()?.Outdated ?? false;
-        Disabled = CachedType.GetCustomAttribute<TweakAttribute>()?.Disabled ?? false;
-        DisabledReason = CachedType.GetCustomAttribute<TweakAttribute>()?.DisabledReason;
-        IsDebug = CachedType.GetCustomAttribute<TweakAttribute>()?.Debug ?? false;
+
+        var tweakAttr = CachedType.GetCustomAttribute<TweakAttribute>();
+        Outdated = tweakAttr?.Outdated ?? false;
+        Disabled = tweakAttr?.Disabled ?? false;
+        DisabledReason = tweakAttr?.DisabledReason;
+        IsDebug = tweakAttr?.Debug ?? false;
+        Requirements = Service.IPC.GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct()]);
 
         try
         {
@@ -63,8 +66,8 @@ public abstract partial class Tweak : ITweak
     public Type CachedType { get; init; }
     public string InternalName { get; init; }
     public IncompatibilityWarningAttribute[] IncompatibilityWarnings { get; init; }
-    public virtual BaseIPC[] Requirements { get; } = [];
-    //public IBaseIPC[] Requirements => RequiredIPCs.Where(t => t.IsAssignableTo(typeof(IBaseIPC))).ToArray(); // TODO: I don't like this
+
+    public BaseIPC[] Requirements { get; }
 
     public abstract string Name { get; }
     public abstract string Description { get; }

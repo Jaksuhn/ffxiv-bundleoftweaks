@@ -45,11 +45,11 @@ public class DateWithDestinyConfiguration
 }
 
 [Tweak]
+[Requires(Ipc.Navmesh)]
 public class DateWithDestiny : Tweak<DateWithDestinyConfiguration>
 {
     public override string Name => "Date with Destiny";
     public override string Description => "Fate tracker and mover. Doesn't handle combat.";
-    public override BaseIPC[] Requirements => [Service.Navmesh];
 
     public bool active = false;
     private static Vector3 TargetPos;

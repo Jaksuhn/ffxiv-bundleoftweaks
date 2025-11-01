@@ -3,10 +3,11 @@
 namespace Automaton.IPC;
 
 #nullable disable
+[Ipc(Ipc.Lifestream)]
 public class LifestreamIPC : BaseIPC
 {
     public override string Name => "Lifestream";
-    public override string Repo => "https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json";
+    public override string Repo => Nightmare;
     public LifestreamIPC() => EzIPC.Init(this, Name);
 
     [EzIPC] public Func<string, bool> AethernetTeleport;

@@ -4,10 +4,11 @@ namespace Automaton.IPC;
 
 #nullable disable
 #pragma warning disable CS0649
+[Ipc(Ipc.PandorasBox)]
 internal class PandorasBoxIPC : BaseIPC
 {
     public override string Name => "PandorasBox";
-    public override string Repo => "https://love.puni.sh/ment.json";
+    public override string Repo => Punish;
     public PandorasBoxIPC() => EzIPC.Init(this, Name);
 
     [EzIPC] public readonly Func<string, bool?> GetFeatureEnabled;

@@ -2,10 +2,11 @@
 
 namespace Automaton.IPC;
 #nullable disable
+[Ipc(Ipc.Visibility)]
 public class VisibilityIPC : BaseIPC
 {
     public override string Name => "Visibility";
-    public override string Repo => string.Empty;
+    public override string Repo => Main;
 
     public VisibilityIPC() => EzIPC.Init(this, Name);
 

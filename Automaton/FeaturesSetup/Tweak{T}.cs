@@ -1,8 +1,8 @@
 using Automaton.Configuration;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Utility.Raii;
 using ECommons.ImGuiMethods;
-using Dalamud.Bindings.ImGui;
 using System.Reflection;
 
 namespace Automaton.FeaturesSetup;
@@ -106,9 +106,20 @@ public abstract class Tweak<T> : Tweak
                 enabled |= (typeof(T).GetField(attr.ConfigFieldName)?.GetValue(Config) as bool?)
                     ?? throw new InvalidOperationException($"Configuration field {attr.ConfigFieldName} in {typeof(T).Name} not found.");
 
+            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs)
+            {
+                if (!Service.IPC.AreAllLoaded(reqs))
+                {
+                    var missing = Service.IPC.GetMissing(reqs);
+                    var missingNames = missing.Length > 0 ? string.Join(", ", missing.Select(ipc => ipc.Name)) : "one or more required IPCs are not registered";
+                    Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {missingNames}");
+                    continue;
+                }
+            }
+
             if (enabled)
                 foreach (var c in attr.Commands)
-                    EnableCommand(c, attr.HelpMessage, methodInfo);
+                    EnableCommand(c, attr.HelpMessage, methodInfo, attr);
         }
     }
 
@@ -143,9 +154,19 @@ public abstract class Tweak<T> : Tweak
                 enabled |= (typeof(T).GetField(attr.ConfigFieldName)?.GetValue(Config) as bool?)
                     ?? throw new InvalidOperationException($"Configuration field {attr.ConfigFieldName} in {typeof(T).Name} not found.");
 
+            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs)
+            {
+                if (!Service.IPC.AreAllLoaded(reqs))
+                {
+                    var missing = Service.IPC.GetMissing(reqs);
+                    Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {string.Join(", ", missing.Select(ipc => ipc.Name))}");
+                    enabled = false;
+                }
+            }
+
             if (enabled)
                 foreach (var c in attr.Commands)
-                    EnableCommand(c, attr.HelpMessage, methodInfo);
+                    EnableCommand(c, attr.HelpMessage, methodInfo, attr);
             else
                 foreach (var c in attr.Commands)
                     DisableCommand(c);
@@ -154,9 +175,24 @@ public abstract class Tweak<T> : Tweak
         base.OnConfigChangeInternal(fieldName);
     }
 
-    private void EnableCommand(string command, string helpMessage, MethodInfo methodInfo)
+    private void EnableCommand(string command, string helpMessage, MethodInfo methodInfo, CommandHandlerAttribute attr)
     {
-        var handler = methodInfo.CreateDelegate<IReadOnlyCommandInfo.HandlerDelegate>(this);
+        var originalHandler = methodInfo.CreateDelegate<IReadOnlyCommandInfo.HandlerDelegate>(this);
+        void handler(string cmd, string args)
+        {
+            if (methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs)
+            {
+                if (!Service.IPC.AreAllLoaded(reqs))
+                {
+                    var missing = Service.IPC.GetMissing(reqs);
+                    ModuleMessage($"Command {cmd} requires: {string.Join(", ", missing.Select(ipc => ipc.Name))}");
+                    return;
+                }
+            }
+
+            originalHandler(cmd, args);
+        }
+
         if (Svc.Commands.AddHandler(command, new CommandInfo(handler) { HelpMessage = helpMessage, DisplayOrder = 1 }))
             Log($"Added CommandHandler for {command}");
         else

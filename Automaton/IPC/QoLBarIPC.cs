@@ -4,10 +4,11 @@ namespace Automaton.IPC;
 
 #nullable disable
 #pragma warning disable CS0649
+[Ipc(Ipc.QoLBar)]
 internal class QoLBarIPC : BaseIPC
 {
     public override string Name => "QoLBar";
-    public override string Repo => string.Empty;
+    public override string Repo => Main;
     public QoLBarIPC() => EzIPC.Init(this, Name);
 
     [EzIPC] public readonly Func<string> GetVersion;

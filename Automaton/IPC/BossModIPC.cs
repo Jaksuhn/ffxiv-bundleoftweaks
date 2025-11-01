@@ -4,10 +4,11 @@ namespace Automaton.IPC;
 
 #nullable disable
 #pragma warning disable CS8632
+[Ipc(Ipc.BossMod)]
 public class BossModIPC : BaseIPC
 {
     public override string Name => "BossMod";
-    public override string Repo => "https://puni.sh/api/repository/veyn";
+    public override string Repo => Veyn;
     public BossModIPC() => EzIPC.Init(this, Name);
 
     /// <remarks> string name </remarks>

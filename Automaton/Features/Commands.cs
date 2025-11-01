@@ -133,13 +133,15 @@ public partial class Commands : Tweak<CommandsConfiguration>
     #endregion
 
     #region Kill Flag
-    [CommandHandler(["/killflag", "/kf"], "Goes to flag, kills hunt mob at destination. Requires VBM.", nameof(Config.EnableKillFlag))]
+    [Requires(Ipc.BossMod | Ipc.Navmesh)]
+    [CommandHandler(["/killflag", "/kf"], "Goes to flag, kills hunt mob at destination. Requires BossMod.", nameof(Config.EnableKillFlag))]
     internal unsafe void OnCommandKillFlag(string command, string arguments) => Service.Automation.Start(new KillFlag(arguments));
     #endregion
 
     #region Go to flag
+    [Requires(Ipc.Navmesh)]
     [CommandHandler(["/gotoflag", "/gtf"], "Goes to flag location", nameof(Config.EnableGoToFlag))]
-    internal void OnGoToFlagCommand() => Service.Automation.Start(new GoToFlagTask());
+    internal void OnGoToFlagCommand(string command, string arguments) => Service.Automation.Start(new GoToFlagTask());
 
     private class GoToFlagTask : CommonTasks
     {

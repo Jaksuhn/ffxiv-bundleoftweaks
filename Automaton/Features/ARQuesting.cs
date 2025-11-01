@@ -8,11 +8,11 @@ public class ARQuestingConfiguration
 }
 
 [Tweak]
+[Requires(Ipc.AutoRetainer | Ipc.Lifestream | Ipc.Questionable)]
 internal class ARQuesting : ARTweak<ARQuestingConfiguration>
 {
     public override string Name => "AutoRetainer x Questionable";
     public override string Description => "On CharacterPostProcess, do any seasonal quests that are available.";
-    public override BaseIPC[] Requirements => [Service.AutoRetainerIPC, Service.Lifestream, Service.Questionable];
 
     private List<string> _quests = [];
 

@@ -5,10 +5,11 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 namespace Automaton.IPC;
 
 #nullable disable
+[Ipc(Ipc.Gearsetter)]
 public class GearsetterIPC : BaseIPC
 {
     public override string Name => "Gearsetter";
-    public override string Repo => "https://git.carvel.li/liza/";
+    public override string Repo => Vera;
     public GearsetterIPC() => EzIPC.Init(this, Name);
 
     [EzIPC] public Func<byte, List<(uint ItemId, InventoryType? SourceInventory, byte? SourceInventorySlot, RaptureGearsetModule.GearsetItemIndex TargetSlot)>> GetRecommendationsForGearset;

@@ -3,11 +3,11 @@
 namespace Automaton.Features;
 
 [Tweak]
+[Requires(Ipc.AutoRetainer | Ipc.Lifestream | Ipc.Navmesh)]
 internal class ARCeruleum : ARTweak
 {
     public override string Name => "AutoRetainer x Ceruleum";
     public override string Description => "On CharacterPostProcess, refill the stack of ceruleum tanks. Triggers when inventory has <200.";
-    public override BaseIPC[] Requirements => [Service.AutoRetainerIPC, Service.Lifestream, Service.Navmesh];
 
     private const uint CeruleumTankId = 10155;
 

@@ -1,0 +1,69 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33513.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automaton", "ffxiv_bundledtweaks\Automaton.csproj", "{4A68DEED-4539-477E-87A2-32E30043FF0B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A67F6A48-BF53-43B3-83C5-F937B484299F}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitmodules = .gitmodules
+		.github\workflows\publish.yml = .github\workflows\publish.yml
+		TODO.txt = TODO.txt
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoRetainerAPI", "AutoRetainerAPI\AutoRetainerAPI\AutoRetainerAPI.csproj", "{61FEA914-4DA7-4BB9-B665-D05D0E74377F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportDebug|x64 = ExportDebug|x64
+		ExportRelease|Any CPU = ExportRelease|Any CPU
+		ExportRelease|x64 = ExportRelease|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Debug|Any CPU.Build.0 = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Debug|x64.ActiveCfg = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Debug|x64.Build.0 = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportDebug|Any CPU.ActiveCfg = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportDebug|Any CPU.Build.0 = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportDebug|x64.ActiveCfg = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportDebug|x64.Build.0 = Debug|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportRelease|Any CPU.ActiveCfg = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportRelease|Any CPU.Build.0 = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportRelease|x64.ActiveCfg = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.ExportRelease|x64.Build.0 = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Release|Any CPU.ActiveCfg = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Release|Any CPU.Build.0 = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Release|x64.ActiveCfg = Release|x64
+		{4A68DEED-4539-477E-87A2-32E30043FF0B}.Release|x64.Build.0 = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Debug|Any CPU.Build.0 = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Debug|x64.ActiveCfg = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Debug|x64.Build.0 = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportDebug|Any CPU.ActiveCfg = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportDebug|Any CPU.Build.0 = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportDebug|x64.ActiveCfg = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportDebug|x64.Build.0 = Debug|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportRelease|Any CPU.ActiveCfg = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportRelease|Any CPU.Build.0 = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportRelease|x64.ActiveCfg = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.ExportRelease|x64.Build.0 = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Release|Any CPU.ActiveCfg = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Release|Any CPU.Build.0 = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Release|x64.ActiveCfg = Release|x64
+		{61FEA914-4DA7-4BB9-B665-D05D0E74377F}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B17E85B1-5F60-4440-9F9A-3DDE877E8CDF}
+	EndGlobalSection
+EndGlobal

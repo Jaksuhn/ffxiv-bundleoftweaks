@@ -39,9 +39,9 @@
       },
       "TerraFX.Interop.Windows": {
         "type": "Direct",
-        "requested": "(, )",
-        "resolved": "10.0.20348",
-        "contentHash": "I6+8GNRS68DEW4gk0TajpYeKEU13H/Tu8cnZ7fMB37qURoiZkuhvhJpWytg57u8m/d4nRQlYzS+mo6D8/FCfpQ=="
+        "requested": "[10.0.26100.2, )",
+        "resolved": "10.0.26100.2",
+        "contentHash": "XfDj/2uswLyPc0p7/rmir+y9jwBEg9tIbClcRdwQALJfxiMuO8mWcqKlG4iUmwtBGxoRMY+eEj3QpXYWSbDK5g=="
       },
       "YamlDotNet": {
         "type": "Direct",

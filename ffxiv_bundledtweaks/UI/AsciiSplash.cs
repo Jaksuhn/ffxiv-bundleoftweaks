@@ -39,7 +39,7 @@ public static class AsciiSplash
     private static volatile int _maxRows;
     private static volatile int _cols;
     private static volatile int _rows;
-    private static readonly float _fontScale = 0.5f; // Smaller font for higher resolution
+    private static readonly float _fontScale = 0.5f;
     private static ref readonly Guid GUID_ContainerFormatPng // straight from terrafx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -138,7 +138,6 @@ public static class AsciiSplash
         }
 
         ImGui.SetWindowFontScale(ImGuiHelpers.GlobalScaleSafe);
-        // Move the cursor down exactly by the pixels we consumed
         ImGui.SetCursorPos(new Vector2(baseCursorPos.X, baseCursorPos.Y + maxRowsToDraw * lineHeight));
     }
 

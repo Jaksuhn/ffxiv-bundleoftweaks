@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game;
+﻿using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
 using Lumina.Excel.Sheets;
@@ -75,7 +76,7 @@ public unsafe class Inventory
                     if (!gm->IsValidGearset(i)) continue;
                     var gearset = gm->GetGearset(i);
                     if (gearset != null && gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
-                        if (gearset->Items.ToArray().Any(x => x.ItemId % 1_000_000 == ItemId)) return true;
+                        if (gearset->Items.ToArray().Any(x => ItemUtil.GetBaseId(x.ItemId).ItemId == ItemId)) return true;
                 }
                 return false;
             }
@@ -289,7 +290,7 @@ public unsafe class Inventory
             if (!gm->IsValidGearset(i)) continue;
             var gearset = gm->GetGearset(i);
             if (gearset != null && gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
-                itemIds.AddRange(gearset->Items.ToArray().Where(x => x.ItemId != 0).Select(x => x.ItemId % 1_000_000));
+                itemIds.AddRange(gearset->Items.ToArray().Where(x => x.ItemId != 0).Select(x => ItemUtil.GetBaseId(x.ItemId).ItemId));
         }
         return itemIds;
     }

@@ -4,6 +4,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
@@ -44,10 +45,10 @@ public unsafe class GlamourSetsTrackerUI : Window
     private static readonly ImmutableHashSet<uint> UnobtainableSets = new HashSet<uint>
     {
         // old pvp rewards
-        45437, 45320, 45248, 45247, 45508, 45529, 45306, 45340, 45289, 45339, 45222, 45330, 45223, 45424, 45423
+        45437, 45320, 45248, 45247, 45508, 45529, 45306, 45340, 45289, 45339, 45222, 45330, 45223, 45424, 45423, 45564
     }.ToImmutableHashSet();
 
-    private const uint MostRecentPvpSet = 45564; // loose fitting set
+    private const uint MostRecentPvpSet = 47704; // air cell series 9
 
     private readonly List<InventoryType> _inventoryTypes =
     [
@@ -255,7 +256,7 @@ public unsafe class GlamourSetsTrackerUI : Window
                     {
                         var item = inventoryContainer->GetInventorySlot(i);
                         if (item != null && item->ItemId != 0)
-                            ownedItems.Add(item->ItemId % 1_000_000);
+                            ownedItems.Add(ItemUtil.GetBaseId(item->ItemId).ItemId);
                     }
                 }
             }
@@ -311,8 +312,11 @@ public unsafe class GlamourSetsTrackerUI : Window
 
     private static ESetType DetermineSetType(MirageStoreSetItem item, ReadOnlyCollection<GlamourItem> items)
     {
-        if (item.RowId == MostRecentPvpSet)
-            return ESetType.PvP;
+        // this would be a lot easier if the coffer item had any link to the mirage set
+        if (GetSheet<PvPSeries>(language: Dalamud.Game.ClientLanguage.English).Reverse().FirstOrNull(x => x.LevelRewards[25].LevelRewardItem[0].ValueNullable?.Singular.ToString().Contains("attire coffer") ?? false) is { } latestReward)
+            if (latestReward.LevelRewards[25].LevelRewardItem[0].Value.Singular.ToString().Replace("attire coffer", "").Trim() is { } baseName)
+                if (MirageSetContainsName(item, baseName))
+                    return ESetType.PvP;
 
         if (UnobtainableSets.Contains(item.RowId))
             return ESetType.Unobtainable;
@@ -333,6 +337,13 @@ public unsafe class GlamourSetsTrackerUI : Window
             _ => ESetType.Default,
         };
     }
+
+    private static bool MirageSetContainsName(MirageStoreSetItem item, string name)
+        => item.Head.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false ||
+            (item.Body.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (item.Hands.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (item.Legs.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (item.Feet.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false);
 
     private bool CanAffordAllMissingGearPieces(GlamourSet glamourSet, HashSet<uint> ownedItems)
     {

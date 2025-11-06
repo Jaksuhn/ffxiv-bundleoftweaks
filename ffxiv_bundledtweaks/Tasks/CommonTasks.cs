@@ -132,13 +132,11 @@ public abstract class CommonTasks : AutoTask
         var closestAetheryteId = Coords.FindClosestAetheryte(territoryId, destination) ?? 0;
         var teleportAetheryteId = Coords.FindPrimaryAetheryte(closestAetheryteId);
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {GetRow<TerritoryType>(territoryId)?.PlaceName.Value.Name}");
-        var row = GetRow<Aetheryte>(teleportAetheryteId)!;
-        if (Player.Territory != row.Value.Territory.RowId)
+        if (GetRow<Aetheryte>(teleportAetheryteId) is { Territory.RowId: var destinationId, PlaceName.Value.Name: var destinationName } && Player.Territory != destinationId)
         {
-            Status = $"Teleporting to {row.Value.PlaceName.Value.Name}";
+            Status = $"Teleporting to {destinationName}";
             ErrorIf(!Coords.ExecuteTeleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
-            await WaitUntil(Game.IsCastingTeleport, "TeleportStart");
-            await WaitUntil(() => Player.Territory == GetRow<Aetheryte>(teleportAetheryteId)?.Territory.RowId && Game.IsTerritoryLoaded() && Player.Interactable, "TeleportFinish");
+            await WaitUntilTerritory(destinationId);
         }
 
         if (teleportAetheryteId != closestAetheryteId)
@@ -149,8 +147,7 @@ public abstract class CommonTasks : AutoTask
             ErrorIf(!PlayerEx.InteractWith(aetheryteId), "Failed to interact with aetheryte");
             await WaitUntilSkipping(() => Game.AddonActive("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
             Game.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
-            await WaitUntil(() => Player.IsBusy, "TeleportStart");
-            await WaitUntil(() => Player.Territory == territoryId && Game.IsTerritoryLoaded() && Player.Interactable, "TeleportFinish");
+            await WaitUntilTerritory(territoryId);
         }
 
         if (territoryId == 886)
@@ -162,8 +159,7 @@ public abstract class CommonTasks : AutoTask
             ErrorIf(!PlayerEx.InteractWith(aetheryteId), "Failed to interact with aetheryte");
             await WaitUntilSkipping(() => Game.AddonActive("SelectString"), "WaitSelectFirmament", UiSkipOptions.Talk);
             Game.TeleportToFirmament(teleportAetheryteId);
-            await WaitUntil(() => Player.IsBusy, "TeleportStart");
-            await WaitUntil(() => Player.Territory == territoryId && Game.IsTerritoryLoaded() && Player.Interactable, "TeleportFinish");
+            await WaitUntilTerritory(territoryId);
         }
 
         // I think this check gives more problems than it solves
@@ -226,7 +222,7 @@ public abstract class CommonTasks : AutoTask
     protected async Task WaitUntilTerritory(uint territoryId)
     {
         using var scope = BeginScope("WaitUntilTerritory");
-        await WaitWhile(() => Player.Territory != territoryId || Player.IsBusy || !Game.IsTerritoryLoaded(), "WaitingForTerritory");
+        await WaitUntil(() => Player.Territory == territoryId && Game.IsTerritoryLoaded() && Player.Interactable, "WaitingForTerritory");
     }
 
     protected async Task<(uint, uint)> GetAchievementProgress(uint achievementId, string scopeName)

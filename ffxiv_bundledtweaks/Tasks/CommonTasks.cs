@@ -147,7 +147,8 @@ public abstract class CommonTasks : AutoTask
             ErrorIf(!PlayerEx.InteractWith(aetheryteId), "Failed to interact with aetheryte");
             await WaitUntilSkipping(() => Game.AddonActive("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
             Game.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
-            await WaitUntilTerritory(territoryId);
+            await WaitUntil(() => Player.IsBusy, "TeleportStart"); // TODO: something better
+            await WaitUntil(() => Player.Territory == territoryId && Game.IsTerritoryLoaded() && Player.Interactable, "TeleportFinish");
         }
 
         if (territoryId == 886)

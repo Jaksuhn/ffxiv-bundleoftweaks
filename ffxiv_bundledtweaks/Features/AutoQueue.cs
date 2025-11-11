@@ -25,7 +25,7 @@ internal class AutoQueue : Tweak
 
     private unsafe void OnTerritoryChanged(ushort obj)
     {
-        if (Player.IsInDuty || PlayerEx.HasPenalty) return;
+        if (Player.IsInDuty || Player.HasPenalty) return;
         TaskManager.Enqueue(() => !IsOccupied());
         TaskManager.Enqueue(() => Svc.Party.All(p => p.Territory.Value.TerritoryIntendedUse.Value.RowId is (byte)TerritoryIntendedUseEnum.City_Area or (byte)TerritoryIntendedUseEnum.Open_World));
         TaskManager.Enqueue(() => !Svc.Party.All(p => p.Territory.Value.RowId == Player.Territory) || Svc.Party.All(p => p.GameObject?.IsTargetable ?? false));

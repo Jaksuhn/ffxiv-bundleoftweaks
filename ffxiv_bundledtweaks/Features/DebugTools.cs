@@ -89,13 +89,13 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     private void OnMoveSpeed(string command, string arguments)
     {
         if (Player.IsInPvP) return;
-        PlayerEx.Speed = float.TryParse(arguments, out var speed) ? speed : 1.0f;
+        Player.Speed = float.TryParse(arguments, out var speed) ? speed : 1.0f;
     }
 
     // prevent entering pvp with debug options enabled
     private void OnEnterPvP()
     {
-        PlayerEx.Speed = 1.0f;
+        Player.Speed = 1.0f;
         tpActive = false;
         ncActive = false;
     }

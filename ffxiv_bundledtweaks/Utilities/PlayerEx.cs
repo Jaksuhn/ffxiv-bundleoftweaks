@@ -14,16 +14,20 @@ namespace ComplexTweaks.Utilities;
 
 public static unsafe class PlayerEx
 {
+    extension(Player)
+    {
+        public static float Speed { get => Controller->MoveControllerWalk.BaseMovementSpeed; set => Memory.SetSpeed(6 * value); }
+        public static bool HasPenalty => FFXIVClientStructs.FFXIV.Client.Game.UI.InstanceContent.Instance()->GetPenaltyRemainingInMinutes(0) > 0;
+    }
     public static Character* Character => (Character*)Svc.ClientState.LocalPlayer.Address;
     public static BattleChara* BattleChara => (BattleChara*)Svc.ClientState.LocalPlayer.Address;
     public static CSGameObject* GameObject => (CSGameObject*)Svc.ClientState.LocalPlayer.Address;
 
     public static PlayerController* Controller => (PlayerController*)Svc.SigScanner.GetStaticAddressFromSig(Memory.Signatures.PlayerController);
-    public static bool HasPenalty => FFXIVClientStructs.FFXIV.Client.Game.UI.InstanceContent.Instance()->GetPenaltyRemainingInMinutes(0) > 0;
     public static bool InFlightAllowedTerritory => GetRow<TerritoryType>(Svc.ClientState.TerritoryType)?.AetherCurrentCompFlgSet.RowId != 0;
     public static bool AllowedToFly => PlayerState.Instance()->IsAetherCurrentZoneComplete(Svc.ClientState.TerritoryType);
     public static Vector3 Position { get => Svc.ClientState.LocalPlayer.Position; set => GameObject->SetPosition(value.X, value.Y, value.Z); }
-    public static float Speed { get => Controller->MoveControllerWalk.BaseMovementSpeed; set => Memory.SetSpeed(6 * value); }
+    //public static float Speed { get => Controller->MoveControllerWalk.BaseMovementSpeed; set => Memory.SetSpeed(6 * value); }
     public static DGameObject Target { get => Svc.Targets.Target; set => Svc.Targets.Target = value; }
     public static bool IsTargetLocked => *(byte*)((nint)TargetSystem.Instance() + 309) == 1;
     public static HaterInfo[] Haters => UIState.Instance()->Hater.Haters.ToArray();

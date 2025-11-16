@@ -120,7 +120,7 @@ public abstract class CommonTasks : AutoTask
     protected async Task MoveToDirectly(Vector3 dest, float tolerance)
     {
         using var scope = BeginScope("MoveDirectlyWithTolerance");
-        await MoveToDirectly(dest, () => !(Player.DistanceTo(dest) < tolerance));
+        await MoveToDirectly(dest, () => Player.DistanceTo(dest) < tolerance);
     }
 
     protected async Task TeleportTo(uint territoryId, Vector3 destination, bool allowSameZoneTeleport = false)

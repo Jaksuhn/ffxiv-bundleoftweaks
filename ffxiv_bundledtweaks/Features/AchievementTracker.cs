@@ -123,7 +123,7 @@ public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window(
 
         foreach (var achv in GetSheet<SheetAchievement>().Where(x => !x.Name.ToString().IsNullOrEmpty() && x.Name.ToString().Contains(Search, StringComparison.CurrentCultureIgnoreCase)))
         {
-            ImGui.PushID($"###achievement{achv.RowId}");
+            using var _ = ImRaii.PushId($"###achievement{achv.RowId}");
             var selected = ImGui.Selectable($"{achv.Name}", achv.RowId == selectedAchievement?.RowId);
 
             if (selected)
@@ -131,8 +131,6 @@ public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window(
                 tweak.Config.Achievements.Add(new AchievementTracker.Achv { ID = achv.RowId, Name = achv.Name.ToString(), Description = GetRow<SheetAchievement>(achv.RowId)!.Value.Description.ToString(), Points = GetRow<SheetAchievement>(achv.RowId)!.Value.Points });
                 tweak.RequestUpdate(achv.RowId);
             }
-
-            ImGui.PopID();
         }
     }
 

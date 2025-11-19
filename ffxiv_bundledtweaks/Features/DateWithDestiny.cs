@@ -447,7 +447,7 @@ public class DateWithDestinyWindow(DateWithDestiny tweak) : Window($"Fate Tracke
             }
 
             var nameColour = tweak.FateConditions(fate) ? new Vector4(1, 1, 1, 1) : tweak.Config.blacklist.Contains(fate.FateId) ? new Vector4(1, 0, 0, 0.5f) : new Vector4(1, 1, 1, 0.5f);
-            ImGuiEx.TextV(nameColour, $"{fate.Name} {(tweak.Config.ShowFateTimeRemaining && fate.TimeRemaining >= 0 ? new TimeSpan(0, 0, (int)fate.TimeRemaining) : string.Empty)}");
+            ImGuiEx.TextV(nameColour, $"[{fate.Level}] {fate.Name} {(tweak.Config.ShowFateTimeRemaining && fate.TimeRemaining >= 0 ? new TimeSpan(0, 0, (int)fate.TimeRemaining) : string.Empty)}");
             if (ImGui.IsItemHovered()) ImGui.SetTooltip($"{fate.Stringify()}\nDistance to: {Player.DistanceTo(fate.Position)}\nFate {(tweak.FateConditions(fate) ? "meets" : "doesn't meet")} conditions and {(tweak.FateConditions(fate) ? "will" : "won't")} be pathed to in auto mode.");
 
             ImGui.TableNextColumn();

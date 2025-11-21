@@ -12,7 +12,7 @@ namespace InteropSourceGenerators;
 [Generator]
 internal sealed class AddressHookGenerator : IIncrementalGenerator
 {
-    private const string AddressHookAttributeName = "ComplexTweaks.FeaturesSetup.AddressHookAttribute`1";
+    private const string AddressHookAttributeName = "ComplexTweaks.TweakSystem.AddressHookAttribute`1";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

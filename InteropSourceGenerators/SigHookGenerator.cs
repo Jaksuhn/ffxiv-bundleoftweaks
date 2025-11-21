@@ -11,7 +11,7 @@ namespace InteropSourceGenerators;
 [Generator]
 internal sealed class SigHookGenerator : IIncrementalGenerator
 {
-    private const string SigHookAttributeName = "ComplexTweaks.FeaturesSetup.SigHookAttribute";
+    private const string SigHookAttributeName = "ComplexTweaks.TweakSystem.SigHookAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

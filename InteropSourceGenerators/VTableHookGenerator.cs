@@ -12,7 +12,7 @@ namespace InteropSourceGenerators;
 [Generator]
 internal sealed class VTableHookGenerator : IIncrementalGenerator
 {
-    private const string VTableHookAttributeName = "ComplexTweaks.FeaturesSetup.VTableHookAttribute`1";
+    private const string VTableHookAttributeName = "ComplexTweaks.TweakSystem.VTableHookAttribute`1";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

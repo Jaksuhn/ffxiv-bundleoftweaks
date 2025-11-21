@@ -1,5 +1,5 @@
-global using ComplexTweaks.FeaturesSetup;
-global using ComplexTweaks.FeaturesSetup.Attributes;
+global using ComplexTweaks.TweakSystem;
+global using ComplexTweaks.TweakSystem.Attributes;
 global using ComplexTweaks.IPC;
 global using ComplexTweaks.Services;
 global using ComplexTweaks.Utilities;

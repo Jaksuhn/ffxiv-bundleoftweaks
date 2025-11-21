@@ -1,4 +1,4 @@
-﻿using ComplexTweaks.Features;
+﻿using ComplexTweaks.Tweaks;
 using Dalamud.Interface.Windowing;
 using ECommons.ImGuiMethods;
 using ECommons.SimpleGui;

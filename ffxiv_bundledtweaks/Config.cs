@@ -1,4 +1,4 @@
-using ComplexTweaks.Features;
+using ComplexTweaks.Tweaks;
 using ECommons.Configuration;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;

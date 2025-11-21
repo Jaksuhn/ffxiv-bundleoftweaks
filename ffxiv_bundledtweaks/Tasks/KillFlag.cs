@@ -1,4 +1,4 @@
-﻿using ComplexTweaks.Features;
+﻿using ComplexTweaks.Tweaks;
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.Automation;
 using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;

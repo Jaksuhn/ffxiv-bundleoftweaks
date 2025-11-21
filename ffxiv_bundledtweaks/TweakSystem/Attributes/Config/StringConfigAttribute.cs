@@ -1,0 +1,56 @@
+using Dalamud.Interface;
+using ECommons.ImGuiMethods;
+using Dalamud.Bindings.ImGui;
+using System.Reflection;
+using System.Text.RegularExpressions;
+
+namespace ComplexTweaks.TweakSystem.Attributes;
+
+[AttributeUsage(AttributeTargets.Field)]
+public class StringConfigAttribute : BaseConfigAttribute
+{
+    public string DefaultValue = string.Empty;
+    public string IsRegex = string.Empty;
+
+    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo)
+    {
+        var value = (string)fieldInfo.GetValue(config)!;
+        var attr = fieldInfo.GetCustomAttribute<BaseConfigAttribute>();
+
+        ImGui.TextUnformatted(fieldInfo.Name.SplitWords());
+
+        if (ImGui.InputText("##Input", ref value, 500))
+        {
+            fieldInfo.SetValue(config, value);
+            OnChangeInternal(tweak, fieldInfo);
+        }
+
+        if (DrawResetButton(DefaultValue))
+        {
+            fieldInfo.SetValue(config, DefaultValue);
+            OnChangeInternal(tweak, fieldInfo);
+        }
+
+        // validate regex if IsRegex is set
+        if (!string.IsNullOrEmpty(IsRegex) && !string.IsNullOrEmpty(value))
+        {
+            if (config.GetType().GetField(IsRegex) is { } field && field.GetValue(config) is bool b && b)
+            {
+                try
+                {
+                    _ = new Regex(value);
+                    ImGui.SameLine();
+                    ImGui.Icon(FontAwesomeIcon.Check, EzColor.Green, "Valid regex pattern");
+                }
+                catch (ArgumentException)
+                {
+                    ImGui.SameLine();
+                    ImGui.Icon(FontAwesomeIcon.Ban, EzColor.Red, "Invalid regex pattern");
+                }
+            }
+        }
+
+        if (!attr?.Description.IsNullOrEmpty() ?? false)
+            ImGui.TextColoredWrapped(Colors.Grey, attr!.Description);
+    }
+}

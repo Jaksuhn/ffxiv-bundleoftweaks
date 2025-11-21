@@ -1,5 +1,6 @@
 using Dalamud.Game.Config;
 using ECommons.EzHookManager;
+using ECommons.MathHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using System.Runtime.InteropServices;
 

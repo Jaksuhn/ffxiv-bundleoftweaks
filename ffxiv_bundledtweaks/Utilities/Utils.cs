@@ -37,14 +37,6 @@ public static class Utils
         return p;
     }
 
-    public static Vector3 RandomPointInCircle(Vector3 center, float radius, float radiusLimit = 1)
-    {
-        var random = new Random();
-        var angle = random.NextDouble() * 2 * Math.PI;
-        var distance = random.NextFloat(0, radius * radiusLimit);
-        return new(center.X + distance * (float)Math.Cos(angle), center.Y, center.Z + distance * (float)Math.Sin(angle));
-    }
-
     //public static bool KeybindIsPressed(string name)
     //{
     //    var key = KeybindToKey(name);

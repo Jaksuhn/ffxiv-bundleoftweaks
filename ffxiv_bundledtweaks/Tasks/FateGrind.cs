@@ -1,4 +1,4 @@
-﻿using ComplexTweaks.Features;
+﻿using ComplexTweaks.Tweaks;
 using Dalamud.Game.ClientState.Fates;
 using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -305,7 +305,7 @@ public sealed class FateGrind(DateWithDestinyConfiguration config) : CommonTasks
 
     private unsafe Vector3 GetRandomPointInFate(IFate fate)
     {
-        var randomPoint = Utils.RandomPointInCircle(fate.Position, fate.Radius, 0.5f);
+        var randomPoint = fate.Position.RandomPoint(fate.Radius * 0.5f);
         var point = Service.Navmesh.NearestPoint(randomPoint, 5, 5);
         return (Vector3)(point == null ? fate.Position : point);
     }

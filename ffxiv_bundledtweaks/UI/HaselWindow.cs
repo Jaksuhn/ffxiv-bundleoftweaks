@@ -22,7 +22,7 @@ public partial class HaselWindow : Window
     private string _selectedTweak = string.Empty;
     private string? _splashText = null;
 
-    private Tweak? SelectedTweak => Tweaks.FirstOrDefault(t => t.Name == _selectedTweak);
+    private Tweak? SelectedTweak => Plugin.Tweaks.FirstOrDefault(t => t.Name == _selectedTweak);
 
     public override void OnClose()
     {
@@ -51,7 +51,7 @@ public partial class HaselWindow : Window
         ImGui.TableSetupColumn("Checkbox", ImGuiTableColumnFlags.WidthFixed);
         ImGui.TableSetupColumn("Tweak Name", ImGuiTableColumnFlags.WidthStretch);
 
-        foreach (var tweak in Tweaks.Where(t => !t.Disabled && (!t.IsDebug || C.ShowDebug)).OrderBy(t => t.Name))
+        foreach (var tweak in Plugin.Tweaks.Where(t => !t.Disabled && (!t.IsDebug || C.ShowDebug)).OrderBy(t => t.Name))
         {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();

@@ -19,15 +19,16 @@ public class FateToolKitConfig
 }
 
 [Tweak]
+[Requires(Ipc.Navmesh | Ipc.BossMod)]
 public class FateToolKit : Tweak<FateToolKitConfig>
 {
     public override string Name => "Fate Tool Kit (Date With Destiny)";
     public override string Description => "Fate tracker with additional fate automations.";
 
-    [CommandHandler(["/dwd"], "Opens the FATE tracker")]
+    [CommandHandler(["/dwd", "/vfate"], "Opens the FATE tracker")]
     private void OnCommand(string command, string arguments) => Window<DateWithDestinyWindow>()?.Toggle();
 
-    [TweakEvent(TweakEvent.FateJoined)]
+    [TweakEvent(TweakEvent.FateJoined, AutoEnable = false)]
     private void OnFateJoined(Type type, EventArgs args)
     {
         // return if fateargs fateid is not next fate
@@ -44,14 +45,14 @@ public class FateToolKit : Tweak<FateToolKitConfig>
         // todo: pull size based on role
     }
 
-    [TweakEvent(TweakEvent.FateLeft)]
+    [TweakEvent(TweakEvent.FateLeft, AutoEnable = false)]
     private void OnFateLeft(Type type, EventArgs args)
     {
         Service.BossMod.ClearActive();
         Service.Automation.Start(new FateGrind(Config));
     }
 
-    [TweakEvent(TweakEvent.Died)]
+    [TweakEvent(TweakEvent.Died, AutoEnable = false)]
     private void OnDeath(Type type, EventArgs args)
     {
         Service.Automation.Start(new FateGrind(Config));

@@ -249,7 +249,8 @@ public abstract partial class Tweak // Internal
 
         try
         {
-            EnableEventHandlers();
+            if (EventHandlers.Any(eh => eh.GetCustomAttribute<TweakEventAttribute>()?.AutoEnable != false))
+                EnableEventHandlers();
         }
         catch (Exception ex)
         {
@@ -301,7 +302,8 @@ public abstract partial class Tweak // Internal
 
         try
         {
-            DisableEventHandlers();
+            if (AreEventHandlersEnabled)
+                DisableEventHandlers();
         }
         catch (Exception ex)
         {
@@ -480,8 +482,11 @@ public abstract partial class Tweak // Internal
         }
     }
 
-    protected virtual void EnableEventHandlers()
+    public void EnableEventHandlers()
     {
+        if (AreEventHandlersEnabled)
+            return;
+
         foreach (var methodInfo in EventHandlers)
         {
             var attr = methodInfo.GetCustomAttribute<TweakEventAttribute>()!;
@@ -513,15 +518,23 @@ public abstract partial class Tweak // Internal
                 _eventHandlers[eventEnum].Add(handler);
             }
         }
+
+        AreEventHandlersEnabled = true;
     }
 
-    protected virtual void DisableEventHandlers()
+    public void DisableEventHandlers()
     {
+        if (!AreEventHandlersEnabled)
+            return;
+
         foreach (var (eventName, handlers) in _eventHandlers)
             foreach (var handler in handlers)
                 Service.TweakEventManager.Unsubscribe(eventName, handler);
         _eventHandlers.Clear();
+        AreEventHandlersEnabled = false;
     }
+
+    public bool AreEventHandlersEnabled { get; private set; } = false;
 
     protected void DrawCommands()
     {

@@ -4,5 +4,6 @@ namespace ComplexTweaks.FeaturesSetup.Attributes;
 public class TweakEventAttribute(params TweakEvent[] events) : Attribute
 {
     public TweakEvent[] Events { get; } = events;
+    public bool AutoEnable { get; init; } = true;
 }
 

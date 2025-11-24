@@ -4,7 +4,6 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.Shell;
 using Lumina.Excel.Sheets;
-using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -25,8 +24,10 @@ public partial class InstantLogout : Tweak
         }
 
         // ToString is needed so that the implicit equals doesn't try to turn msg into a ROSSSS (which will crash with payloads like translate)
-        if (GetRow<TextCommand>(172) is { Command: var cmd, Alias: var alias } && (cmd.ToString() == msg || alias.ToString() == msg) && ShouldLogout())
-            Logout();
+        if (GetRow<TextCommand>(172) is { Command: var cmd, Alias: var alias } && (cmd.ToString() == msg || alias.ToString() == msg) && ShouldInstantLogout())
+            AgentLobby.Instance()->HandleLogout(false, 60);
+        if (GetRow<TextCommand>(173) is { Command: var cmd2, Alias: var alias2 } && (cmd2.ToString() == msg || alias2.ToString() == msg) && ShouldInstantLogout())
+            AgentLobby.Instance()->HandleLogout(true, 60);
 
         ExecuteCommandInnerHook.Original(commandModule, rawMessage, uiModule);
     }
@@ -38,10 +39,12 @@ public partial class InstantLogout : Tweak
         {
             switch (a3)
             {
-                case 23 when ShouldLogout():
-                    Logout();
+                case 23 when ShouldInstantLogout():
+                    AgentLobby.Instance()->HandleLogout(false, 60);
                     return false;
-                    // 24 is for shutdown but I don't want to override that one
+                case 24 when ShouldInstantLogout():
+                    AgentLobby.Instance()->HandleLogout(true, 60);
+                    return false;
             }
         }
 
@@ -49,18 +52,6 @@ public partial class InstantLogout : Tweak
     }
 
     // only trigger instant when the 20s would trigger since this causes "the selected character was not logged out properly" and I'd like to do that as infrequently as possible
-    private unsafe bool ShouldLogout() => !Player.IsInDuty && !TerritoryInfo.Instance()->InSanctuary;
-    private unsafe void Logout()
-    {
-        for (var i = 0; i < Svc.Condition.MaxEntries; i++)
-            Marshal.WriteByte(Svc.Condition.Address + i, 0);
-
-        foreach (var addon in RaptureAtkUnitManager.Instance()->AtkUnitManager.AllLoadedUnitsList.Entries)
-        {
-            if (addon.Value == null || !addon.Value->IsVisible) continue;
-            addon.Value->Close(true);
-        }
-
-        Service.Memory.SendLogout?.Invoke();
-    }
+    // TODO: figure out what needs to be done before HandleLogout to not have the above happen
+    private unsafe bool ShouldInstantLogout() => !Player.IsInDuty && !TerritoryInfo.Instance()->InSanctuary;
 }

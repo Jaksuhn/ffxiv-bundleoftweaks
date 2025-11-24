@@ -37,7 +37,6 @@ public unsafe class Memory
         internal const string FreeCompanyDialogPacketReceive = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 42 31"; // xan
         internal const string ProcessPacketUpdateClassInfo = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B DA 48 8D 0D ?? ?? ?? ??";
         internal const string SystemMenuExecution = "E8 ?? ?? ?? ?? 40 B5 ?? 41 B9";
-        internal const string SendLogout = "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 74 3C 48 8B 0D ?? ?? ?? ??";
         internal const string HasPermission = "E8 ?? ?? ?? ?? 84 C0 75 ?? 8B FB";
         internal const string UpdateOnlineStatus = "48 89 5C 24 ?? 57 48 83 EC 20 4C 8B 49 28 48 8B D9";
         internal const string CanEquip = "E8 ?? ?? ?? ?? 85 C0 75 ?? 80 7E";
@@ -64,7 +63,6 @@ public unsafe class Memory
         internal delegate nint WorldTravelSetupInfoDelegate(nint worldTravel, ushort currentWorld, ushort targetWorld);
         internal delegate void ProcessPacketUpdateClassInfoDelegate(InfoProxyInterface* ptr, byte* packetData);
         internal delegate bool SystemMenuExecutionDelegate(AgentHUD* @this, int a2, int a3, int a4, byte* a5);
-        internal delegate nint SendLogoutDelegate();
         internal delegate bool HasPermissionDelegate(Conditions* @this, uint permissionId, int excludedCondition1 = 0, int excludedCondition2 = 0);
         internal delegate void UpdateOnlineStatusDelegate(InfoProxyDetail* @this);
         internal delegate bool CanEquip(uint itemId, byte race, byte sex, ushort level, byte classJobId, byte grandCompany, byte pvpRank, ExcelRow* item);
@@ -73,7 +71,6 @@ public unsafe class Memory
     internal Delegates.RidePillionDelegate? RidePillion = EzDelegate.Get<Delegates.RidePillionDelegate>(Signatures.RidePillion);
     internal Delegates.ExecuteCommandDelegate? ExecuteCommand = EzDelegate.Get<Delegates.ExecuteCommandDelegate>(Signatures.ExecuteCommand);
     internal Delegates.MoveItem? MoveItem = EzDelegate.Get<Delegates.MoveItem>(Signatures.MoveItem);
-    internal Delegates.SendLogoutDelegate? SendLogout = EzDelegate.Get<Delegates.SendLogoutDelegate>(Signatures.SendLogout);
     internal Delegates.HasPermissionDelegate? HasPermission = EzDelegate.Get<Delegates.HasPermissionDelegate>(Signatures.HasPermission);
     internal Delegates.UpdateOnlineStatusDelegate? ClearAfkStatus = EzDelegate.Get<Delegates.UpdateOnlineStatusDelegate>(Signatures.UpdateOnlineStatus);
     internal Delegates.CanEquip? CanEquip = EzDelegate.Get<Delegates.CanEquip>(Signatures.CanEquip);

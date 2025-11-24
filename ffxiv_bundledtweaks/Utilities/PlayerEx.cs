@@ -34,6 +34,7 @@ public static unsafe class PlayerEx
         public static bool AllowedToFly => PlayerState.Instance()->IsAetherCurrentZoneComplete(Svc.ClientState.TerritoryType);
         public static ushort CurrentCfc => GameMain.Instance()->CurrentContentFinderConditionId;
         public static FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse StructsIntendedUse => (FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse)(GetRow<TerritoryType>(Player.Territory)?.TerritoryIntendedUse.RowId);
+        public static byte ReviveState => Player.IsDead ? AgentRevive.Instance()->ReviveState : (byte)0;
 
         public static HaterInfo[] Haters => UIState.Instance()->Hater.Haters.ToArray();
         public static int HatersWithFullAggro => Player.Haters.Count(h => h.Enmity == 100);

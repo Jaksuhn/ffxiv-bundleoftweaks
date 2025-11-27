@@ -93,7 +93,7 @@ internal sealed class HookGenerator : IIncrementalGenerator
                     var methodSymbol = (IMethodSymbol)context.TargetSymbol;
                     var attr = methodSymbol.GetAttributes()[0];
 
-                    var addressName = $"*(nint*)({attr.AttributeClass!.TypeArguments[0].GetFullyQualifiedName()}.StaticVirtualTablePointer + 8 * {(int)attr.ConstructorArguments[0].Value!})";
+                    var addressName = $"{attr.AttributeClass!.TypeArguments[0].GetFullyQualifiedName()}.StaticVirtualTablePointer->{methodSymbol.Name}";
 
                     return new HookInfo(
                         new ClassInfo(

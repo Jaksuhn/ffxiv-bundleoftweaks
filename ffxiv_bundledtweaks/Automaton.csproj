@@ -22,8 +22,8 @@
 		<ProjectReference Include="..\..\..\FFXIVClientStructs\InteropGenerator\InteropGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 	<Target Name="Clean CS" Condition="'$(Configuration)'!='LocalCS' and $([MSBuild]::IsOSPlatform('Windows'))" BeforeTargets="PreBuildEvent">
-		<Exec Command="del $(TargetDir)FFXIVClientStructs.dll" EchoOff="true" StandardErrorImportance="low" StandardOutputImportance="low" ContinueOnError="true"/>
-		<Exec Command="del $(TargetDir)InteropGenerator.Runtime.dll" EchoOff="true" StandardErrorImportance="low" StandardOutputImportance="low" ContinueOnError="true"/>
+		<Exec Command="if exist &quot;$(TargetDir)FFXIVClientStructs.dll&quot; del &quot;$(TargetDir)FFXIVClientStructs.dll&quot;" EchoOff="true" StandardErrorImportance="low" StandardOutputImportance="low"/>
+		<Exec Command="if exist &quot;$(TargetDir)InteropGenerator.Runtime.dll&quot; del &quot;$(TargetDir)InteropGenerator.Runtime.dll&quot;" EchoOff="true" StandardErrorImportance="low" StandardOutputImportance="low"/>
 	</Target>
 	<Target Name="Ensure CExporter" Condition="'$(Configuration)'=='LocalCS'" BeforeTargets="PreBuildEvent">
 		<Exec Command="dotnet run --no-restore -v q --project ..\FFXIVClientStructs\CExporter\CExporter.csproj --quiet --no-write --strip-color"/>

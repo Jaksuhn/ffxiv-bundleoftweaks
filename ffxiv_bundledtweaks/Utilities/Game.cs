@@ -52,6 +52,16 @@ public unsafe class Game
         }
     }
 
+    public static void ProgressMateriaAttachDialog()
+    {
+        if (TryGetAddonByName<AtkUnitBase>("MateriaAttachDialog", out var addon))
+        {
+            var evt = new AtkEvent() { Listener = &addon->AtkEventListener, Target = &AtkStage.Instance()->AtkEventTarget };
+            var data = new AtkEventData();
+            addon->ReceiveEvent(AtkEventType.ButtonClick, 0, &evt, &data);
+        }
+    }
+
     public static void TeleportToAethernet(uint currentAetheryte, uint destinationAetheryte)
     {
         Span<uint> payload = [4, destinationAetheryte];

@@ -1,4 +1,5 @@
 using Dalamud.Game.ClientState.Fates;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 
 namespace Automaton.Events;
@@ -11,8 +12,6 @@ public class FateEventArgs : EventArgs
 
 public class FateEventTracker : ITweakEvent
 {
-    private ushort? _currentFateId;
-
     public TweakEvent[] Events => [TweakEvent.FateJoined, TweakEvent.FateLeft];
 
     public void RegisterHandlers(TweakEventManager manager)
@@ -20,6 +19,9 @@ public class FateEventTracker : ITweakEvent
         manager.RegisterFrameworkUpdateHandler(TweakEvent.FateJoined, OnFateFrameworkUpdate);
         manager.RegisterFrameworkUpdateHandler(TweakEvent.FateLeft, OnFateFrameworkUpdate);
     }
+
+    private ushort? _currentFateId;
+    private unsafe bool IsGrounded => Player.Character->MovementState is MovementStateOptions.Normal && !Player.Mounted;
 
     private unsafe void OnFateFrameworkUpdate(IFramework framework)
     {
@@ -31,7 +33,8 @@ public class FateEventTracker : ITweakEvent
         var currentFate = fateManager->CurrentFate;
         var currentFateId = currentFate != null ? currentFate->FateId : (ushort)0;
 
-        if (currentFateId != 0 && _currentFateId != currentFateId) // joined
+        // only consider it joining when grounded
+        if (currentFateId != 0 && _currentFateId != currentFateId && IsGrounded) // joined
         {
             _currentFateId = currentFateId;
             var fate = Svc.Fates.CreateFateReference((nint)currentFate);

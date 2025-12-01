@@ -6,10 +6,8 @@ namespace InteropSourceGenerators.Extensions;
 ///     Extension methods for <see cref="IParameterSymbol" /> types.
 /// </summary>
 // ReSharper disable once InconsistentNaming
-internal static class IParameterSymbolExtensions
-{
-    public static string? GetDefaultValueString(this IParameterSymbol symbol)
-    {
+internal static class IParameterSymbolExtensions {
+    public static string? GetDefaultValueString(this IParameterSymbol symbol) {
         if (!symbol.HasExplicitDefaultValue)
             return null;
 

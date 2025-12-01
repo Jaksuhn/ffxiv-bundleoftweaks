@@ -3,19 +3,16 @@ using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Utilities;
 
-public static unsafe class Structs
-{
+public static unsafe class Structs {
     [StructLayout(LayoutKind.Explicit)]
-    public unsafe struct PlayerController
-    {
+    public unsafe struct PlayerController {
         [FieldOffset(0x10)] public PlayerMoveControllerWalk MoveControllerWalk;
         [FieldOffset(0x150)] public PlayerMoveControllerFly MoveControllerFly;
         [FieldOffset(0x559)] public byte ControlMode;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0x140)]
-    public unsafe struct PlayerMoveControllerWalk
-    {
+    public unsafe struct PlayerMoveControllerWalk {
         [FieldOffset(0x10)] public Vector3 MovementDir;
         [FieldOffset(0x58)] public float BaseMovementSpeed;
         [FieldOffset(0x90)] public float MovementDirRelToCharacterFacing;
@@ -28,8 +25,7 @@ public static unsafe class Structs
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0xB0)]
-    public unsafe struct PlayerMoveControllerFly
-    {
+    public unsafe struct PlayerMoveControllerFly {
         [FieldOffset(0x10)] public float unk10; // x coord?
         [FieldOffset(0x14)] public float unk14; // y coord?
         [FieldOffset(0x18)] public float unk18; // z coord?
@@ -50,14 +46,12 @@ public static unsafe class Structs
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0x1BD0)]
-    public unsafe partial struct Character
-    {
+    public unsafe partial struct Character {
         [FieldOffset(0x386)] public byte IsFlying;
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct AgentWorldTravel
-    {
+    public struct AgentWorldTravel {
         [FieldOffset(0)]
         public AgentInterface AgentInterface;
 

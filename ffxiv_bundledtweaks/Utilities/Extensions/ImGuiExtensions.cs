@@ -11,31 +11,25 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Utilities.Extensions;
 
-public static class ImGuiExtensions
-{
+public static class ImGuiExtensions {
     private static float startTime;
 
-    extension(ImGui)
-    {
-        public static void DrawPaddedSeparator()
-        {
+    extension(ImGui) {
+        public static void DrawPaddedSeparator() {
             var style = ImGui.GetStyle();
             ImGuiEx.PushCursorY(style.ItemSpacing.Y);
             ImGui.Separator();
             ImGuiEx.PushCursorY(style.ItemSpacing.Y - 1);
         }
 
-        public static void DrawLink(string label, string title, string url)
-        {
+        public static void DrawLink(string label, string title, string url) {
             ImGui.TextUnformatted(label);
 
-            if (ImGui.IsItemHovered())
-            {
+            if (ImGui.IsItemHovered()) {
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
 
                 using var tooltip = ImRaii.Tooltip();
-                if (tooltip.Success)
-                {
+                if (tooltip.Success) {
                     ImGuiEx.Text(EzColor.White, title);
 
                     var pos = ImGui.GetCursorPos();
@@ -50,14 +44,12 @@ public static class ImGuiExtensions
                 }
             }
 
-            if (ImGui.IsItemClicked())
-            {
+            if (ImGui.IsItemClicked()) {
                 Task.Run(() => Dalamud.Utility.Util.OpenLink(url));
             }
         }
 
-        public static void DrawSection(string Label, bool PushDown = true, bool RespectUiTheme = false, uint UIColor = 1, bool drawSeparator = true)
-        {
+        public static void DrawSection(string Label, bool PushDown = true, bool RespectUiTheme = false, uint UIColor = 1, bool drawSeparator = true) {
             var style = ImGui.GetStyle();
 
             // push down a bit
@@ -70,8 +62,7 @@ public static class ImGuiExtensions
 
             ImGuiEx.Text(color, Label);
 
-            if (drawSeparator)
-            {
+            if (drawSeparator) {
                 // pull up the separator
                 ImGuiEx.PushCursorY(-style.ItemSpacing.Y + 3);
                 ImGui.Separator();
@@ -81,16 +72,13 @@ public static class ImGuiExtensions
 
         public static ImRaii.Indent ConfigIndent(bool enabled = true) => ImRaii.PushIndent(ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X / 2f, true, enabled);
 
-        public static void Checkbox(string name, ref bool v)
-        {
+        public static void Checkbox(string name, ref bool v) {
             if (ImGui.Checkbox(name, ref v))
                 EzConfig.Save();
         }
 
-        public static void Icon(FontAwesomeIcon icon, EzColor? col = null, string? tooltip = null)
-        {
-            using (col is { } c ? ImRaii.PushColor(ImGuiCol.Text, c.Vector4) : null)
-            {
+        public static void Icon(FontAwesomeIcon icon, EzColor? col = null, string? tooltip = null) {
+            using (col is { } c ? ImRaii.PushColor(ImGuiCol.Text, c.Vector4) : null) {
                 using (ImRaii.PushFont(UiBuilder.IconFont))
                     ImGui.TextUnformatted(icon.ToIconString());
             }
@@ -102,8 +90,7 @@ public static class ImGuiExtensions
         public static void Icon(ushort iconID, Vector2 size) => Icon(Utils.GetIcon(iconID), size);
         public static void Icon(uint iconID, int size) => Icon(Utils.GetIcon(iconID), size.Vec2());
         public static void Icon(uint iconID, Vector2 size) => Icon(Utils.GetIcon(iconID), size);
-        public static void Icon(IDalamudTextureWrap? icon, Vector2 size)
-        {
+        public static void Icon(IDalamudTextureWrap? icon, Vector2 size) {
             if (icon != null)
                 ImGui.Image(icon.Handle, size);
             else
@@ -113,21 +100,18 @@ public static class ImGuiExtensions
         public static float IconUnitHeight() => ImGuiHelpers.GetButtonSize(FontAwesomeIcon.Trash.ToIconString()).Y;
         public static float IconUnitWidth() => ImGuiHelpers.GetButtonSize(FontAwesomeIcon.Trash.ToIconString()).X;
 
-        public static bool IconButton(FontAwesomeIcon icon, string key, string tooltip = "", Vector2 size = default, bool disabled = false, bool active = false)
-        {
+        public static bool IconButton(FontAwesomeIcon icon, string key, string tooltip = "", Vector2 size = default, bool disabled = false, bool active = false) {
             using var iconFont = ImRaii.PushFont(UiBuilder.IconFont);
             if (!key.StartsWith("##")) key = "##" + key;
 
             var disposables = new List<IDisposable>();
 
-            if (disabled)
-            {
+            if (disabled) {
                 disposables.Add(ImRaii.PushColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]));
                 disposables.Add(ImRaii.PushColor(ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button]));
                 disposables.Add(ImRaii.PushColor(ImGuiCol.ButtonHovered, ImGui.GetStyle().Colors[(int)ImGuiCol.Button]));
             }
-            else if (active)
-            {
+            else if (active) {
                 disposables.Add(ImRaii.PushColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonActive]));
             }
 
@@ -144,8 +128,7 @@ public static class ImGuiExtensions
             return pressed;
         }
 
-        public static void ResetButton<T>(ref T var, T value)
-        {
+        public static void ResetButton<T>(ref T var, T value) {
             if (IconButton(FontAwesomeIcon.Undo, $"##FormatReset{var}", $"Reset To Default: {var}"))
                 var = value;
         }
@@ -154,8 +137,7 @@ public static class ImGuiExtensions
         /// Calculates a contrasting text colour (b/w) based on the background colour's luminance.
         /// Uses perceptual luminance formula: 0.299*R + 0.587*G + 0.114*B
         /// </summary>
-        public static Vector4 GetContrastingTextColor(Vector4 backgroundColor)
-        {
+        public static Vector4 GetContrastingTextColor(Vector4 backgroundColor) {
             var luminance = 0.299f * backgroundColor.X + 0.587f * backgroundColor.Y + 0.114f * backgroundColor.Z;
             return luminance > 0.5f ? new Vector4(0, 0, 0, backgroundColor.W) : new Vector4(1, 1, 1, backgroundColor.W);
         }
@@ -164,8 +146,7 @@ public static class ImGuiExtensions
         /// Calculates a contrasting text colour for a progress bar, considering both the filled and unfilled portions.
         /// The text colour is determined by which colour (filled or background) covers more of the text area.
         /// </summary>
-        public static Vector4 GetProgressBarTextColor(Vector4 filledColor, Vector4 backgroundColor, float percentage, float textStartX, float textWidth, float barWidth)
-        {
+        public static Vector4 GetProgressBarTextColor(Vector4 filledColor, Vector4 backgroundColor, float percentage, float textStartX, float textWidth, float barWidth) {
             var filledEndX = barWidth * percentage;
             var textEndX = textStartX + textWidth;
 
@@ -179,8 +160,7 @@ public static class ImGuiExtensions
                 dominantColor = filledColor;
             else if (textOverBackground > textOverFilled)
                 dominantColor = backgroundColor;
-            else
-            {
+            else {
                 var blendFactor = 0.5f;
                 dominantColor = new Vector4(
                     filledColor.X * blendFactor + backgroundColor.X * (1 - blendFactor),
@@ -197,11 +177,9 @@ public static class ImGuiExtensions
         /// Sets up drag and drop source for reordering list items.
         /// Call this after drawing the draggable item (e.g., after a Button or Selectable).
         /// </summary>
-        public static void DragDropSource(int index, ReadOnlySpan<byte> payloadType, string? dragPreviewText = null)
-        {
+        public static void DragDropSource(int index, ReadOnlySpan<byte> payloadType, string? dragPreviewText = null) {
             using var source = ImRaii.DragDropSource();
-            if (source)
-            {
+            if (source) {
                 if (!string.IsNullOrEmpty(dragPreviewText))
                     ImGui.Text(dragPreviewText);
                 ImGui.SetDragDropPayload(payloadType, BitConverter.GetBytes(index), ImGuiCond.None);
@@ -213,19 +191,14 @@ public static class ImGuiExtensions
         /// Call this after drawing the drop target item.
         /// </summary>
         /// <param name="onReorder">Callback that performs the reorder: (sourceIndex, targetIndex) => { /* reorder logic */ }</param>
-        public static void DragDropTarget(int targetIndex, ReadOnlySpan<byte> payloadType, int listCount, Action<int, int> onReorder)
-        {
+        public static void DragDropTarget(int targetIndex, ReadOnlySpan<byte> payloadType, int listCount, Action<int, int> onReorder) {
             using var target = ImRaii.DragDropTarget();
-            if (target)
-            {
+            if (target) {
                 var payload = ImGui.AcceptDragDropPayload(payloadType);
-                unsafe
-                {
-                    if (!payload.IsNull && payload.IsDelivery() && payload.Data != null && payload.DataSize == sizeof(int))
-                    {
+                unsafe {
+                    if (!payload.IsNull && payload.IsDelivery() && payload.Data != null && payload.DataSize == sizeof(int)) {
                         var sourceIndex = *(int*)payload.Data;
-                        if (sourceIndex != targetIndex && sourceIndex >= 0 && sourceIndex < listCount)
-                        {
+                        if (sourceIndex != targetIndex && sourceIndex >= 0 && sourceIndex < listCount) {
                             // Calculate insert index before removal
                             // When dragging down (sourceIndex < targetIndex), insert after target (at targetIndex+1)
                             // When dragging up (sourceIndex > targetIndex), insert before target (at targetIndex)
@@ -240,12 +213,9 @@ public static class ImGuiExtensions
         }
 
         // https://github.com/KazWolfe/CollectorsAnxiety/blob/bf48a4b0681e5f70fb67e3b1cb22b4565ecfcc02/CollectorsAnxiety/Util/ImGuiUtil.cs#L10
-        public static void DrawProgressBar(int progress, int total, Vector4 colour)
-        {
-            try
-            {
-                using (ImRaii.Group())
-                {
+        public static void DrawProgressBar(int progress, int total, Vector4 colour) {
+            try {
+                using (ImRaii.Group()) {
                     var cursor = ImGui.GetCursorPos();
                     var sizeVec = new Vector2(ImGui.GetContentRegionAvail().X - IconUnitWidth() - ImGui.GetStyle().WindowPadding.X * 2, IconUnitHeight());
 
@@ -263,10 +233,8 @@ public static class ImGuiExtensions
             catch (Exception e) { e.Log(); }
         }
 
-        public static void PathfindButton(NavmeshIPC nav, Vector3 pos)
-        {
-            if (ImGuiComponents.IconButton($"###Pathfind{pos}", FontAwesomeIcon.Map))
-            {
+        public static void PathfindButton(NavmeshIPC nav, Vector3 pos) {
+            if (ImGuiComponents.IconButton($"###Pathfind{pos}", FontAwesomeIcon.Map)) {
                 if (!nav.IsRunning())
                     nav.PathfindAndMoveTo(pos, Svc.Condition[ConditionFlag.InFlight]);
                 else
@@ -275,8 +243,7 @@ public static class ImGuiExtensions
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Pathfind");
         }
 
-        public static void FlashText(string text, Vector4 colour1, Vector4 colour2, float duration)
-        {
+        public static void FlashText(string text, Vector4 colour1, Vector4 colour2, float duration) {
             var currentTime = (float)ImGui.GetTime();
             var elapsedTime = currentTime - startTime;
 
@@ -297,22 +264,18 @@ public static class ImGuiExtensions
                 startTime = currentTime;
         }
 
-        public static string EnumString(Enum v)
-        {
+        public static string EnumString(Enum v) {
             var name = v.ToString();
             return v.GetType().GetField(name)?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? name;
         }
 
-        public static bool Enum<T>(string label, ref T v) where T : Enum
-        {
+        public static bool Enum<T>(string label, ref T v) where T : Enum {
             var res = false;
             ImGui.SetNextItemWidth(200);
             using var combo = ImRaii.Combo(label, EnumString(v));
             if (!combo) return false;
-            foreach (var opt in System.Enum.GetValues(v.GetType()))
-            {
-                if (ImGui.Selectable(EnumString((Enum)opt), opt.Equals(v)))
-                {
+            foreach (var opt in System.Enum.GetValues(v.GetType())) {
+                if (ImGui.Selectable(EnumString((Enum)opt), opt.Equals(v))) {
                     v = (T)opt;
                     res = true;
                 }
@@ -320,14 +283,12 @@ public static class ImGuiExtensions
             return res;
         }
 
-        public static void DrawTableColumn(string name)
-        {
+        public static void DrawTableColumn(string name) {
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(name);
         }
 
-        public static void FieldAndValue(string field, object value, bool? valueCondition = null)
-        {
+        public static void FieldAndValue(string field, object value, bool? valueCondition = null) {
             using (var _ = ImRaii.PushColor(ImGuiCol.Text, (uint)Colors.Field))
                 ImGui.TextUnformatted($"{field}:");
             ImGui.SameLine();
@@ -335,8 +296,7 @@ public static class ImGuiExtensions
                 ImGui.TextUnformatted($"{(valueCondition is { } condition && condition || valueCondition is not { } ? value : "N/A")}");
         }
 
-        public static void SpacedSeparator()
-        {
+        public static void SpacedSeparator() {
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();

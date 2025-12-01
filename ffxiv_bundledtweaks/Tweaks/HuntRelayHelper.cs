@@ -17,8 +17,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
 namespace ComplexTweaks.Tweaks;
 
-public class HuntRelayHelperConfiguration
-{
+public class HuntRelayHelperConfiguration {
     public List<(XivChatType Channel, string Command, bool IsLocal, bool Enabled)> Channels =
     [
         (Ls1, "l1", true, false),
@@ -61,8 +60,7 @@ public class HuntRelayHelperConfiguration
 }
 
 [Tweak]
-public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
-{
+public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     public override string Name => "Hunt Relay Helper";
     public override string Description => "Appends a clickable icon to messages with a MapLinkPayload to relay them to other channels.";
 
@@ -70,27 +68,23 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
     private readonly string InstanceHeuristics = @"\b(?:instance\s*(?<instanceNumber>\d+)|i(?<iNumber>\d+))\b";
     private RelayPayload? LastRelay;
 
-    public override void Enable()
-    {
+    public override void Enable() {
         Svc.Chat.CheckMessageHandled += OnChatMessage;
         RelayLinkPayload = Svc.Chat.AddChatLinkHandler((uint)LinkHandlerId.RelayLinkPayload, HandleRelayLink);
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         Svc.Chat.CheckMessageHandled -= OnChatMessage;
         Svc.Chat.RemoveChatLinkHandler((uint)LinkHandlerId.RelayLinkPayload);
     }
 
-    public enum Locality
-    {
+    public enum Locality {
         PlayerHomeWorld,
         PlayerCurrentWorld,
         SenderHomeWorld,
     }
 
-    public enum RelayTypes
-    {
+    public enum RelayTypes {
         SRank,
         Minions,
         Train,
@@ -99,13 +93,10 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         None, // Keep this last
     }
 
-    public override void DrawConfig()
-    {
+    public override void DrawConfig() {
         ImGui.DrawSection("Chat Channels");
-        using (ImRaii.Table($"##{nameof(Config.Channels)}", 4))
-        {
-            foreach (var c in Config.Channels.ToList().Select((x, i) => new { Value = x, Index = i }))
-            {
+        using (ImRaii.Table($"##{nameof(Config.Channels)}", 4)) {
+            foreach (var c in Config.Channels.ToList().Select((x, i) => new { Value = x, Index = i })) {
                 var column = c.Index % 2 == 0 ? 0 : 2;
                 if (column == 0)
                     ImGui.TableNextRow();
@@ -148,8 +139,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         ImGuiComponents.HelpMarker("If the world is failed to be detected, assume it's meant for the local world.");
 
         ImGui.Indent();
-        foreach (var l in Enum.GetValues<Locality>().Select((x, i) => new { Value = x, Index = i }))
-        {
+        foreach (var l in Enum.GetValues<Locality>().Select((x, i) => new { Value = x, Index = i })) {
             if (ImGui.RadioButton($"{l.Value.ToString().SplitWords()}", Config.AssumedLocality == l.Value))
                 Config.AssumedLocality = l.Value;
             if (l.Index < Enum.GetValues<Locality>().Length - 1)
@@ -167,8 +157,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         ImGuiComponents.HelpMarker("Available tags: <world>, <type>, <flag>");
 
         ImGui.DrawSection("Relay Type Configuration");
-        foreach (var t in Config.Types.ToList().Select((x, i) => new { Value = x, Index = i }))
-        {
+        foreach (var t in Config.Types.ToList().Select((x, i) => new { Value = x, Index = i })) {
             ImGui.TextUnformatted($"{t.Value.RelayType.ToString().SplitWords()}");
             ImGui.Indent();
             ImGuiEx.TextV("Format: ");
@@ -188,26 +177,21 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         }
     }
 
-    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
-    {
+    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
         if (sender.TextValue == Player.Name) return;
         var maplink = message.Payloads.FirstOrDefault(x => x is MapLinkPayload, null);
         if (maplink is not MapLinkPayload mlp) return;
 
-        try
-        {
+        try {
             var (world, instance, relayType) = DetectWorldInstanceRelayType(message);
-            if ((RelayTypes)relayType == RelayTypes.None)
-            {
+            if ((RelayTypes)relayType == RelayTypes.None) {
                 Log($"Failed to detect relay type in {nameof(MapLinkPayload)} message: {message}");
                 return;
             }
             if (world is null && type is XivChatType.NoviceNetwork)
                 world = Player.Object.CurrentWorld.Value;
-            if (world is null && Config.AssumeBlankWorldsAreLocal)
-            {
-                world = Config.AssumedLocality switch
-                {
+            if (world is null && Config.AssumeBlankWorldsAreLocal) {
+                world = Config.AssumedLocality switch {
                     Locality.PlayerHomeWorld => Player.Object.HomeWorld.Value,
                     Locality.PlayerCurrentWorld => Player.Object.CurrentWorld.Value,
                     Locality.SenderHomeWorld => sender.Payloads.OfType<TextPayload>().Select(p => p.Text!.Contains((char)SeIconChar.CrossWorld)
@@ -222,31 +206,26 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
             else
                 Log($"Failed to detect world in {nameof(MapLinkPayload)} message: {message}");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, $"[{nameof(OnChatMessage)}] Unexpected error");
         }
     }
 
-    private unsafe void HandleRelayLink(uint _, SeString link)
-    {
+    private unsafe void HandleRelayLink(uint _, SeString link) {
         var payload = link.Payloads.OfType<RawPayload>().Select(RelayPayload.Parse).FirstOrDefault(x => x != default);
         if (payload == default) { Error($"Failed to parse {nameof(RelayPayload)}"); return; }
-        if (Player.TerritoryIntendedUse is TerritoryIntendedUseEnum.Crystalline_Conflict or TerritoryIntendedUseEnum.Crystalline_Conflict_2 or TerritoryIntendedUseEnum.Deep_Dungeon)
-        {
+        if (Player.TerritoryIntendedUse is TerritoryIntendedUseEnum.Crystalline_Conflict or TerritoryIntendedUseEnum.Crystalline_Conflict_2 or TerritoryIntendedUseEnum.Deep_Dungeon) {
             Log($"Relay link ignored. Player in territory {Player.Territory} ({Player.TerritoryIntendedUse}) where chat is not permitted.");
             return;
         }
-        if (payload == LastRelay)
-        {
+        if (payload == LastRelay) {
             Log("Relay link ignored; same as last relay.");
             return;
         }
 
         var relay = BuildRelayMessage(payload.MapLink, payload.World, payload.Instance, payload.RelayType);
         var nnRelay = BuildRelayMessage(payload.MapLink, payload.World, payload.Instance, payload.RelayType, true);
-        foreach (var (channel, command, islocal, _) in Config.Channels.Where(c => c.Enabled))
-        {
+        foreach (var (channel, command, islocal, _) in Config.Channels.Where(c => c.Enabled)) {
             var channelName = channel.GetAttribute<XivChatTypeInfoAttribute>()?.FancyName ?? throw new Exception($"Channel has no {nameof(XivChatTypeInfoAttribute)}");
             if (Config.DontRepeatRelays && payload.OriginChannel == ((uint)channel)) continue; // don't send to the channel that relay was clicked from
             if (channelName.StartsWith("Linkshell") && Player.CurrentWorld != Player.HomeWorld) continue; // don't send to linkshells when off homeworld
@@ -254,15 +233,13 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
             if (channelName.StartsWith("Novice") && Player.Object.CurrentWorld.Value.RowId != payload.World.RowId) continue; // don't send offworld relays to NN
             if (channelName.StartsWith("Novice") && InfoProxyNoviceNetwork.Instance()->Flags != 1) continue; // 1 = joined
 
-            if (Config.DryRun)
-            {
+            if (Config.DryRun) {
                 Svc.Chat.Print(new() { Type = channel, MessageBytes = [.. Encoding.UTF8.GetBytes($"[DRYRUN] "), .. channelName.StartsWith("Novice") ? nnRelay.ToArray() : relay.ToArray()] });
                 continue;
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            TaskManager.Enqueue(() =>
-            {
+            TaskManager.Enqueue(() => {
                 if (Player.Available) // messages can't be sent when travelling between zones where your player goes null
                 {
                     Chat.SendMessageUnsafe([.. Encoding.UTF8.GetBytes($"/{command} "), .. channelName.StartsWith("Novice") ? nnRelay.ToArray() : relay.ToArray()]);
@@ -276,16 +253,13 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         LastRelay = payload;
     }
 
-    private Lumina.Text.SeStringBuilder BuildRelayMessage(MapLinkPayload MapLink, World World, uint? Instance, uint RelayType, bool removeWorld = false)
-    {
+    private Lumina.Text.SeStringBuilder BuildRelayMessage(MapLinkPayload MapLink, World World, uint? Instance, uint RelayType, bool removeWorld = false) {
         var pattern = "(?i)(<flag>|<world>|<type>)";
         var msg = removeWorld ? Regex.Replace(Config.ChatMessagePattern, @"[^\s]*<world>[^\s]*", "").Replace(@"\s+", " ").Trim() : Config.ChatMessagePattern;
         var splitMsg = Regex.Split(msg, pattern);
         var sb = new Lumina.Text.SeStringBuilder();
-        foreach (var s in splitMsg)
-        {
-            switch (s)
-            {
+        foreach (var s in splitMsg) {
+            switch (s) {
                 case "<flag>":
                     // Hook PronounModule.Instance()->VirtualTable->ProcessString and decode the Utf8String to check the args here in case they change in the future
                     sb.BeginMacro(Lumina.Text.Payloads.MacroCode.Fixed)
@@ -303,8 +277,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
                     sb.Append(World.Name);
                     break;
                 case "<type>":
-                    switch (RelayType)
-                    {
+                    switch (RelayType) {
                         case (uint)RelayTypes.SRank:
                             sb.Append(Config.Types[(int)RelayTypes.SRank].TypeFormat);
                             break;
@@ -327,8 +300,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         return sb;
     }
 
-    private (World?, uint, uint) DetectWorldInstanceRelayType(SeString message)
-    {
+    private (World?, uint, uint) DetectWorldInstanceRelayType(SeString message) {
         var text = string.Join(" ", message.Payloads.OfType<TextPayload>().Select(x => x.Text));
         var heuristicInstance = 0;
         var mapInstance = text.Select(ReplaceSeIconIntanceNumber).OfType<int>().FirstOrDefault(0);
@@ -341,8 +313,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         text = string.Join(string.Empty, text.Select(ReplaceSeIconChar));
 
         var instanceMatch = Regex.Match(text, InstanceHeuristics, RegexOptions.IgnoreCase);
-        if (instanceMatch.Success)
-        {
+        if (instanceMatch.Success) {
             if (instanceMatch.Groups["instance"].Success && int.TryParse(instanceMatch.Groups["instance"].Value, out var i1))
                 heuristicInstance = i1;
             if (instanceMatch.Groups["iNumber"].Success && int.TryParse(instanceMatch.Groups["iNumber"].Value, out var i2))
@@ -350,10 +321,8 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         }
 
         var relayType = RelayTypes.None;
-        foreach (var t in Config.Types)
-        {
-            if (t.TypeHeuristics.Split(',').Select(x => x.Trim()).Any(x => { return x.StartsWith('/') && x.EndsWith('/') ? Regex.IsMatch(text, x[1..^1], RegexOptions.IgnoreCase) : text.Contains(x, StringComparison.OrdinalIgnoreCase); }))
-            {
+        foreach (var t in Config.Types) {
+            if (t.TypeHeuristics.Split(',').Select(x => x.Trim()).Any(x => { return x.StartsWith('/') && x.EndsWith('/') ? Regex.IsMatch(text, x[1..^1], RegexOptions.IgnoreCase) : text.Contains(x, StringComparison.OrdinalIgnoreCase); })) {
                 relayType = t.RelayType;
                 break;
             }
@@ -371,10 +340,8 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
     private string RemoveConflicts(string text) => text.Replace("kaiser behemoth", string.Empty, StringComparison.OrdinalIgnoreCase);
     private string RemoveNonAlphaNumeric(string text) => Regex.Replace(text, @"\W+", "");
 
-    private char ReplaceSeIconChar(char c)
-    {
-        return c switch
-        {
+    private char ReplaceSeIconChar(char c) {
+        return c switch {
             (char)SeIconChar.BoxedLetterA => 'A',
             (char)SeIconChar.BoxedLetterB => 'B',
             (char)SeIconChar.BoxedLetterC => 'C',
@@ -405,10 +372,8 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         };
     }
 
-    private int? ReplaceSeIconIntanceNumber(char c)
-    {
-        return c switch
-        {
+    private int? ReplaceSeIconIntanceNumber(char c) {
+        return c switch {
             (char)SeIconChar.Instance1 => 1,
             (char)SeIconChar.Instance2 => 2,
             (char)SeIconChar.Instance3 => 3,
@@ -422,10 +387,8 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration>
         };
     }
 
-    private int ReplaceSeIconCharNumber(char c)
-    {
-        return c switch
-        {
+    private int ReplaceSeIconCharNumber(char c) {
+        return c switch {
             (char)SeIconChar.Number1 => 1,
             (char)SeIconChar.BoxedNumber1 => 1,
             (char)SeIconChar.Number2 => 2,

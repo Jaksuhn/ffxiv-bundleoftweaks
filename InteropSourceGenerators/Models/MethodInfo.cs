@@ -9,14 +9,12 @@ internal sealed record MethodInfo(
     string Modifiers,
     string ReturnType,
     bool IsStatic,
-    ParameterInfo[] Parameters)
-{
+    ParameterInfo[] Parameters) {
     public string GetDeclarationString() => $"{Modifiers} {ReturnType} {Name}({GetParameterTypesAndNamesString()})";
 
     public string GetDeclarationStringWithoutPartial() => $"{Modifiers.Replace(" partial", string.Empty)} {ReturnType} {Name}({GetParameterTypesAndNamesString()})";
 
-    public string GetStringOverloadDeclarationString(string typeReplacement, ImmutableArray<string> paramsToOverload)
-    {
+    public string GetStringOverloadDeclarationString(string typeReplacement, ImmutableArray<string> paramsToOverload) {
         var parameterTypesAndNamesString = string.Join(", ",
             Parameters.Select(p => paramsToOverload.Contains(p.Name) ? $"{p.RefKind.GetParameterPrefix()}{typeReplacement} {p.Name}" : $"{p.RefKind.GetParameterPrefix()}{p.Type} {p.Name}"));
 

@@ -4,25 +4,20 @@ using System.Text.RegularExpressions;
 
 namespace ComplexTweaks.Utilities.Extensions;
 
-public static class DateTimeExtensions
-{
+public static class DateTimeExtensions {
     // there was probably a better way to do this
-    public static Regex GetFullDateTimeRegexPattern(this CultureInfo info)
-    {
+    public static Regex GetFullDateTimeRegexPattern(this CultureInfo info) {
         var form = info.DateTimeFormat.FullDateTimePattern;
 
         var regex = new StringBuilder();
         var inQuotes = false;
         var dtfi = info.DateTimeFormat;
 
-        for (var i = 0; i < form.Length; i++)
-        {
+        for (var i = 0; i < form.Length; i++) {
             var c = form[i];
 
-            if (c == '\'')
-            {
-                if (i + 1 < form.Length && form[i + 1] == '\'')
-                {
+            if (c == '\'') {
+                if (i + 1 < form.Length && form[i + 1] == '\'') {
                     regex.Append(Regex.Escape("'"));
                     i++;
                 }
@@ -31,52 +26,42 @@ public static class DateTimeExtensions
                 continue;
             }
 
-            if (inQuotes)
-            {
+            if (inQuotes) {
                 var escaped = Regex.Escape(c.ToString());
                 regex.Append(escaped);
                 continue;
             }
 
-            if (c == '%')
-            {
-                if (i + 1 < form.Length)
-                {
+            if (c == '%') {
+                if (i + 1 < form.Length) {
                     i++; // Skip % and check next char
                     c = form[i];
                 }
-                else
-                {
+                else {
                     // % at end of string, treat as literal
                     regex.Append(Regex.Escape("%"));
                     continue;
                 }
             }
 
-            switch (c)
-            {
+            switch (c) {
                 case 'd':
-                    if (i + 1 < form.Length && form[i + 1] == 'd')
-                    {
-                        if (i + 2 < form.Length && form[i + 2] == 'd')
-                        {
-                            if (i + 3 < form.Length && form[i + 3] == 'd')
-                            {
+                    if (i + 1 < form.Length && form[i + 1] == 'd') {
+                        if (i + 2 < form.Length && form[i + 2] == 'd') {
+                            if (i + 3 < form.Length && form[i + 3] == 'd') {
                                 var dayNames = string.Join("|", dtfi.DayNames.Where(d => !string.IsNullOrEmpty(d)).Select(Regex.Escape));
                                 var pattern = $@"({dayNames})";
                                 regex.Append(pattern);
                                 i += 3;
                             }
-                            else
-                            {
+                            else {
                                 var dayNames = string.Join("|", dtfi.AbbreviatedDayNames.Where(d => !string.IsNullOrEmpty(d)).Select(Regex.Escape));
                                 var pattern = $@"({dayNames})";
                                 regex.Append(pattern);
                                 i += 2;
                             }
                         }
-                        else
-                        {
+                        else {
                             regex.Append(@"\d{2}");
                             i++;
                         }
@@ -86,27 +71,22 @@ public static class DateTimeExtensions
                     break;
 
                 case 'M':
-                    if (i + 1 < form.Length && form[i + 1] == 'M')
-                    {
-                        if (i + 2 < form.Length && form[i + 2] == 'M')
-                        {
-                            if (i + 3 < form.Length && form[i + 3] == 'M')
-                            {
+                    if (i + 1 < form.Length && form[i + 1] == 'M') {
+                        if (i + 2 < form.Length && form[i + 2] == 'M') {
+                            if (i + 3 < form.Length && form[i + 3] == 'M') {
                                 var monthNames = string.Join("|", dtfi.MonthNames.Where(m => !string.IsNullOrEmpty(m)).Select(Regex.Escape));
                                 var pattern = $@"({monthNames})";
                                 regex.Append(pattern);
                                 i += 3;
                             }
-                            else
-                            {
+                            else {
                                 var monthNames = string.Join("|", dtfi.AbbreviatedMonthNames.Where(m => !string.IsNullOrEmpty(m)).Select(Regex.Escape));
                                 var pattern = $@"({monthNames})";
                                 regex.Append(pattern);
                                 i += 2;
                             }
                         }
-                        else
-                        {
+                        else {
                             regex.Append(@"\d{2}");
                             i++;
                         }
@@ -132,8 +112,7 @@ public static class DateTimeExtensions
                     break;
 
                 case 'h':
-                    if (i + 1 < form.Length && form[i + 1] == 'h')
-                    {
+                    if (i + 1 < form.Length && form[i + 1] == 'h') {
                         regex.Append(@"\d{2}");
                         i++;
                     }
@@ -142,8 +121,7 @@ public static class DateTimeExtensions
                     break;
 
                 case 'H':
-                    if (i + 1 < form.Length && form[i + 1] == 'H')
-                    {
+                    if (i + 1 < form.Length && form[i + 1] == 'H') {
                         regex.Append(@"\d{2}");
                         i++;
                     }
@@ -152,8 +130,7 @@ public static class DateTimeExtensions
                     break;
 
                 case 'm':
-                    if (i + 1 < form.Length && form[i + 1] == 'm')
-                    {
+                    if (i + 1 < form.Length && form[i + 1] == 'm') {
                         regex.Append(@"\d{2}");
                         i++;
                     }
@@ -162,8 +139,7 @@ public static class DateTimeExtensions
                     break;
 
                 case 's':
-                    if (i + 1 < form.Length && form[i + 1] == 's')
-                    {
+                    if (i + 1 < form.Length && form[i + 1] == 's') {
                         regex.Append(@"\d{2}");
                         i++;
                     }

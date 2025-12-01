@@ -5,13 +5,10 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace ComplexTweaks.Utilities.Movement;
 
-public unsafe class OverrideCamera
-{
-    public bool Enabled
-    {
+public unsafe class OverrideCamera {
+    public bool Enabled {
         get => RMICameraHook.IsEnabled;
-        set
-        {
+        set {
             if (value)
                 RMICameraHook.Enable();
             else
@@ -29,14 +26,12 @@ public unsafe class OverrideCamera
     [EzHook("40 53 48 83 EC 70 44 0F 29 44 24 ?? 48 8B D9", false)]
     private readonly EzHook<RMICameraDelegate> RMICameraHook = null!;
 
-    public OverrideCamera()
-    {
+    public OverrideCamera() {
         EzSignatureHelper.Initialize(this);
         Svc.Log.Information($"RMICamera address: 0x{RMICameraHook.Address:X}");
     }
 
-    private void RMICameraDetour(Camera* self, int inputMode, float speedH, float speedV)
-    {
+    private void RMICameraDetour(Camera* self, int inputMode, float speedH, float speedV) {
         RMICameraHook.Original(self, inputMode, speedH, speedV);
         if (IgnoreUserInput || inputMode == 0) // let user override...
         {

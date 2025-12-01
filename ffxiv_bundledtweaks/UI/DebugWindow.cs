@@ -5,12 +5,9 @@ using Dalamud.Bindings.ImGui;
 
 namespace ComplexTweaks.UI;
 
-internal class DebugWindow : Window
-{
-    public DebugWindow() : base($"{Name} - Debug v{P.Version.ToString(2)}###{nameof(DebugWindow)}")
-    {
-        SizeConstraints = new WindowSizeConstraints
-        {
+internal class DebugWindow : Window {
+    public DebugWindow() : base($"{Name} - Debug v{P.Version.ToString(2)}###{nameof(DebugWindow)}") {
+        SizeConstraints = new WindowSizeConstraints {
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
@@ -25,15 +22,13 @@ internal class DebugWindow : Window
 
     public override bool DrawConditions() => C.ShowDebug;
 
-    public override void Draw()
-    {
+    public override void Draw() {
         DrawSidebar();
         ImGui.SameLine();
         DrawTab();
     }
 
-    private void DrawSidebar()
-    {
+    private void DrawSidebar() {
         using var child = ImRaii.Child("Sidebar", new Vector2(SidebarWidth * ImGui.GetIO().FontGlobalScale, -1), true, ImGuiWindowFlags.NoSavedSettings);
         if (!child || !child.Success) return;
 
@@ -42,8 +37,7 @@ internal class DebugWindow : Window
 
         ImGui.TableSetupColumn("Tab Name", ImGuiTableColumnFlags.WidthStretch);
 
-        foreach (var tab in Tabs)
-        {
+        foreach (var tab in Tabs) {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
@@ -53,10 +47,8 @@ internal class DebugWindow : Window
         }
     }
 
-    private unsafe void DrawTab()
-    {
-        if (SelectedTab == null)
-        {
+    private unsafe void DrawTab() {
+        if (SelectedTab == null) {
             ImGui.Dummy(Vector2.Zero);
             return;
         }

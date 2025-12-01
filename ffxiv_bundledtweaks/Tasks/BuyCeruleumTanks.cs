@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class BuyCeruleumTanks : CommonTasks
-{
+public sealed class BuyCeruleumTanks : CommonTasks {
     private const uint CeruleumTankId = 10155;
     private const uint MammetVoyagerENpcId = 1011274;
     private readonly Memory.FreeCompanyDialogIPCReceive ipc = new();
 
-    protected override async Task Execute()
-    {
+    protected override async Task Execute() {
         await GoToWorkshop();
         await WaitUntil(Game.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
         var npc = Game.GetNPCInfo(MammetVoyagerENpcId, Player.Territory, CeruleumTankId);
@@ -25,14 +23,12 @@ public sealed class BuyCeruleumTanks : CommonTasks
         await BuyFromFccShop(MammetVoyagerENpcId, npc!.ShopId, CeruleumTankId, 999 - Inventory.GetItemCount(CeruleumTankId, false));
     }
 
-    private async Task GoToWorkshop()
-    {
+    private async Task GoToWorkshop() {
         using var scope = BeginScope("GoToWorkshop");
         static bool PlayerInWorkshop() => GetRow<TerritoryType>(Player.Territory) is { } t && t.BGM.RowId == 328;
         if (PlayerInWorkshop()) return; // already there
 
-        if (Player.TerritoryIntendedUse == TerritoryIntendedUseEnum.Housing_Instances)
-        {
+        if (Player.TerritoryIntendedUse == TerritoryIntendedUseEnum.Housing_Instances) {
             await EnterWorkshop();
             return;
         }
@@ -40,8 +36,7 @@ public sealed class BuyCeruleumTanks : CommonTasks
         Status = "Teleporting to FC";
         Service.Lifestream.ExecuteCommand("fc");
         await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), $"LifestreamWaitForFinish");
-        if (EstateHallDoor is { } door)
-        {
+        if (EstateHallDoor is { } door) {
             await MoveTo(door.Position, MovementConfig.InteractRange);
             await InteractWith(door, () => Player.TerritoryIntendedUse == TerritoryIntendedUseEnum.Housing_Instances, null, UiSkipOptions.YesNo);
             await WaitWhile(() => !Game.IsTerritoryLoaded(), "WaitingForTerritoryToLoad");
@@ -51,12 +46,10 @@ public sealed class BuyCeruleumTanks : CommonTasks
             Error("Failed to find estate hall door");
     }
 
-    private async Task EnterWorkshop()
-    {
+    private async Task EnterWorkshop() {
         using var scope = BeginScope("EnterWorkshop");
         ErrorIf(Player.TerritoryIntendedUse != TerritoryIntendedUseEnum.Housing_Instances, "Not in a house");
-        if (WorkshopDoor is { } door)
-        {
+        if (WorkshopDoor is { } door) {
             await MoveTo(door.Position, MovementConfig.InteractRange);
             await InteractWith(door, () => GetRow<TerritoryType>(Player.Territory) is { BGM.RowId: 328 }, 0);
             await WaitUntil(Game.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
@@ -65,12 +58,10 @@ public sealed class BuyCeruleumTanks : CommonTasks
             Error("Failed to find workshop door");
     }
 
-    private async Task BuyFromFccShop(ulong vendorInstanceId, uint shopId, uint itemId, int count)
-    {
+    private async Task BuyFromFccShop(ulong vendorInstanceId, uint shopId, uint itemId, int count) {
         using var scope = BeginScope("Buy");
         Status = "Opening shop";
-        if (!Game.AddonActive("FreeCompanyCreditShop"))
-        {
+        if (!Game.AddonActive("FreeCompanyCreditShop")) {
             Log("Opening shop...");
             ErrorIf(!Game.OpenShop(vendorInstanceId, shopId), $"Failed to open shop {vendorInstanceId:X}.{shopId:X}");
             await WaitWhile(() => !Game.AddonActive("FreeCompanyCreditShop"), "WaitForFCCShop");
@@ -78,11 +69,9 @@ public sealed class BuyCeruleumTanks : CommonTasks
         }
 
         Log("Buying...");
-        if (TryGetAddonMaster<AddonMaster.FreeCompanyCreditShop>(out var am))
-        {
+        if (TryGetAddonMaster<AddonMaster.FreeCompanyCreditShop>(out var am)) {
             var tanks = am.Items.First(x => x.ItemId == itemId);
-            while (count > 0)
-            {
+            while (count > 0) {
                 Status = $"Buying x{count} ceruleum tanks";
                 tanks.Buy(Math.Min(count, tanks.MaxPurchaseSize));
                 count -= tanks.MaxPurchaseSize;
@@ -103,13 +92,11 @@ public sealed class BuyCeruleumTanks : CommonTasks
         await NextFrame();
     }
 
-    private async Task WaitUntilServerIPC()
-    {
+    private async Task WaitUntilServerIPC() {
         using var scope = BeginScope("WaitForPacketFreeCompanyDialog");
         ipc.FreeCompanyDialogPacketReceiveHook.Enable();
         var lastPacketTimestamp = ipc.LastPacketTimestamp;
-        while (ipc.LastPacketTimestamp == lastPacketTimestamp)
-        {
+        while (ipc.LastPacketTimestamp == lastPacketTimestamp) {
             Log($"waiting...");
             await NextFrame();
         }

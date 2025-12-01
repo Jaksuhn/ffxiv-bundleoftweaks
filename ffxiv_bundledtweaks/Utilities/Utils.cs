@@ -6,8 +6,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace ComplexTweaks.Utilities;
 
-public static class Utils
-{
+public static class Utils {
     public static IDalamudTextureWrap? GetIcon(uint iconId) => iconId != 0 ? Svc.Texture?.GetFromGameIcon(iconId).GetWrapOrEmpty() : null;
 
     public static bool HasPlugin(string name) => DalamudReflector.TryGetDalamudPlugin(name, out _, false, true);
@@ -18,8 +17,7 @@ public static class Utils
         && AtkStage.Instance()->RaptureAtkUnitManager->AtkUnitManager.FocusedUnitsList.Count == 0
         && Framework.Instance()->Cursor->ActiveCursorType == 0;
 
-    public static Vector3 RotatePoint(float cx, float cy, float angle, Vector3 p)
-    {
+    public static Vector3 RotatePoint(float cx, float cy, float angle, Vector3 p) {
         if (angle == 0f) return p;
         var s = (float)Math.Sin(angle);
         var c = (float)Math.Cos(angle);

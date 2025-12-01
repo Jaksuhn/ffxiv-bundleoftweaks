@@ -15,8 +15,7 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Tweaks;
 
-public class DebugToolsConfiguration
-{
+public class DebugToolsConfiguration {
     [BoolConfig] public bool AutoVoidIslandRest = false;
     [BoolConfig] public bool EnableTPClick = false;
     [BoolConfig] public bool EnableNoClip = false;
@@ -32,31 +31,26 @@ public class DebugToolsConfiguration
 }
 
 [Tweak(true)]
-public class DebugTools : Tweak<DebugToolsConfiguration>
-{
+public class DebugTools : Tweak<DebugToolsConfiguration> {
     public override string Name => "Debug Tools";
     public override string Description => "Debug tools for use in hyperborea/firewall";
 
-    public override void Enable()
-    {
+    public override void Enable() {
         _keys = GetSheet<ConfigKey>().Where(x => x.RowId is >= 12 and <= 18).ToDictionary(x => x.Label.ToString(), x => x);
         Svc.Framework.Update += OnUpdate;
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MJICraftSchedule", OnSetup);
         Svc.ClientState.EnterPvP += OnEnterPvP;
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         Svc.Framework.Update -= OnUpdate;
         Svc.AddonLifecycle.UnregisterListener(OnSetup);
         Svc.ClientState.EnterPvP -= OnEnterPvP;
     }
 
-    private unsafe void OnSetup(AddonEvent type, AddonArgs args)
-    {
+    private unsafe void OnSetup(AddonEvent type, AddonArgs args) {
         if (!Config.AutoVoidIslandRest) return;
-        if (AgentMJICraftSchedule.Instance()->Data->RestCycles.ToHex() != 8321u)
-        {
+        if (AgentMJICraftSchedule.Instance()->Data->RestCycles.ToHex() != 8321u) {
             Svc.Log.Debug($"Setting rest: {8321u:X}");
             AgentMJICraftSchedule.Instance()->Data->NewRestCycles = 8321u;
             var eventData = stackalloc int[] { 0, 0, 0 };
@@ -66,8 +60,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     }
 
     [CommandHandler("/tpclick", "Teleport to your mouse location on click while CTRL is held.", nameof(Config.EnableTPClick))]
-    private void OnTeleportClick(string command, string arguments)
-    {
+    private void OnTeleportClick(string command, string arguments) {
         tpActive ^= true;
         if (tpActive)
             EzConfigGui.WindowSystem.AddWindow(new MousePositionOverlay());
@@ -77,30 +70,26 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     }
 
     [CommandHandler("/noclip", "Enable NoClip", nameof(Config.EnableNoClip))]
-    private void OnNoClip(string command, string arguments)
-    {
+    private void OnNoClip(string command, string arguments) {
         if (Player.IsInPvP) return;
         ncActive ^= true;
         Config.NoClipSpeed = float.TryParse(arguments, out var speed) ? speed : Config.NoClipSpeed;
     }
 
     [CommandHandler(["/move", "/speed"], "Modify your movement speed", nameof(Config.EnableMoveSpeed))]
-    private void OnMoveSpeed(string command, string arguments)
-    {
+    private void OnMoveSpeed(string command, string arguments) {
         if (Player.IsInPvP) return;
         Player.Speed = float.TryParse(arguments, out var speed) ? speed : 1.0f;
     }
 
     // prevent entering pvp with debug options enabled
-    private void OnEnterPvP()
-    {
+    private void OnEnterPvP() {
         Player.Speed = 1.0f;
         tpActive = false;
         ncActive = false;
     }
 
-    class MovementKeys
-    {
+    class MovementKeys {
         public const string Forward = "MOVE_FORE";
         public const string Backward = "MOVE_BACK";
         public const string Left = "MOVE_LEFT";
@@ -117,21 +106,16 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     private bool tpActive;
     private bool ncActive;
     private Dictionary<string, ConfigKey> _keys = null!;
-    private unsafe void OnUpdate(IFramework framework)
-    {
+    private unsafe void OnUpdate(IFramework framework) {
         if (!Player.Available || IsOccupied()) return;
 
         ShowMouseOverlay = false;
-        if (Config.EnableTPClick && tpActive)
-        {
-            if (!Framework.Instance()->WindowInactive && IsKeyPressed([LimitedKeys.LeftControlKey, LimitedKeys.RightControlKey]) && Utils.IsClickingInGameWorld())
-            {
+        if (Config.EnableTPClick && tpActive) {
+            if (!Framework.Instance()->WindowInactive && IsKeyPressed([LimitedKeys.LeftControlKey, LimitedKeys.RightControlKey]) && Utils.IsClickingInGameWorld()) {
                 ShowMouseOverlay = true;
                 var pos = ImGui.GetMousePos();
-                if (Svc.GameGui.ScreenToWorld(pos, out var res))
-                {
-                    if (IsKeyPressed(LimitedKeys.LeftMouseButton))
-                    {
+                if (Svc.GameGui.ScreenToWorld(pos, out var res)) {
+                    if (IsKeyPressed(LimitedKeys.LeftMouseButton)) {
                         if (!IsLButtonPressed)
                             PlayerEx.Position = res;
                         IsLButtonPressed = true;
@@ -142,8 +126,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
             }
         }
 
-        if (Config.EnableNoClip && ncActive && !Framework.Instance()->WindowInactive)
-        {
+        if (Config.EnableNoClip && ncActive && !Framework.Instance()->WindowInactive) {
             if (_keys["JUMP"].IsHeldRaw())
                 PlayerEx.Position = (Player.Object.Position.X, Player.Object.Position.Y + Config.NoClipSpeed, Player.Object.Position.Z).ToVector3();
             if (Svc.KeyState.GetRawValue(VirtualKey.LSHIFT) != 0 || IsKeyPressed(LimitedKeys.LeftShiftKey))
@@ -160,11 +143,9 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     }
 
     [CommandHandler("/ada", "Call actions directly.", nameof(Config.EnableDirectActions))]
-    private unsafe void OnDirectAction(string command, string arguments)
-    {
+    private unsafe void OnDirectAction(string command, string arguments) {
         if (Player.IsInPvP) return;
-        try
-        {
+        try {
             var args = arguments.Split(' ');
             var actionType = ParseActionType(args[0]);
             var actionID = uint.Parse(args[1]);
@@ -173,8 +154,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
         catch (Exception e) { e.Log(); }
     }
 
-    private static ActionType ParseActionType(string input)
-    {
+    private static ActionType ParseActionType(string input) {
         if (Enum.TryParse(input, true, out ActionType result))
             return result;
 
@@ -186,11 +166,9 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     }
 
     [CommandHandler("/tpmarker", "Teleport to a given marker", nameof(Config.EnableTPMarker))]
-    private unsafe void OnTeleportMarker(string command, string arguments)
-    {
+    private unsafe void OnTeleportMarker(string command, string arguments) {
         if (Player.IsInPvP) return;
-        if (int.TryParse(arguments, out var i))
-        {
+        if (int.TryParse(arguments, out var i)) {
             var m = MarkingController.Instance()->FieldMarkers[i];
             Vector3? pos = m.Active ? new(m.X / 1000.0f, m.Y / 1000.0f, m.Z / 1000.0f) : null;
             if (pos != null)
@@ -199,16 +177,14 @@ public class DebugTools : Tweak<DebugToolsConfiguration>
     }
 
     [CommandHandler("/tpoff", "Teleport from your current position, offset by arguments", nameof(Config.EnableTPOffset))]
-    private unsafe void OnTeleportOffset(string command, string arguments)
-    {
+    private unsafe void OnTeleportOffset(string command, string arguments) {
         if (Player.IsInPvP) return;
         if (arguments.TryParseVector3(out var v))
             PlayerEx.Position += v;
     }
 
     [CommandHandler("/tpabs", "Teleport to a given absolute position", nameof(Config.EnableTPAbsolute))]
-    private unsafe void OnTeleportAbsolute(string command, string arguments)
-    {
+    private unsafe void OnTeleportAbsolute(string command, string arguments) {
         if (Player.IsInPvP) return;
         if (arguments.TryParseVector3(out var v))
             PlayerEx.Position = v;

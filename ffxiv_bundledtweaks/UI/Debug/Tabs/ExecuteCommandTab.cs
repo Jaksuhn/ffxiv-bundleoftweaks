@@ -5,15 +5,13 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace ComplexTweaks.UI.Debug.Tabs;
 
-internal unsafe class ExecuteCommandTab : DebugTab
-{
+internal unsafe class ExecuteCommandTab : DebugTab {
     private ExecuteCommandFlag flag;
     private ExecuteCommandComplexFlag flag2;
     private readonly int[] ecParams = new int[4];
     private readonly int[] eccParams = new int[4];
 
-    public override void Draw()
-    {
+    public override void Draw() {
         ImGuiEx.EnumCombo("ExecuteCommand", ref flag);
         ImGui.InputInt("p1", ref ecParams[0]);
         ImGui.InputInt("p2", ref ecParams[1]);

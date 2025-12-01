@@ -6,29 +6,25 @@ using Dalamud.Bindings.ImGui;
 
 namespace ComplexTweaks.Tweaks;
 
-public class EnhancedLoginLogoutConfig
-{
+public class EnhancedLoginLogoutConfig {
     public List<EnhancedLoginLogout.CharacterCommands> Chars = [];
     public bool RunCommandsWhenARIsActive = false;
 }
 
 [Tweak]
-public class EnhancedLoginLogout : Tweak<EnhancedLoginLogoutConfig>
-{
+public class EnhancedLoginLogout : Tweak<EnhancedLoginLogoutConfig> {
     // TODO: hook logout and run commands then too
     public override string Name => "Enhanced Login";
     public override string Description => "Additional options when logging in.";
 
-    public class CharacterCommands
-    {
+    public class CharacterCommands {
         public ulong CID;
         public string Name = string.Empty;
         public List<string> LoginCommands = [];
         //public List<string> LogoutCommands = [];
     }
 
-    public override void DrawConfig()
-    {
+    public override void DrawConfig() {
         base.DrawConfig();
 
         ImGui.DrawSection("Login Commands");
@@ -36,31 +32,26 @@ public class EnhancedLoginLogout : Tweak<EnhancedLoginLogoutConfig>
         if (Service.AutoRetainerIPC.IsLoaded)
             ImGui.Checkbox("Run Commands if AutoRetainer is active", ref Config.RunCommandsWhenARIsActive);
 
-        if (Config.Chars.All(c => c.CID != 0))
-        {
-            Config.Chars.Add(new CharacterCommands
-            {
+        if (Config.Chars.All(c => c.CID != 0)) {
+            Config.Chars.Add(new CharacterCommands {
                 CID = 0,
                 Name = "Global",
             });
         }
         if (Config.Chars.All(c => c.CID != Player.CID) && !Player.Name.IsNullOrEmpty()) // there's a delay after getting a cid before you have a name
         {
-            Config.Chars.Add(new CharacterCommands
-            {
+            Config.Chars.Add(new CharacterCommands {
                 CID = Player.CID,
                 Name = Player.Name,
             });
         }
         Config.Chars.RemoveAll(c => c.LoginCommands.Count == 0 && c.CID != 0 && c.CID != Player.CID);
 
-        foreach (var c in Config.Chars.OrderByDescending(x => x.Name == "Global"))
-        {
+        foreach (var c in Config.Chars.OrderByDescending(x => x.Name == "Global")) {
             ImGui.DrawSection(c.Name, drawSeparator: false);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) Config.Chars.Remove(c);
 
-            foreach (var cmd in c.LoginCommands.ToList())
-            {
+            foreach (var cmd in c.LoginCommands.ToList()) {
                 var tmp = cmd;
                 if (ImGui.InputText($"##{c.CID}_{cmd}", ref tmp, 150))
                     c.LoginCommands[c.LoginCommands.IndexOf(cmd)] = ConvertToCommand(tmp);
@@ -78,12 +69,10 @@ public class EnhancedLoginLogout : Tweak<EnhancedLoginLogoutConfig>
     public override void Disable() => ProperOnLogin.Unregister(RunCommands);
 
     private string ConvertToCommand(string cmd) => cmd.StartsWith('/') ? cmd : $"/{cmd}";
-    private void RunCommands()
-    {
+    private void RunCommands() {
         if (Service.AutoRetainerIPC.IsLoaded && !Config.RunCommandsWhenARIsActive && (Service.AutoRetainerIPC.IsBusy() || Service.AutoRetainerIPC.GetMultiModeEnabled())) return;
         foreach (var chr in Config.Chars.Where(x => x.CID == 0 || x.CID == Player.CID).OrderByDescending(x => x.Name == "Global"))
-            foreach (var cmd in chr.LoginCommands.Where(c => c.Length >= 3))
-            {
+            foreach (var cmd in chr.LoginCommands.Where(c => c.Length >= 3)) {
                 TaskManager.EnqueueDelay(250);
                 TaskManager.Enqueue(() => Chat.SendMessage(cmd));
             }

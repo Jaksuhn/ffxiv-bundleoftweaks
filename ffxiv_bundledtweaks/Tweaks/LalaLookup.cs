@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
-public class LalaLookup : Tweak
-{
+public class LalaLookup : Tweak {
     public override string Name => "Lalachievements Lookup";
     public override string Description => "Adds a context menu entry to lookup a character on lalachievements";
 
@@ -18,24 +17,20 @@ public class LalaLookup : Tweak
 
     public override void Disable() => Svc.ContextMenu.OnMenuOpened -= OnOpenContextMenu;
 
-    private void OnOpenContextMenu(IMenuOpenedArgs menuOpenedArgs)
-    {
+    private void OnOpenContextMenu(IMenuOpenedArgs menuOpenedArgs) {
         if (!IsMenuValid(menuOpenedArgs)) return;
 
-        menuOpenedArgs.AddMenuItem(new MenuItem
-        {
+        menuOpenedArgs.AddMenuItem(new MenuItem {
             PrefixChar = 'C',
             Name = "Search on Lala",
             OnClicked = Search,
         });
     }
 
-    private static bool IsMenuValid(IMenuOpenedArgs menuOpenedArgs)
-    {
+    private static bool IsMenuValid(IMenuOpenedArgs menuOpenedArgs) {
         if (menuOpenedArgs.Target is not MenuTargetDefault menuTargetDefault) return false;
 
-        switch (menuOpenedArgs.AddonName)
-        {
+        switch (menuOpenedArgs.AddonName) {
             case null: // Nameplate/Model menu
             case "LookingForGroup":
             case "PartyMemberList":
@@ -58,29 +53,24 @@ public class LalaLookup : Tweak
         return false;
     }
 
-    private void Search(IMenuItemClickedArgs menuItemClickedArgs)
-    {
+    private void Search(IMenuItemClickedArgs menuItemClickedArgs) {
         //if (!IsMenuValid(menuItemClickedArgs)) return;
         _ = SearchPlayerFromMenu(menuItemClickedArgs);
     }
 
-    private async Task SearchPlayerFromMenu(IMenuItemClickedArgs menuArgs)
-    {
+    private async Task SearchPlayerFromMenu(IMenuItemClickedArgs menuArgs) {
         if (menuArgs.Target is not MenuTargetDefault menuTargetDefault) return;
 
         var playerName = menuTargetDefault.TargetName;
         var world = GetSheet<World>()?.FirstOrDefault(x => x.RowId == menuTargetDefault.TargetHomeWorld.RowId);
-        if (world is not { IsPublic: true })
-        {
+        if (world is not { IsPublic: true }) {
             ModuleMessage($"Unable to find world for {playerName}");
             return;
         }
 
-        try
-        {
+        try {
             _client = await LodestoneClient.GetClientAsync();
-            var searchResponse = await _client.SearchCharacter(new CharacterSearchQuery
-            {
+            var searchResponse = await _client.SearchCharacter(new CharacterSearchQuery {
                 CharacterName = playerName,
                 World = world.Value.Name.ToString(),
             });

@@ -11,8 +11,7 @@ using System.Reflection;
 
 namespace ComplexTweaks;
 
-public class Plugin : IDalamudPlugin
-{
+public class Plugin : IDalamudPlugin {
     public static string Name => "CBT";
     private const string Command = "/cbt";
     public static Plugin P { get; private set; } = null!;
@@ -21,8 +20,7 @@ public class Plugin : IDalamudPlugin
 
     public static readonly HashSet<Tweak> Tweaks = [];
 
-    public Plugin(IDalamudPluginInterface pluginInterface)
-    {
+    public Plugin(IDalamudPluginInterface pluginInterface) {
         P = this;
         Version = P.GetType().Assembly.GetName().Version ?? new(0, 0);
         ECommonsMain.Init(pluginInterface, P, ECommons.Module.DalamudReflector, ECommons.Module.ObjectFunctions);
@@ -37,10 +35,8 @@ public class Plugin : IDalamudPlugin
         C = EzConfig.Init<Config>();
 
         IMigration[] migrations = [new V3(), new V4()];
-        foreach (var migration in migrations)
-        {
-            if (C.Version < migration.Version)
-            {
+        foreach (var migration in migrations) {
+            if (C.Version < migration.Version) {
                 Svc.Log.Info($"Migrating from config version {C.Version} to {migration.Version}");
                 var c = C;
                 migration.Migrate(ref c);
@@ -60,10 +56,8 @@ public class Plugin : IDalamudPlugin
         DalamudReflector.RegisterOnInstalledPluginsChangedEvents(OnPluginsChanged);
     }
 
-    public static void OnChange(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        foreach (var t in Tweaks)
-        {
+    public static void OnChange(object? sender, NotifyCollectionChangedEventArgs e) {
+        foreach (var t in Tweaks) {
             if (C.EnabledTweaks.Contains(t.InternalName) && !t.Enabled)
                 TryExecute(t.EnableInternal);
             else if (!C.EnabledTweaks.Contains(t.InternalName) && t.Enabled || t.Enabled && t.IsDebug && !C.ShowDebug)
@@ -72,10 +66,8 @@ public class Plugin : IDalamudPlugin
         }
     }
 
-    private static void OnPluginsChanged()
-    {
-        foreach (var tweak in Tweaks)
-        {
+    private static void OnPluginsChanged() {
+        foreach (var tweak in Tweaks) {
             if (C.EnabledTweaks.Contains(tweak.InternalName) && !tweak.Enabled && !tweak.Outdated && !tweak.Disabled)
                 if (tweak.CanBeEnabled())
                     TryExecute(tweak.EnableInternal);
@@ -85,10 +77,8 @@ public class Plugin : IDalamudPlugin
         }
     }
 
-    public void Dispose()
-    {
-        foreach (var tweak in Tweaks)
-        {
+    public void Dispose() {
+        foreach (var tweak in Tweaks) {
             Svc.Log.Debug($"Disposing {tweak.InternalName}");
             TryExecute(tweak.DisposeInternal);
         }
@@ -96,17 +86,14 @@ public class Plugin : IDalamudPlugin
         ECommonsMain.Dispose();
     }
 
-    private void OnCommand(string command, string args)
-    {
+    private void OnCommand(string command, string args) {
         if (args.Length == 0)
             EzConfigGui.Window?.Toggle();
-        else
-        {
+        else {
             var arguments = args.Split(' ');
             var subcommand = arguments[0];
             var @params = arguments.Skip(1).ToArray();
-            switch (subcommand)
-            {
+            switch (subcommand) {
                 case string cmd when cmd.StartsWith('d') && !cmd.EqualsIgnoreCase("disable"):
                     EzConfigGui.GetWindow<DebugWindow>()!.Toggle();
                     break;
@@ -133,24 +120,19 @@ public class Plugin : IDalamudPlugin
         }
     }
 
-    private void InitializeTweaks()
-    {
-        foreach (var tweakType in GetType().Assembly.GetTypes().Where(type => type.GetCustomAttribute<TweakAttribute>() != null))
-        {
+    private void InitializeTweaks() {
+        foreach (var tweakType in GetType().Assembly.GetTypes().Where(type => type.GetCustomAttribute<TweakAttribute>() != null)) {
             Svc.Log.Verbose($"Initializing {tweakType.Name}");
-            try
-            {
+            try {
                 Tweaks.Add((Tweak)Activator.CreateInstance(tweakType)!);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Svc.Log.Error($"Failed to initialize {tweakType.Name}", ex);
                 ex.Log();
             }
         }
 
-        foreach (var tweak in Tweaks)
-        {
+        foreach (var tweak in Tweaks) {
             if (!C.EnabledTweaks.Contains(tweak.InternalName))
                 continue;
 

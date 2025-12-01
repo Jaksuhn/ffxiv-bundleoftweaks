@@ -5,15 +5,12 @@ using System.Collections.Immutable;
 namespace InteropSourceGenerators;
 
 [Generator]
-public class ServiceExtensionGenerator : IIncrementalGenerator
-{
-    public void Initialize(IncrementalGeneratorInitializationContext context)
-    {
+public class ServiceExtensionGenerator : IIncrementalGenerator {
+    public void Initialize(IncrementalGeneratorInitializationContext context) {
         var serviceClassProvider = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (node, _) => node is ClassDeclarationSyntax { Identifier.ValueText: "Service" },
-                transform: static (ctx, _) =>
-                {
+                transform: static (ctx, _) => {
                     var serviceClass = (ClassDeclarationSyntax)ctx.Node;
                     var semanticModel = ctx.SemanticModel;
                     var serviceSymbol = semanticModel.GetDeclaredSymbol(serviceClass) as INamedTypeSymbol;
@@ -25,8 +22,7 @@ public class ServiceExtensionGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(serviceClassProvider, GenerateExtensionMembers);
     }
 
-    private static void GenerateExtensionMembers(SourceProductionContext context, ImmutableArray<(ClassDeclarationSyntax serviceClass, INamedTypeSymbol? serviceSymbol)> serviceClasses)
-    {
+    private static void GenerateExtensionMembers(SourceProductionContext context, ImmutableArray<(ClassDeclarationSyntax serviceClass, INamedTypeSymbol? serviceSymbol)> serviceClasses) {
         if (serviceClasses.IsDefaultOrEmpty)
             return;
 
@@ -54,12 +50,9 @@ public class ServiceExtensionGenerator : IIncrementalGenerator
         builder.AppendLine("namespace ComplexTweaks.Services;");
         builder.AppendLine();
 
-        using (builder.Block("public static class ServiceExtensions"))
-        {
-            using (builder.Block("extension(Svc)"))
-            {
-                foreach (var property in properties)
-                {
+        using (builder.Block("public static class ServiceExtensions")) {
+            using (builder.Block("extension(Svc)")) {
+                foreach (var property in properties) {
                     var propertyType = property.Type.ToDisplayString(
                         new SymbolDisplayFormat(
                             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,

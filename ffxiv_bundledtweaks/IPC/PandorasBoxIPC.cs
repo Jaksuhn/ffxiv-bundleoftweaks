@@ -5,8 +5,7 @@ namespace ComplexTweaks.IPC;
 #nullable disable
 #pragma warning disable CS0649
 [Ipc(Ipc.PandorasBox)]
-internal class PandorasBoxIPC : BaseIPC
-{
+internal class PandorasBoxIPC : BaseIPC {
     public override string Name => "PandorasBox";
     public override string Repo => Punish;
     public PandorasBoxIPC() => EzIPC.Init(this, Name);

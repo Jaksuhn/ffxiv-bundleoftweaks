@@ -3,8 +3,7 @@
 namespace ComplexTweaks.IPC;
 #nullable disable
 [Ipc(Ipc.Visibility)]
-public class VisibilityIPC : BaseIPC
-{
+public class VisibilityIPC : BaseIPC {
     public override string Name => "Visibility";
     public override string Repo => Main;
 

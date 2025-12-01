@@ -9,8 +9,7 @@ namespace InteropSourceGenerators.Extensions;
 ///     Extension methods for <see cref="ISymbol" /> types.
 /// </summary>
 // ReSharper disable once InconsistentNaming
-public static class ISymbolExtensions
-{
+public static class ISymbolExtensions {
     public static string GetFullyQualifiedName(this ISymbol symbol) => symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
     /// <summary>
@@ -28,12 +27,9 @@ public static class ISymbolExtensions
     /// <param name="typeSymbol">The <see cref="ITypeSymbol" /> instance for the attribute type to look for.</param>
     /// <param name="attributeData">The resulting attribute, if it was found.</param>
     /// <returns>Whether or not <paramref name="symbol" /> has an attribute with the specified name.</returns>
-    public static bool TryGetAttributeWithType(this ISymbol symbol, ITypeSymbol typeSymbol, [NotNullWhen(true)] out AttributeData? attributeData)
-    {
-        foreach (var attribute in symbol.GetAttributes())
-        {
-            if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, typeSymbol))
-            {
+    public static bool TryGetAttributeWithType(this ISymbol symbol, ITypeSymbol typeSymbol, [NotNullWhen(true)] out AttributeData? attributeData) {
+        foreach (var attribute in symbol.GetAttributes()) {
+            if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, typeSymbol)) {
                 attributeData = attribute;
 
                 return true;
@@ -52,13 +48,10 @@ public static class ISymbolExtensions
     /// <param name="name">The attribute name to look for.</param>
     /// <param name="attributeData">The resulting attribute data, if found.</param>
     /// <returns>Whether or not <paramref name="symbol" /> has an attribute with the specified name.</returns>
-    public static bool TryGetAttributeWithFullyQualifiedMetadataName(this ISymbol symbol, string name, [NotNullWhen(true)] out AttributeData? attributeData)
-    {
-        foreach (var attribute in symbol.GetAttributes())
-        {
+    public static bool TryGetAttributeWithFullyQualifiedMetadataName(this ISymbol symbol, string name, [NotNullWhen(true)] out AttributeData? attributeData) {
+        foreach (var attribute in symbol.GetAttributes()) {
             if (attribute.AttributeClass is { } attributeSymbol &&
-                attributeSymbol.HasFullyQualifiedMetadataName(name))
-            {
+                attributeSymbol.HasFullyQualifiedMetadataName(name)) {
                 attributeData = attribute;
 
                 return true;
@@ -79,11 +72,9 @@ public static class ISymbolExtensions
     /// <param name="syntaxNode">The resulting <typeparamref name="T" /> syntax node, if found.</param>
     /// <returns>Whether or not a syntax node of type <typeparamref name="T" /> was retrieved successfully.</returns>
     public static bool TryGetSyntaxNode<T>(this ISymbol symbol, CancellationToken token, [NotNullWhen(true)] out T? syntaxNode)
-        where T : SyntaxNode
-    {
+        where T : SyntaxNode {
         // If there are no syntax references, there is nothing to do
-        if (symbol.DeclaringSyntaxReferences is not [{ } syntaxReference, ..])
-        {
+        if (symbol.DeclaringSyntaxReferences is not [{ } syntaxReference, ..]) {
             syntaxNode = null;
 
             return false;

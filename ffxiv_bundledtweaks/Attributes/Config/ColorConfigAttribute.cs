@@ -6,13 +6,11 @@ using System.Reflection;
 namespace ComplexTweaks.Attributes.Config;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class ColorConfigAttribute : BaseConfigAttribute
-{
+public class ColorConfigAttribute : BaseConfigAttribute {
     public Vector4 DefaultValue = Vector4.One;
     public ImGuiColorEditFlags Flags = ImGuiColorEditFlags.NoAlpha;
 
-    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo)
-    {
+    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo) {
         var value = (Vector4)fieldInfo.GetValue(config)!;
         var attr = fieldInfo.GetCustomAttribute<BaseConfigAttribute>();
 
@@ -20,14 +18,12 @@ public class ColorConfigAttribute : BaseConfigAttribute
         ImGui.SameLine();
 
         var newColor = ImGuiComponents.ColorPickerWithPalette(1, $"##{fieldInfo.Name}", value, Flags);
-        if (!value.Equals(newColor))
-        {
+        if (!value.Equals(newColor)) {
             fieldInfo.SetValue(config, newColor);
             OnChangeInternal(tweak, fieldInfo);
         }
 
-        if (DrawResetButton(DefaultValue.ToString()))
-        {
+        if (DrawResetButton(DefaultValue.ToString())) {
             fieldInfo.SetValue(config, DefaultValue);
             OnChangeInternal(tweak, fieldInfo);
         }

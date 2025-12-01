@@ -12,14 +12,12 @@ using System.Collections.ObjectModel;
 
 namespace ComplexTweaks.Tweaks;
 
-public class GlamourSetsTrackerConfiguration
-{
+public class GlamourSetsTrackerConfiguration {
     [BoolConfig] public bool ShowOnlyMissing = false;
 }
 
 [Tweak]
-public unsafe class GlamourSets : Tweak<GlamourSetsTrackerConfiguration, GlamourSetsWindow>
-{
+public unsafe class GlamourSets : Tweak<GlamourSetsTrackerConfiguration, GlamourSetsWindow> {
     public override string Name => "Glamour Sets Tracker";
     public override string Description => "A tracking window for glamour sets";
 
@@ -27,8 +25,7 @@ public unsafe class GlamourSets : Tweak<GlamourSetsTrackerConfiguration, Glamour
     internal void OnCommand(string command, string arguments) => Window<GlamourSetsWindow>()?.Toggle();
 }
 
-public unsafe class GlamourSetsWindow : Window
-{
+public unsafe class GlamourSetsWindow : Window {
     private const uint ItemWolfMarks = 25;
     private const uint ItemMgp = 29;
     private const uint ItemTrophyCrystals = 36656;
@@ -93,28 +90,23 @@ public unsafe class GlamourSetsWindow : Window
     private readonly ReadOnlyCollection<GlamourSet> _glamourSets;
     private readonly Dictionary<uint, int> _ownedCurrencies = [];
 
-    public GlamourSetsWindow(GlamourSets tweak) : base($"Glamour Sets Tracker##{nameof(GlamourSetsWindow)}")
-    {
+    public GlamourSetsWindow(GlamourSets tweak) : base($"Glamour Sets Tracker##{nameof(GlamourSetsWindow)}") {
         _tweak = tweak;
         var armoireItems = GetSheet<Cabinet>().Where(x => x.RowId > 0).Select(x => x.Item.RowId).ToHashSet();
         var specialShopItems = BuildSpecialShopItems();
         _glamourSets = BuildGlamourSets(armoireItems, specialShopItems);
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         var agent = ItemFinderModule.Instance();
-        if (agent is null)
-        {
+        if (agent is null) {
             ImGui.Text("You are not logged in.");
             return;
         }
 
-        unsafe
-        {
+        unsafe {
             var inventoryManager = InventoryManager.Instance();
-            if (inventoryManager != null)
-            {
+            if (inventoryManager != null) {
                 _ownedCurrencies[ItemMgp] = inventoryManager->GetItemCountInContainer(ItemMgp, InventoryType.Currency);
                 _ownedCurrencies[ItemWolfMarks] = (int)inventoryManager->GetWolfMarks();
                 _ownedCurrencies[ItemTrophyCrystals] = inventoryManager->GetInventoryItemCount(ItemTrophyCrystals);
@@ -139,8 +131,7 @@ public unsafe class GlamourSetsWindow : Window
         ImGui.Separator();
 
         using var tabBar = ImRaii.TabBar("Tabs");
-        if (tabBar)
-        {
+        if (tabBar) {
             DrawTab("Normal", ownedSets, ESetType.Default);
             DrawTab("PvP", ownedSets, ESetType.PvP);
             DrawTab("MGP", ownedSets, ESetType.MGP);
@@ -150,8 +141,7 @@ public unsafe class GlamourSetsWindow : Window
         }
     }
 
-    private void DrawTab(string name, List<GlamourSet> ownedSets, ESetType setType)
-    {
+    private void DrawTab(string name, List<GlamourSet> ownedSets, ESetType setType) {
         using var tab = ImRaii.TabItem(name);
         if (!tab)
             return;
@@ -168,8 +158,7 @@ public unsafe class GlamourSetsWindow : Window
             DrawSetRange(glamourSets, ownedSets, ownedItems);
     }
 
-    private void DrawSpecialtyTab(List<GlamourSet> ownedSets)
-    {
+    private void DrawSpecialtyTab(List<GlamourSet> ownedSets) {
         using var tab = ImRaii.TabItem("Special");
         if (!tab)
             return;
@@ -189,36 +178,29 @@ public unsafe class GlamourSetsWindow : Window
     }
 
     private void DrawMissingItemHeader(List<GlamourSet> glamourSets, ESetType setType, List<GlamourSet> ownedSets,
-        HashSet<uint> ownedItems)
-    {
+        HashSet<uint> ownedItems) {
         var missingItems = glamourSets.Except(ownedSets).SelectMany(x => x.Items).Where(x => !ownedItems.Contains(x.ItemId)).ToList();
-        if (setType == ESetType.PvP)
-        {
+        if (setType == ESetType.PvP) {
             ImGui.Text($"Wolf Marks: {_ownedCurrencies.GetValueOrDefault(ItemWolfMarks):N0} / {missingItems.Where(x => x is { ShopItem.CostItemId: ItemWolfMarks }).Sum(x => x.ShopItem!.CostQuantity):N0}");
             ImGui.Text($"Trophy Crystals: {_ownedCurrencies.GetValueOrDefault(ItemTrophyCrystals):N0} / {missingItems.Where(x => x is { ShopItem.CostItemId: ItemTrophyCrystals }).Sum(x => x.ShopItem!.CostQuantity):N0}");
             ImGui.Separator();
         }
-        else if (setType is ESetType.MGP or ESetType.Special)
-        {
+        else if (setType is ESetType.MGP or ESetType.Special) {
             ImGui.Text($"MGP: {_ownedCurrencies.GetValueOrDefault(ItemMgp):N0} / {missingItems.Where(x => x is { ShopItem.CostItemId: ItemMgp }).Sum(x => x.ShopItem!.CostQuantity):N0}");
             ImGui.Separator();
         }
-        else if (setType == ESetType.AlliedSociety)
-        {
+        else if (setType == ESetType.AlliedSociety) {
             foreach (var (itemId, name) in AlliedSocietyCurrencies)
                 ImGui.Text($"{name}: {_ownedCurrencies.GetValueOrDefault(itemId):N0} / {missingItems.Where(x => x is { ShopItem: { } shopItem } && shopItem.CostItemId == itemId).Sum(x => x.ShopItem!.CostQuantity):N0}");
             ImGui.Separator();
         }
     }
 
-    private void DrawSetRange(List<GlamourSet> glamourSets, List<GlamourSet> ownedSets, HashSet<uint> ownedItems)
-    {
-        foreach (var glamourSet in glamourSets)
-        {
+    private void DrawSetRange(List<GlamourSet> glamourSets, List<GlamourSet> ownedSets, HashSet<uint> ownedItems) {
+        foreach (var glamourSet in glamourSets) {
             if (ownedSets.Contains(glamourSet))
                 ImGui.TextColored(ImGuiColors.ParsedGreen, glamourSet.Name);
-            else
-            {
+            else {
                 var ownedCount = glamourSet.Items.Count(x => ownedItems.Contains(x.ItemId));
                 if (ownedCount == glamourSet.Items.Count)
                     ImGui.TextColored(ImGuiColors.ParsedBlue, $"{glamourSet.Name} (Can be completed)");
@@ -229,10 +211,8 @@ public unsafe class GlamourSetsWindow : Window
                 else
                     ImGui.Text(glamourSet.Name);
 
-                using (ImRaii.PushIndent())
-                {
-                    foreach (var item in glamourSet.Items)
-                    {
+                using (ImRaii.PushIndent()) {
+                    foreach (var item in glamourSet.Items) {
                         if (ownedItems.Contains(item.ItemId))
                             ImGui.TextColored(ImGuiColors.ParsedGreen, item.Name);
                         else if (item.ShopItem is { } shopItem)
@@ -240,14 +220,11 @@ public unsafe class GlamourSetsWindow : Window
                         else
                             ImGui.Text(item.Name);
 
-                        if (ImGui.IsItemClicked())
-                        {
-                            try
-                            {
+                        if (ImGui.IsItemClicked()) {
+                            try {
                                 Svc.Chat.Print(SeString.CreateItemLink(item.ItemId, false));
                             }
-                            catch (Exception)
-                            {
+                            catch (Exception) {
                                 // doesn't matter, just nice-to-have
                             }
                         }
@@ -257,22 +234,17 @@ public unsafe class GlamourSetsWindow : Window
         }
     }
 
-    private HashSet<uint> GetOwnedItems()
-    {
+    private HashSet<uint> GetOwnedItems() {
         HashSet<uint> ownedItems = [.. ItemFinderModule.Instance() != null ? ItemFinderModule.Instance()->GlamourDresserItemIds : []];
-        unsafe
-        {
+        unsafe {
             var inventoryManager = InventoryManager.Instance();
-            if (inventoryManager != null)
-            {
-                foreach (var inventoryType in _inventoryTypes)
-                {
+            if (inventoryManager != null) {
+                foreach (var inventoryType in _inventoryTypes) {
                     var inventoryContainer = inventoryManager->GetInventoryContainer(inventoryType);
                     if (inventoryContainer == null)
                         continue;
 
-                    for (var i = 0; i < inventoryContainer->Size; ++i)
-                    {
+                    for (var i = 0; i < inventoryContainer->Size; ++i) {
                         var item = inventoryContainer->GetInventorySlot(i);
                         if (item != null && item->ItemId != 0)
                             ownedItems.Add(ItemUtil.GetBaseId(item->ItemId).ItemId);
@@ -284,10 +256,8 @@ public unsafe class GlamourSetsWindow : Window
         return ownedItems;
     }
 
-    private static ReadOnlyCollection<GlamourSet> BuildGlamourSets(HashSet<uint> armoireItems, Dictionary<uint, SpecialShopItem> specialShopItems)
-    {
-        return GetSheet<MirageStoreSetItem>().Where(x => x.RowId > 0).Select(x =>
-        {
+    private static ReadOnlyCollection<GlamourSet> BuildGlamourSets(HashSet<uint> armoireItems, Dictionary<uint, SpecialShopItem> specialShopItems) {
+        return GetSheet<MirageStoreSetItem>().Where(x => x.RowId > 0).Select(x => {
             var items = new List<uint>
             {
                 x.MainHand.RowId,
@@ -304,8 +274,7 @@ public unsafe class GlamourSetsWindow : Window
             }
             .Where(y => y > 0)
             .Select(y => GetRow<Item>(y)!.Value)
-            .Select(y => new GlamourItem
-            {
+            .Select(y => new GlamourItem {
                 ItemId = y.RowId,
                 Name = y.Name.ToString(),
                 ShopItem = specialShopItems.GetValueOrDefault(y.RowId),
@@ -314,8 +283,7 @@ public unsafe class GlamourSetsWindow : Window
             .ToList()
             .AsReadOnly();
 
-            return new GlamourSet
-            {
+            return new GlamourSet {
                 ItemId = x.RowId,
                 Name = GetRow<Item>(x.RowId)?.Name.ToString() ?? "",
                 Items = items,
@@ -329,8 +297,7 @@ public unsafe class GlamourSetsWindow : Window
         .AsReadOnly();
     }
 
-    private static ESetType DetermineSetType(MirageStoreSetItem item, ReadOnlyCollection<GlamourItem> items)
-    {
+    private static ESetType DetermineSetType(MirageStoreSetItem item, ReadOnlyCollection<GlamourItem> items) {
         // this would be a lot easier if the coffer item had any link to the mirage set
         if (GetSheet<PvPSeries>(language: Dalamud.Game.ClientLanguage.English).Reverse().FirstOrNull(x => x.LevelRewards[25].LevelRewardItem[0].ValueNullable?.Singular.ToString().Contains("attire coffer") ?? false) is { } latestReward)
             if (latestReward.LevelRewards[25].LevelRewardItem[0].Value.Singular.ToString().Replace("attire coffer", "").Trim() is { } baseName)
@@ -349,8 +316,7 @@ public unsafe class GlamourSetsWindow : Window
         if (AlliedSocietyCurrencies.Any(x => x.ItemId == costItemId))
             return ESetType.AlliedSociety;
 
-        return costItemId switch
-        {
+        return costItemId switch {
             ItemWolfMarks or ItemTrophyCrystals => ESetType.PvP,
             ItemMgp => ESetType.MGP,
             _ => ESetType.Default,
@@ -364,12 +330,10 @@ public unsafe class GlamourSetsWindow : Window
             (item.Legs.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (item.Feet.ValueNullable?.Singular.ToString().Contains(name, StringComparison.OrdinalIgnoreCase) ?? false);
 
-    private bool CanAffordAllMissingGearPieces(GlamourSet glamourSet, HashSet<uint> ownedItems)
-    {
+    private bool CanAffordAllMissingGearPieces(GlamourSet glamourSet, HashSet<uint> ownedItems) {
         uint costItemId = 0;
         uint costQuantity = 0;
-        foreach (var item in glamourSet.Items)
-        {
+        foreach (var item in glamourSet.Items) {
             if (ownedItems.Contains(item.ItemId))
                 continue;
 
@@ -387,8 +351,7 @@ public unsafe class GlamourSetsWindow : Window
         => GetSheet<SpecialShop>()
             .Where(x => x.RowId > 0 && !string.IsNullOrEmpty(x.Name.ToString()))
             .SelectMany(x => x.Item.SelectMany(y =>
-                y.ReceiveItems.Select(z => new SpecialShopItem
-                {
+                y.ReceiveItems.Select(z => new SpecialShopItem {
                     ItemId = z.Item.RowId,
                     CostItemId = y.ItemCosts[0].ItemCost.Value.RowId,
                     CostType = y.ItemCosts[0].ItemCost.Value.ItemUICategory.RowId,
@@ -399,23 +362,20 @@ public unsafe class GlamourSetsWindow : Window
             .GroupBy(x => x.ItemId)
             .ToDictionary(x => x.Key, x => x.First());
 
-    private sealed class GlamourSet
-    {
+    private sealed class GlamourSet {
         public required uint ItemId { get; init; }
         public required string Name { get; init; }
         public required ESetType SetType { get; init; }
         public required IReadOnlyList<GlamourItem> Items { get; init; }
     }
 
-    private sealed class GlamourItem
-    {
+    private sealed class GlamourItem {
         public required uint ItemId { get; init; }
         public required string Name { get; init; }
         public required SpecialShopItem? ShopItem { get; init; }
     }
 
-    private sealed class SpecialShopItem
-    {
+    private sealed class SpecialShopItem {
         public required uint ItemId { get; init; }
         public required uint CostItemId { get; init; }
         public required uint CostType { get; init; }
@@ -423,8 +383,7 @@ public unsafe class GlamourSetsWindow : Window
         public required uint CostQuantity { get; init; }
     }
 
-    private enum ESetType
-    {
+    private enum ESetType {
         Default,
         MGP,
         PvP,

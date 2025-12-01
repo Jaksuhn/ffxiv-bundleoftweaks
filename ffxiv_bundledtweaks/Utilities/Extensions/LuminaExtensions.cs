@@ -6,21 +6,16 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Utilities.Extensions;
 
-public static class LuminaExtensions
-{
-    public record IngredientExtension()
-    {
+public static class LuminaExtensions {
+    public record IngredientExtension() {
         public required Item Item { get; init; }
         public required int Amount { get; init; }
     }
 
-    public static IEnumerable<IngredientExtension> Ingredients(this Recipe recipe)
-    {
+    public static IEnumerable<IngredientExtension> Ingredients(this Recipe recipe) {
         var output = new List<IngredientExtension>();
-        for (var i = 0; i < recipe.Ingredient.Count; i++)
-        {
-            try
-            {
+        for (var i = 0; i < recipe.Ingredient.Count; i++) {
+            try {
                 var item = recipe.Ingredient[i].Value;
                 var amount = recipe.AmountIngredient[i];
 
@@ -35,8 +30,7 @@ public static class LuminaExtensions
     public static string Print(this Item item) => $"[{item.RowId}] {item.Name}";
     public static string Print(this EventItem item) => $"[{item.RowId}] {item.Name}";
 
-    public static bool TryGetInputId(this ConfigKey key, out InputId inputId)
-    {
+    public static bool TryGetInputId(this ConfigKey key, out InputId inputId) {
         inputId = Enum.GetValues<InputId>().FirstOrDefault(i => Enum.GetName(i) == key.Label.ToString(), InputId.NotFound);
         return inputId != InputId.NotFound;
     }
@@ -45,24 +39,19 @@ public static class LuminaExtensions
     public static unsafe bool IsHeld(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdHeld(inputId);
     public static unsafe bool IsPressed(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdPressed(inputId);
     public static unsafe bool IsReleased(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdReleased(inputId);
-    public static unsafe bool IsHeldRaw(this ConfigKey key)
-    {
+    public static unsafe bool IsHeldRaw(this ConfigKey key) {
         if (!key.TryGetInputId(out var inputId)) return false;
         var keybind = UIInputData.Instance()->GetKeybind(inputId);
-        foreach (var ks in keybind->KeySettings)
-        {
+        foreach (var ks in keybind->KeySettings) {
             if (!Svc.KeyState.IsVirtualKeyValid((VirtualKey)ks.Key)) continue;
             if (Svc.KeyState.GetRawValue((VirtualKey)ks.Key) != 0) return true;
         }
         return false;
     }
-    public static unsafe void ResetKeyState(this ConfigKey key)
-    {
-        if (key.TryGetInputId(out var inputId))
-        {
+    public static unsafe void ResetKeyState(this ConfigKey key) {
+        if (key.TryGetInputId(out var inputId)) {
             var keybind = UIInputData.Instance()->GetKeybind(inputId);
-            foreach (var ks in keybind->KeySettings)
-            {
+            foreach (var ks in keybind->KeySettings) {
                 if (!Svc.KeyState.IsVirtualKeyValid((VirtualKey)ks.Key)) continue;
                 Svc.KeyState.SetRawValue((VirtualKey)ks.Key, 0);
                 if (ks.KeyModifier == KeyModifierFlag.Ctrl)

@@ -2,16 +2,14 @@
 
 namespace ComplexTweaks.IPC;
 
-public class Provider
-{
+public class Provider {
     public Provider() => EzIPC.Init(this);
 
     [EzIPC]
     public bool IsTweakEnabled(string className) => C.EnabledTweaks.Contains(className);
 
     [EzIPC]
-    public void SetTweakState(string className, bool state)
-    {
+    public void SetTweakState(string className, bool state) {
         if (state)
             C.EnabledTweaks.Add(className);
         else

@@ -1,8 +1,7 @@
 namespace ComplexTweaks.Attributes;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class CommandHandlerAttribute(string[] commands, string helpMessage, string? configFieldName = null, params string[] subCommandStrings) : Attribute
-{
+public class CommandHandlerAttribute(string[] commands, string helpMessage, string? configFieldName = null, params string[] subCommandStrings) : Attribute {
     public string[] Commands { get; } = commands;
     public string HelpMessage { get; } = helpMessage;
     public string? ConfigFieldName { get; } = configFieldName;
@@ -17,8 +16,7 @@ public class CommandHandlerAttribute(string[] commands, string helpMessage, stri
 }
 
 // microsoft please let me be able to pass this to the attribute
-public class SubCommand(string subcommand, string helpMessage)
-{
+public class SubCommand(string subcommand, string helpMessage) {
     public string Subcommand { get; } = subcommand;
     public string HelpMessage { get; } = helpMessage;
 

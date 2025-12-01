@@ -5,14 +5,12 @@ using System.Reflection;
 namespace ComplexTweaks.Attributes.Config;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class FloatConfigAttribute : BaseConfigAttribute
-{
+public class FloatConfigAttribute : BaseConfigAttribute {
     public float DefaultValue = 0;
     public float Min = 0;
     public float Max = 100;
 
-    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo)
-    {
+    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo) {
         var value = (float)fieldInfo.GetValue(config)!;
         var attr = fieldInfo.GetCustomAttribute<BaseConfigAttribute>();
 
@@ -20,14 +18,12 @@ public class FloatConfigAttribute : BaseConfigAttribute
 
         using var indent = ImGui.ConfigIndent();
 
-        if (ImGui.DragFloat("##Input", ref value, 0.01f, Min, Max, "%.2f"))
-        {
+        if (ImGui.DragFloat("##Input", ref value, 0.01f, Min, Max, "%.2f")) {
             fieldInfo.SetValue(config, value);
             OnChangeInternal(tweak, fieldInfo);
         }
 
-        if (DrawResetButton(string.Format(CultureInfo.InvariantCulture, "{0:0.00}", DefaultValue)))
-        {
+        if (DrawResetButton(string.Format(CultureInfo.InvariantCulture, "{0:0.00}", DefaultValue))) {
             fieldInfo.SetValue(config, DefaultValue);
             OnChangeInternal(tweak, fieldInfo);
         }

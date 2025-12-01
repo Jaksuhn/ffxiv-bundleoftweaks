@@ -5,8 +5,7 @@ namespace ComplexTweaks.IPC;
 
 #nullable disable
 [Ipc(Ipc.Navmesh)]
-public class NavmeshIPC : BaseIPC
-{
+public class NavmeshIPC : BaseIPC {
     public override string Name => "vnavmesh";
     public override string Repo => Veyn;
     public NavmeshIPC() => EzIPC.Init(this, Name);

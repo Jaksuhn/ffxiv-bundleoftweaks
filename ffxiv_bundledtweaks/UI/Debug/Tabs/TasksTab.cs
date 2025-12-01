@@ -5,10 +5,8 @@ using Dalamud.Bindings.ImGui;
 
 namespace ComplexTweaks.UI.Debug.Tabs;
 
-internal unsafe class TasksTab : DebugTab
-{
-    public override void Draw()
-    {
+internal unsafe class TasksTab : DebugTab {
+    public override void Draw() {
         using (ImRaii.Disabled(!Service.Automation.Running))
             if (ImGui.Button("Stop current task"))
                 Service.Automation.Stop();
@@ -17,18 +15,15 @@ internal unsafe class TasksTab : DebugTab
         if (ImGui.Button("transmute"))
             Service.Automation.Start(new MateriaTransmutation());
 
-        if (ImGui.Button($"dwd"))
-        {
+        if (ImGui.Button($"dwd")) {
             Service.Automation.Start(new FateGrind(C.Tweaks.DateWithDestiny));
         }
 
         if (ImGui.Button("void all weeaboos"))
             Service.Automation.Start(new VoidMatches("weeaboo"));
 
-        if (Service.Automation.CurrentTask is FateGrind fg)
-        {
-            foreach (var fate in fg.AvailableFates)
-            {
+        if (Service.Automation.CurrentTask is FateGrind fg) {
+            foreach (var fate in fg.AvailableFates) {
                 fate.Print();
             }
         }

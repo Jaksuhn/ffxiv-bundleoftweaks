@@ -10,8 +10,7 @@ using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace ComplexTweaks.Tweaks;
 
-public class CommandsConfiguration
-{
+public class CommandsConfiguration {
     [BoolConfig(Label = "/tpflag")]
     public bool EnableTPFlag = false;
 
@@ -35,15 +34,13 @@ public class CommandsConfiguration
 }
 
 [Tweak]
-public partial class Commands : Tweak<CommandsConfiguration>
-{
+public partial class Commands : Tweak<CommandsConfiguration> {
     public override string Name => "Commands";
     public override string Description => "Miscellanous commands";
 
     #region Teleport Flag
     [CommandHandler(["/tpf", "/tpflag"], "Teleport to the aetheryte nearest your flag", nameof(Config.EnableTPFlag))]
-    internal void OnCommmandTeleportFlag(string command, string arguments)
-    {
+    internal void OnCommmandTeleportFlag(string command, string arguments) {
         if (Coords.FindClosestAetheryte(Player.MapFlag, false) is { } aetheryte)
             Coords.ExecuteTeleport(aetheryte);
     }
@@ -51,8 +48,7 @@ public partial class Commands : Tweak<CommandsConfiguration>
 
     #region Equip
     [CommandHandler("/equip", "Equip an item by ID", nameof(Config.EnableEquip))]
-    internal unsafe void OnCommmandEquip(string command, string arguments)
-    {
+    internal unsafe void OnCommmandEquip(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId)) return;
         PlayerEx.Equip(itemId);
     }
@@ -60,19 +56,16 @@ public partial class Commands : Tweak<CommandsConfiguration>
 
     #region Desynth
     [CommandHandler("/desynth", "Desynth an item by ID", nameof(Config.EnableDesynth))]
-    internal unsafe void OnCommmandDesynth(string command, string arguments)
-    {
+    internal unsafe void OnCommmandDesynth(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId)) return;
         var item_loc = Inventory.GetItemLocationInInventory(itemId, Inventory.Equippable);
-        if (item_loc == null)
-        {
+        if (item_loc == null) {
             DuoLog.Error($"Failed to find item {GetRow<Item>(itemId)?.Name} (ID: {itemId}) in inventory");
             return;
         }
 
         var item = InventoryManager.Instance()->GetInventoryContainer(item_loc.Value.inv)->GetInventorySlot(item_loc.Value.slot);
-        if (GetRow<Item>(item->ItemId)!.Value.Desynth == 0)
-        {
+        if (GetRow<Item>(item->ItemId)!.Value.Desynth == 0) {
             DuoLog.Error($"Item {GetRow<Item>(item->ItemId)?.Name} (ID: {item->ItemId}) is not desynthable");
             return;
         }
@@ -89,18 +82,14 @@ public partial class Commands : Tweak<CommandsConfiguration>
 
     #region Lower Quality
     [CommandHandler("/lowerquality", "Lower the quality of an item by ID, or pass all", nameof(Config.EnableLowerQuality))]
-    internal unsafe void OnCommmandLowerQuality(string command, string arguments)
-    {
+    internal unsafe void OnCommmandLowerQuality(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId) && arguments != "all") return;
-        if (arguments == "all")
-        {
-            if (AgentInventoryContext.Instance() == null)
-            {
+        if (arguments == "all") {
+            if (AgentInventoryContext.Instance() == null) {
                 Warning("AgentInventoryContext is null, cannot lower quality on items");
                 return;
             }
-            foreach (var i in Inventory.GetHQItems(Inventory.PlayerInventory))
-            {
+            foreach (var i in Inventory.GetHQItems(Inventory.PlayerInventory)) {
                 // TODO: this still sometimes can just cause a crash, idk why
                 Log($"Lowering quality on item [{i.Value->ItemId}] {GetRow<Item>(i.Value->ItemId)?.Name} in {i.Value->Container} slot {i.Value->Slot}");
                 TaskManager.EnqueueDelay(250);
@@ -110,11 +99,9 @@ public partial class Commands : Tweak<CommandsConfiguration>
                 TaskManager.Enqueue(() => AgentInventoryContext.Instance()->LowerItemQuality(i.Value, i.Value->Container, i.Value->Slot, 0), $"lowering quality on [{i.Value->ItemId}] {GetRow<Item>(i.Value->ItemId)?.Name} in {i.Value->Container} slot {i.Value->Slot}");
             }
         }
-        else
-        {
+        else {
             var item = Inventory.GetItemInInventory(itemId, Inventory.PlayerInventory, true);
-            if (item != null)
-            {
+            if (item != null) {
                 Log($"Lowering quality on item [{item->ItemId}] {GetRow<Item>(item->ItemId)?.Name} in {item->Container} slot {item->Slot}");
                 AgentInventoryContext.Instance()->LowerItemQuality(item, item->Container, item->Slot, 0);
             }
@@ -124,8 +111,7 @@ public partial class Commands : Tweak<CommandsConfiguration>
 
     #region Use Item
     [CommandHandler("/item", "Use an item by ID", nameof(Config.EnableUseItem))]
-    internal unsafe void OnCommandUseItem(string command, string arguments)
-    {
+    internal unsafe void OnCommandUseItem(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId)) return;
         var agent = ActionManager.Instance();
         if (agent == null) return;
@@ -145,8 +131,7 @@ public partial class Commands : Tweak<CommandsConfiguration>
     [CommandHandler(["/gotoflag", "/gtf"], "Goes to flag location", nameof(Config.EnableGoToFlag))]
     internal void OnGoToFlagCommand(string command, string arguments) => Service.Automation.Start(new GoToFlagTask());
 
-    private class GoToFlagTask : CommonTasks
-    {
+    private class GoToFlagTask : CommonTasks {
         protected override async Task Execute() => await MoveTo(Player.MapFlag, MovementConfig.Everything);
     }
     #endregion

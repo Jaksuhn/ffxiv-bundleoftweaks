@@ -2,8 +2,7 @@
 
 namespace ComplexTweaks.Utilities;
 
-public class Events
-{
+public class Events {
     public static event Action<uint, uint, uint>? AchievementProgressUpdate;
     public static void OnAchievementProgressUpdate(uint id, uint current, uint max) => AchievementProgressUpdate?.Invoke(id, current, max);
 

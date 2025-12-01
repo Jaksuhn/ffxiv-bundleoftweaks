@@ -17,8 +17,7 @@ using static ECommons.GameFunctions.ObjectFunctions;
 
 namespace ComplexTweaks.Tweaks;
 
-public class DateWithDestinyConfiguration
-{
+public class DateWithDestinyConfiguration {
     public HashSet<uint> blacklist = [];
     public HashSet<uint> whitelist = [];
     public List<uint> zones = [];
@@ -49,8 +48,7 @@ public class DateWithDestinyConfiguration
 
 [Tweak]
 [Requires(Ipc.Navmesh)]
-public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDestinyWindow>
-{
+public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDestinyWindow> {
     public override string Name => "Date with Destiny";
     public override string Description => "Fate tracker and mover. Doesn't handle combat.";
 
@@ -59,8 +57,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
     private readonly Throttle action = new();
     private Random random = null!;
 
-    private enum Z
-    {
+    private enum Z {
         MiddleLaNoscea = 134,
         LowerLaNoscea = 135,
         EasternLaNoscea = 137,
@@ -126,18 +123,15 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
     private ushort nextFateID;
     private byte fateMaxLevel;
 
-    private ushort FateID
-    {
-        get; set
-        {
+    private ushort FateID {
+        get; set {
             if (field != value)
                 SyncFate(value);
             field = value;
         }
     }
 
-    public override void DrawConfig()
-    {
+    public override void DrawConfig() {
         DrawCommands();
 
         ImGui.DrawSection("Configuration");
@@ -145,8 +139,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         ImGui.Checkbox("Prioritize targeting Forlorns", ref Config.PrioritizeForlorns);
         ImGui.Checkbox("Prioritize Fates with EXP bonus", ref Config.PrioritizeBonusFates);
         ImGui.Indent();
-        using (var _ = ImRaii.Disabled(!Config.PrioritizeBonusFates))
-        {
+        using (var _ = ImRaii.Disabled(!Config.PrioritizeBonusFates)) {
             ImGui.Checkbox("Only with Twist of Fate", ref Config.BonusWhenTwist);
         }
         ImGui.Unindent();
@@ -155,8 +148,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         ImGui.Checkbox("Full Auto Mode", ref Config.FullAuto);
         if (ImGui.IsItemHovered()) ImGui.SetTooltip($"All the below options will be treated as true if this is enabled.");
         ImGui.Indent();
-        using (var _ = ImRaii.Disabled(Config.FullAuto))
-        {
+        using (var _ = ImRaii.Disabled(Config.FullAuto)) {
             ImGui.Checkbox("Auto Mount", ref Config.AutoMount);
             ImGui.Checkbox("Auto Fly", ref Config.AutoFly);
             ImGui.Checkbox("Auto Sync", ref Config.AutoSync);
@@ -184,38 +176,32 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         ImGui.Checkbox("Show Bonus Indicator", ref Config.ShowFateBonusIndicator);
     }
 
-    public override void Enable()
-    {
+    public override void Enable() {
         random = new();
         Svc.Framework.Update += OnUpdate;
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         Svc.Framework.Update -= OnUpdate;
     }
 
     [CommandHandler("/vfate", "Opens the FATE tracker")]
     private void OnCommand(string command, string arguments) => Window<DateWithDestinyWindow>()?.Toggle();
 
-    private unsafe void OnUpdate(IFramework framework)
-    {
+    private unsafe void OnUpdate(IFramework framework) {
         if (!active || Svc.Fates.Count == 0 || Svc.Condition[ConditionFlag.MountOrOrnamentTransition] || Svc.Condition[ConditionFlag.Casting]) return;
 
         // Update target position continually so we don't pingpong
-        if (Svc.Targets.Target != null)
-        {
+        if (Svc.Targets.Target != null) {
             var target = Svc.Targets.Target;
             TargetPos = target.Position;
-            if ((Config.FullAuto || Config.AutoMoveToMobs) && !IsInMeleeRange(target.HitboxRadius + (Config.StayInMeleeRange ? 0 : 15)))
-            {
+            if ((Config.FullAuto || Config.AutoMoveToMobs) && !IsInMeleeRange(target.HitboxRadius + (Config.StayInMeleeRange ? 0 : 15))) {
                 TargetAndMoveToEnemy(target);
                 return;
             }
         }
 
-        if (Service.Navmesh.IsRunning())
-        {
+        if (Service.Navmesh.IsRunning()) {
             if (DistanceToTarget() < 2 || Svc.Targets.Target != null && DistanceToHitboxEdge(Svc.Targets.Target.HitboxRadius) <= (Config.StayInMeleeRange ? 0 : 15))
                 Service.Navmesh.Stop();
             else
@@ -223,8 +209,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         }
 
         var cf = FateManager.Instance()->CurrentFate;
-        if (cf is not null)
-        {
+        if (cf is not null) {
             fateMaxLevel = cf->MaxLevel;
             FateID = cf->FateId;
             if (Svc.Condition[ConditionFlag.Mounted])
@@ -236,37 +221,30 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         else
             FateID = 0;
 
-        if (cf is null)
-        {
-            if (Svc.Condition[ConditionFlag.InCombat])
-            {
+        if (cf is null) {
+            if (Svc.Condition[ConditionFlag.InCombat]) {
                 if (Svc.Condition[ConditionFlag.Mounted]) ExecuteDismount();
                 var target = GetMobTargetingPlayer();
                 if (target != null) TargetAndMoveToEnemy(target);
             }
 
-            if (Config.YokaiMode)
-            {
-                if (YokaiMinions.Contains(CurrentCompanion))
-                {
+            if (Config.YokaiMode) {
+                if (YokaiMinions.Contains(CurrentCompanion)) {
                     if (Config.EquipWatch && HaveYokaiMinionsMissing() && !HasWatchEquipped() && GetItemCount(YokaiWatch) > 0)
                         PlayerEx.Equip(15222);
 
                     var medal = Yokai.FirstOrDefault(x => x.Minion == CurrentCompanion).Medal;
-                    if (GetItemCount(medal) >= 10)
-                    {
+                    if (GetItemCount(medal) >= 10) {
                         Debug("Have 10 of the relevant Legendary Medal. Swapping minions");
                         var minion = Yokai.FirstOrDefault(x => CompanionUnlocked(x.Minion) && GetItemCount(x.Medal) < 10 && GetItemCount(x.Weapon) < 1).Minion;
-                        if (Config.SwapMinions && minion != default)
-                        {
+                        if (Config.SwapMinions && minion != default) {
                             ECommons.Automation.Chat.SendMessage($"/minion {GetRow<Companion>(minion)?.Singular}");
                             return;
                         }
                     }
 
                     var zones = Yokai.FirstOrDefault(x => x.Minion == CurrentCompanion).Zones;
-                    if (Config.SwapZones && !zones.Contains((Z)Svc.ClientState.TerritoryType))
-                    {
+                    if (Config.SwapZones && !zones.Contains((Z)Svc.ClientState.TerritoryType)) {
                         Debug("Have Yokai minion equipped but not in appropiate zone. Teleporting");
                         if (!Svc.Condition[ConditionFlag.Casting])
                             Telepo.Instance()->Teleport((uint)Coords.GetPrimaryAetheryte((uint)zones.First())!, 0);
@@ -275,21 +253,18 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
                 }
             }
 
-            if ((Config.FullAuto || Config.AutoMount) && !Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.Casting])
-            {
+            if ((Config.FullAuto || Config.AutoMount) && !Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.Casting]) {
                 ExecuteMount();
                 return;
             }
 
-            if ((Config.FullAuto || Config.AutoFly) && Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.InFlight] && Player.InFlightAllowedTerritory)
-            {
+            if ((Config.FullAuto || Config.AutoFly) && Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.InFlight] && Player.InFlightAllowedTerritory) {
                 ExecuteJump();
                 return;
             }
 
             var nextFate = GetFates().FirstOrDefault();
-            if ((Config.FullAuto || Config.PathToFate) && nextFate is not null && Svc.Condition[ConditionFlag.InFlight] && !Service.Navmesh.PathfindInProgress())
-            {
+            if ((Config.FullAuto || Config.PathToFate) && nextFate is not null && Svc.Condition[ConditionFlag.InFlight] && !Service.Navmesh.PathfindInProgress()) {
                 Debug("Finding path to fate");
                 nextFateID = nextFate.FateId;
                 TargetPos = GetRandomPointInFate(nextFateID);
@@ -298,16 +273,13 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         }
     }
 
-    private void TargetAndMoveToEnemy(IGameObject target)
-    {
+    private void TargetAndMoveToEnemy(IGameObject target) {
         if (Svc.Condition[ConditionFlag.Mounted]) ExecuteDismount();
         TargetPos = target.Position;
-        if ((Config.FullAuto || Config.AutoTarget) && Svc.Targets.Target?.GameObjectId != target.GameObjectId)
-        {
+        if ((Config.FullAuto || Config.AutoTarget) && Svc.Targets.Target?.GameObjectId != target.GameObjectId) {
             Svc.Targets.Target = target;
         }
-        if ((Config.FullAuto || Config.AutoMoveToMobs) && !Service.Navmesh.PathfindInProgress() && !IsInMeleeRange(target.HitboxRadius + (Config.StayInMeleeRange ? 0 : 15)))
-        {
+        if ((Config.FullAuto || Config.AutoMoveToMobs) && !Service.Navmesh.PathfindInProgress() && !IsInMeleeRange(target.HitboxRadius + (Config.StayInMeleeRange ? 0 : 15))) {
             Service.Navmesh.PathfindAndMoveTo(TargetPos, false);
         }
     }
@@ -375,8 +347,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
     private unsafe float DistanceToHitboxEdge(float hitboxRadius) => DistanceToTarget() - hitboxRadius;
     private unsafe bool IsInMeleeRange(float hitboxRadius)
         => DistanceToHitboxEdge(hitboxRadius) < 2;
-    public unsafe Vector3 GetRandomPointInFate(ushort fateID)
-    {
+    public unsafe Vector3 GetRandomPointInFate(ushort fateID) {
         var fate = FateManager.Instance()->GetFateById(fateID);
         var angle = random.NextDouble() * 2 * Math.PI;
         var randomPoint = new Vector3((float)(fate->Location.X + fate->Radius / 2 * Math.Cos(angle)), fate->Location.Y, (float)(fate->Location.Z + fate->Radius / 2 * Math.Sin(angle)));
@@ -384,27 +355,22 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         return (Vector3)(point == null ? fate->Location : point);
     }
 
-    private unsafe void SyncFate(ushort value)
-    {
-        if (value != 0 && !PlayerState.Instance()->IsLevelSynced)
-        {
+    private unsafe void SyncFate(ushort value) {
+        if (value != 0 && !PlayerState.Instance()->IsLevelSynced) {
             if (Player.Level > fateMaxLevel)
                 ECommons.Automation.Chat.SendMessage("/lsync");
         }
     }
 }
 
-public class DateWithDestinyWindow(DateWithDestiny tweak) : Window($"Fate Tracker##{nameof(DateWithDestinyWindow)}")
-{
+public class DateWithDestinyWindow(DateWithDestiny tweak) : Window($"Fate Tracker##{nameof(DateWithDestinyWindow)}") {
     internal uint SelectedTerritory = 0;
 
     public override bool DrawConditions() => Player.Available;
 
-    public override void Draw()
-    {
+    public override void Draw() {
         ImGui.TextUnformatted($"Status: {(tweak.active ? "on" : "off")} (Yo-Kai: {(tweak.Config.YokaiMode ? "on" : "off")})");
-        if (ImGuiComponents.IconButton(!tweak.active ? FontAwesomeIcon.Play : FontAwesomeIcon.Stop))
-        {
+        if (ImGuiComponents.IconButton(!tweak.active ? FontAwesomeIcon.Play : FontAwesomeIcon.Stop)) {
             tweak.active ^= true;
             Service.Navmesh.Stop();
         }
@@ -413,13 +379,11 @@ public class DateWithDestinyWindow(DateWithDestiny tweak) : Window($"Fate Tracke
         if (!table)
             return;
 
-        foreach (var fate in Svc.Fates.OrderBy(x => Vector3.Distance(x.Position, Player.Position)))
-        {
+        foreach (var fate in Svc.Fates.OrderBy(x => Vector3.Distance(x.Position, Player.Position))) {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
-            if (ImGuiComponents.IconButton($"###Pathfind{fate.FateId}", FontAwesomeIcon.Map))
-            {
+            if (ImGuiComponents.IconButton($"###Pathfind{fate.FateId}", FontAwesomeIcon.Map)) {
                 if (!Service.Navmesh.IsRunning())
                     Service.Navmesh.PathfindAndMoveTo(tweak.GetRandomPointInFate(fate.FateId), Svc.Condition[ConditionFlag.InFlight]);
                 else
@@ -429,16 +393,14 @@ public class DateWithDestinyWindow(DateWithDestiny tweak) : Window($"Fate Tracke
 
             ImGui.SameLine();
 
-            if (ImGuiComponents.IconButton($"###Flag{fate.FateId}", FontAwesomeIcon.Flag))
-            {
+            if (ImGuiComponents.IconButton($"###Flag{fate.FateId}", FontAwesomeIcon.Flag)) {
                 unsafe { AgentMap.Instance()->SetFlagMapMarker(Svc.ClientState.TerritoryType, Svc.ClientState.MapId, fate.Position); }
             }
             if (ImGui.IsItemHovered()) ImGui.SetTooltip($"Set map flag to {fate.Position}");
 
             ImGui.SameLine();
 
-            if (tweak.Config.ShowFateBonusIndicator && fate.HasBonus)
-            {
+            if (tweak.Config.ShowFateBonusIndicator && fate.HasBonus) {
                 ImGui.Image(Svc.Texture.GetFromGameIcon(new Dalamud.Interface.Textures.GameIconLookup(65001)).GetWrapOrEmpty().Handle, new Vector2(ImGui.IconUnitHeight()));
 
                 ImGui.SameLine();
@@ -455,13 +417,11 @@ public class DateWithDestinyWindow(DateWithDestiny tweak) : Window($"Fate Tracke
             ImGui.SameLine();
 
             ImGui.SetCursorPosX(ImGui.GetContentRegionMax().X - ImGui.IconUnitWidth() - ImGui.GetStyle().WindowPadding.X);
-            if (ImGuiComponents.IconButton($"###Blacklist{fate.FateId}", FontAwesomeIcon.Ban))
-            {
+            if (ImGuiComponents.IconButton($"###Blacklist{fate.FateId}", FontAwesomeIcon.Ban)) {
                 tweak.Config.blacklist.Add(fate.FateId);
             }
             if (ImGui.IsItemHovered()) ImGui.SetTooltip($"Add to blacklist. Right click to remove.");
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            {
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
                 tweak.Config.blacklist.Remove(fate.FateId);
             }
         }

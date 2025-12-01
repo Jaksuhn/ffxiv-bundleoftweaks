@@ -4,8 +4,7 @@ namespace SomethingNeedDoing.IPC;
 
 #nullable disable
 [Ipc(Ipc.Dropbox)]
-public class DropboxIPC : BaseIPC
-{
+public class DropboxIPC : BaseIPC {
     public override string Name => "Dropbox";
     public override string Repo => Kawaii;
     public DropboxIPC() => EzIPC.Init(this, Name);

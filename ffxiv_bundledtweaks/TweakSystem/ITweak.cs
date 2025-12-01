@@ -1,7 +1,6 @@
 namespace ComplexTweaks.TweakSystem;
 
-public interface ITweak : IDisposable
-{
+public interface ITweak : IDisposable {
     Type CachedType { get; }
     string InternalName { get; }
     IncompatibilityWarningAttribute[] IncompatibilityWarnings { get; }

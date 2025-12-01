@@ -6,8 +6,7 @@ namespace ComplexTweaks.UI.Debug.Tabs;
 
 public interface IDebugTab : IDrawableTab;
 
-public interface IDrawableTab
-{
+public interface IDrawableTab {
     string Title { get; }
     string InternalName { get; }
     bool DrawInChild { get; }
@@ -17,8 +16,7 @@ public interface IDrawableTab
     void Draw();
 }
 
-public abstract partial class DebugTab : IDebugTab
-{
+public abstract partial class DebugTab : IDebugTab {
     private string? _title = null;
     public virtual string Title => _title ??= NameRegex().Replace(TabRegex().Replace(GetType().Name, ""), "$1 $2");
     public virtual bool IsEnabled => true;
@@ -35,16 +33,13 @@ public abstract partial class DebugTab : IDebugTab
 
     public virtual void Draw() { }
 
-    public void DrawIcon(object value, Type? type = null, bool isHq = false, bool sameLine = true, Vector2? drawInfo = default, bool canCopy = true, bool noTooltip = false)
-    {
-        if (value == null)
-        {
+    public void DrawIcon(object value, Type? type = null, bool isHq = false, bool sameLine = true, Vector2? drawInfo = default, bool canCopy = true, bool noTooltip = false) {
+        if (value == null) {
             DrawIcon(0, isHq, sameLine, drawInfo, canCopy, noTooltip);
             return;
         }
 
-        var iconId = (type ?? value.GetType()) switch
-        {
+        var iconId = (type ?? value.GetType()) switch {
             Type t when t == typeof(short) => (short)value > 0 ? (uint)(short)value : 0u,
             Type t when t == typeof(ushort) => (ushort)value,
             Type t when t == typeof(int) => (int)value > 0 ? (uint)(int)value : 0u,
@@ -55,37 +50,31 @@ public abstract partial class DebugTab : IDebugTab
         DrawIcon(iconId, isHq, sameLine, drawInfo, canCopy, noTooltip);
     }
 
-    public void DrawIcon(uint iconId, bool isHq = false, bool sameLine = true, Vector2? drawInfo = default, bool canCopy = true, bool noTooltip = false)
-    {
+    public void DrawIcon(uint iconId, bool isHq = false, bool sameLine = true, Vector2? drawInfo = default, bool canCopy = true, bool noTooltip = false) {
         drawInfo ??= new Vector2(ImGui.GetTextLineHeight());
 
-        if (iconId == 0)
-        {
+        if (iconId == 0) {
             ImGui.Dummy(drawInfo.Value);
             if (sameLine)
                 ImGui.SameLine();
             return;
         }
 
-        if (!ImGui.IsRectVisible(drawInfo.Value))
-        {
+        if (!ImGui.IsRectVisible(drawInfo.Value)) {
             ImGui.Dummy(drawInfo.Value);
             if (sameLine)
                 ImGui.SameLine();
             return;
         }
 
-        if (Svc.Texture.TryGetFromGameIcon(new GameIconLookup(iconId, isHq), out var tex) && tex.TryGetWrap(out var texture, out _))
-        {
+        if (Svc.Texture.TryGetFromGameIcon(new GameIconLookup(iconId, isHq), out var tex) && tex.TryGetWrap(out var texture, out _)) {
             ImGui.Image(texture.Handle, drawInfo.Value);
 
-            if (ImGui.IsItemHovered())
-            {
+            if (ImGui.IsItemHovered()) {
                 if (canCopy)
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
 
-                if (!noTooltip)
-                {
+                if (!noTooltip) {
                     ImGui.BeginTooltip();
                     if (canCopy)
                         ImGui.TextUnformatted("Click to copy IconId");
@@ -98,8 +87,7 @@ public abstract partial class DebugTab : IDebugTab
             if (canCopy && ImGui.IsItemClicked())
                 ImGui.SetClipboardText(iconId.ToString());
         }
-        else
-        {
+        else {
             ImGui.Dummy(drawInfo.Value);
         }
 

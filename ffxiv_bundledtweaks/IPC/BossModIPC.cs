@@ -5,8 +5,7 @@ namespace ComplexTweaks.IPC;
 #nullable disable
 #pragma warning disable CS8632
 [Ipc(Ipc.BossMod)]
-public class BossModIPC : BaseIPC
-{
+public class BossModIPC : BaseIPC {
     public override string Name => "BossMod";
     public override string Repo => Veyn;
     public BossModIPC() => EzIPC.Init(this, Name);
@@ -47,8 +46,7 @@ public class BossModIPC : BaseIPC
     /// <remarks> string presetName </remarks>
     [EzIPC("Presets.%m", true)] public readonly Func<string, bool> ClearTransientPresetStrategies;
 
-    public class Modules
-    {
+    public class Modules {
         public const string AutoFarm = "BossMod.Autorotation.MiscAI.AutoFarm";
     }
 }

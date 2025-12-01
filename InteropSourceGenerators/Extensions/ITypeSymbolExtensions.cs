@@ -9,16 +9,14 @@ namespace InteropSourceGenerators.Extensions;
 ///     Extension methods for <see cref="ITypeSymbol" /> types.
 /// </summary>
 // ReSharper disable once InconsistentNaming
-internal static class ITypeSymbolExtensions
-{
+internal static class ITypeSymbolExtensions {
     /// <summary>
     ///     Checks whether or not a given type symbol has a specified fully qualified metadata name.
     /// </summary>
     /// <param name="symbol">The input <see cref="ITypeSymbol" /> instance to check.</param>
     /// <param name="name">The full name to check.</param>
     /// <returns>Whether <paramref name="symbol" /> has a full name equals to <paramref name="name" />.</returns>
-    public static bool HasFullyQualifiedMetadataName(this ITypeSymbol symbol, string name)
-    {
+    public static bool HasFullyQualifiedMetadataName(this ITypeSymbol symbol, string name) {
         var builder = new StringBuilder();
 
         symbol.AppendFullyQualifiedMetadataName(in builder);
@@ -31,8 +29,7 @@ internal static class ITypeSymbolExtensions
     /// </summary>
     /// <param name="symbol">The input <see cref="ITypeSymbol" /> instance.</param>
     /// <returns>The fully qualified metadata name for <paramref name="symbol" />.</returns>
-    public static string GetFullyQualifiedMetadataName(this ITypeSymbol symbol)
-    {
+    public static string GetFullyQualifiedMetadataName(this ITypeSymbol symbol) {
         var builder = new StringBuilder();
 
         symbol.AppendFullyQualifiedMetadataName(in builder);
@@ -45,12 +42,9 @@ internal static class ITypeSymbolExtensions
     /// </summary>
     /// <param name="symbol">The input <see cref="ITypeSymbol" /> instance.</param>
     /// <param name="builder">The target <see cref="ImmutableArrayBuilder{T}" /> instance.</param>
-    public static void AppendFullyQualifiedMetadataName(this ITypeSymbol symbol, ref readonly StringBuilder builder)
-    {
-        static void BuildFrom(ISymbol? symbol, ref readonly StringBuilder builder)
-        {
-            switch (symbol)
-            {
+    public static void AppendFullyQualifiedMetadataName(this ITypeSymbol symbol, ref readonly StringBuilder builder) {
+        static void BuildFrom(ISymbol? symbol, ref readonly StringBuilder builder) {
+            switch (symbol) {
                 // Namespaces that are nested also append a leading '.'
                 case INamespaceSymbol { ContainingNamespace.IsGlobalNamespace: false }:
                     BuildFrom(symbol.ContainingNamespace, in builder);

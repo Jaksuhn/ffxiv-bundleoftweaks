@@ -9,8 +9,7 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tweaks;
 
-public class GMAlertConfiguration
-{
+public class GMAlertConfiguration {
     [BoolConfig] public bool Toast = false;
     [BoolConfig] public bool ChatMessage = false;
     [BoolConfig] public bool Sound = false;
@@ -22,31 +21,26 @@ public class GMAlertConfiguration
 }
 
 [Tweak]
-public class GMAlert : Tweak<GMAlertConfiguration>
-{
+public class GMAlert : Tweak<GMAlertConfiguration> {
     public override string Name => "GM Alert";
     public override string Description => "Various alerts for when a GM is nearby.";
 
-    public override void Enable()
-    {
+    public override void Enable() {
         Svc.Framework.Update += OnUpdate;
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         Svc.Framework.Update -= OnUpdate;
     }
 
     private string _cmd = string.Empty;
-    public override void DrawConfig()
-    {
+    public override void DrawConfig() {
         ImGui.DrawSection("Upon GM Appearance");
 
         ImGui.Checkbox("Send Toast Alert", ref Config.Toast);
         ImGui.Checkbox("Send Chat Alert", ref Config.ChatMessage);
         ImGui.Checkbox("Send Sound Alert", ref Config.Sound);
-        if (Config.Sound)
-        {
+        if (Config.Sound) {
             ImGui.SameLine();
             if (ImGui.IconButton(FontAwesomeIcon.Music, "##SoundPreview", "Preview Beeps"))
                 for (var i = 0; i < Config.BeepCount; i++)
@@ -73,8 +67,7 @@ public class GMAlert : Tweak<GMAlertConfiguration>
         if (ImGui.InputText($"##Commands", ref _cmd, 50, ImGuiInputTextFlags.EnterReturnsTrue))
             Config.Commands.Add(_cmd.StartsWith('/') ? _cmd : $"/{_cmd}");
 
-        foreach (var cmd in Config.Commands)
-        {
+        foreach (var cmd in Config.Commands) {
             ImGuiEx.TextV(cmd);
             ImGui.SameLine();
             if (ImGuiComponents.IconButton(cmd, FontAwesomeIcon.Trash))
@@ -83,22 +76,19 @@ public class GMAlert : Tweak<GMAlertConfiguration>
     }
 
     public bool sent;
-    private unsafe void OnUpdate(IFramework framework)
-    {
+    private unsafe void OnUpdate(IFramework framework) {
         if (!Player.Available) return;
 
         var gms = Svc.Objects.OfType<IPlayerCharacter>().Where(pc => pc.EntityId != 0xE000000 && pc.Character()->CharacterData.OnlineStatus is <= 3 and > 0);
 
-        if (!gms.Any())
-        {
+        if (!gms.Any()) {
             sent = false;
             return;
         }
 
         if (sent) return;
 
-        foreach (var player in gms)
-        {
+        foreach (var player in gms) {
             if (Config.Toast)
                 Svc.Toasts.ShowNormal($"GM {player.Name} is nearby!");
             if (Config.ChatMessage)

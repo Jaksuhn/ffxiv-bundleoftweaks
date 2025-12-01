@@ -9,8 +9,7 @@ using TimeZoneNames;
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
-public class TimezoneTranslator : Tweak
-{
+public class TimezoneTranslator : Tweak {
     public override string Name => "Timezone Translator";
     public override string Description => "Translates system message timestamps in chat to your time zone";
 
@@ -52,22 +51,18 @@ public class TimezoneTranslator : Tweak
     public override void Enable() => Svc.Chat.ChatMessage += OnChatMessage;
     public override void Disable() => Svc.Chat.ChatMessage -= OnChatMessage;
 
-    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
-    {
+    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
         if (type is not XivChatType.Notice) return;
         if (message.TextValue.IsNullOrEmpty()) return;
 
-        if (_kvp.TryGetValue(Svc.ClientState.ClientLanguage, out var conf))
-        {
+        if (_kvp.TryGetValue(Svc.ClientState.ClientLanguage, out var conf)) {
             if (conf.Culture.GetFullDateTimeRegexPattern().Match(message.TextValue) is not { Success: true } match) return;
 
             Log($"Detected timestamp [{match.Value}] in message {message.TextValue}");
-            if (DateTime.TryParse(match.Value, conf.Culture, out var serverTime))
-            {
+            if (DateTime.TryParse(match.Value, conf.Culture, out var serverTime)) {
                 var localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(serverTime, conf.ServerTimeZone, TimeZoneInfo.Local.Id).ToString(conf.Culture.DateTimeFormat.FullDateTimePattern, conf.Culture);
                 var sb = new SeStringBuilder();
-                foreach (var item in message.Payloads)
-                {
+                foreach (var item in message.Payloads) {
                     if (item is TextPayload tp && (tp.Text?.Contains(match.Value) ?? false)) // there might be multiple text payloads (like if ST clickable chat links is enabled)
                     {
                         string text, original = text = string.Concat(tp.Text.AsSpan(0, match.Index), localTime, tp.Text.AsSpan(match.Index + match.Length));
@@ -94,8 +89,7 @@ public class TimezoneTranslator : Tweak
         ? TZNames.GetAbbreviationsForTimeZone(TimeZoneInfo.Local.Id, CultureInfo.CurrentCulture.Name).Daylight ?? "null"
         : TZNames.GetAbbreviationsForTimeZone(TimeZoneInfo.Local.Id, CultureInfo.CurrentCulture.Name).Standard ?? "null";
 
-    private sealed class LanguageConfig(CultureInfo cultureInfo, string serverTimezone)
-    {
+    private sealed class LanguageConfig(CultureInfo cultureInfo, string serverTimezone) {
         public CultureInfo Culture { get; } = cultureInfo;
         public string ServerTimeZone { get; } = serverTimezone;
         public TimeZoneInfo Id => TimeZoneInfo.FindSystemTimeZoneById(ServerTimeZone);
@@ -107,10 +101,8 @@ public class TimezoneTranslator : Tweak
 
         public string LongName // yes this is pointlessly complicated
         {
-            get
-            {
-                if (TZNames.GetNamesForTimeZone(Id.Id, Culture.Name) is { Generic: var gen } && !string.IsNullOrEmpty(gen))
-                {
+            get {
+                if (TZNames.GetNamesForTimeZone(Id.Id, Culture.Name) is { Generic: var gen } && !string.IsNullOrEmpty(gen)) {
                     if (!gen.StartsWith("heure de ", StringComparison.OrdinalIgnoreCase))
                         return $"heure de {(Id.Id.Contains('/') ? Id.Id.Split('/').Last() : Id.Id)}";
                     return gen;

@@ -4,8 +4,7 @@ namespace ComplexTweaks.IPC;
 
 #nullable disable
 [Ipc(Ipc.AutoRetainer)]
-public class AutoRetainerIPC : BaseIPC
-{
+public class AutoRetainerIPC : BaseIPC {
     public override string Name => "AutoRetainer";
     public override string Repo => Punish;
     public AutoRetainerIPC() => EzIPC.Init(this, Name);

@@ -5,19 +5,16 @@ using System.Reflection;
 namespace ComplexTweaks.Attributes.Config;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class EnumConfigAttribute : BaseConfigAttribute
-{
+public class EnumConfigAttribute : BaseConfigAttribute {
     public bool NoLabel = false;
 
-    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo)
-    {
+    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo) {
         var enumType = fieldInfo.FieldType;
         var attr = fieldInfo.GetCustomAttribute<BaseConfigAttribute>();
 
         string GetOptionLabel(int value) => $"{Enum.GetName(enumType, value)}";
 
-        if (!NoLabel)
-        {
+        if (!NoLabel) {
             ImGui.TextUnformatted(fieldInfo.Name.SplitWords());
         }
 
@@ -25,20 +22,16 @@ public class EnumConfigAttribute : BaseConfigAttribute
 
         var selectedValue = Convert.ToInt32(fieldInfo.GetValue(config) ?? 0);
         using var combo = ImRaii.Combo("##Input", GetOptionLabel(selectedValue));
-        if (combo.Success)
-        {
-            foreach (var name in Enum.GetNames(enumType))
-            {
+        if (combo.Success) {
+            foreach (var name in Enum.GetNames(enumType)) {
                 var value = Convert.ToInt32(Enum.Parse(enumType, name));
 
-                if (ImGui.Selectable(GetOptionLabel(value), selectedValue == value))
-                {
+                if (ImGui.Selectable(GetOptionLabel(value), selectedValue == value)) {
                     fieldInfo.SetValue(config, Enum.ToObject(fieldInfo.FieldType, value));
                     OnChangeInternal(tweak, fieldInfo);
                 }
 
-                if (selectedValue == value)
-                {
+                if (selectedValue == value) {
                     ImGui.SetItemDefaultFocus();
                 }
             }

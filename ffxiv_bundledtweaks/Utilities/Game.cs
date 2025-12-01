@@ -15,77 +15,63 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Utilities;
 
-public unsafe class Game
-{
+public unsafe class Game {
     public static AtkUnitBase* GetAddonByName(string name) => RaptureAtkUnitManager.Instance()->GetAddonByName(name);
     public static bool AddonActive(string name) => AddonActive(GetAddonByName(name));
     public static bool AddonActive(AtkUnitBase* addon) => addon != null && addon->IsVisible && addon->IsReady;
 
-    public static void ProgressTalk()
-    {
+    public static void ProgressTalk() {
         var addon = GetAddonByName("Talk");
-        if (addon != null && addon->IsReady)
-        {
+        if (addon != null && addon->IsReady) {
             var evt = new AtkEvent() { Listener = &addon->AtkEventListener, Target = &AtkStage.Instance()->AtkEventTarget };
             var data = new AtkEventData();
             addon->ReceiveEvent(AtkEventType.MouseClick, 0, &evt, &data);
         }
     }
 
-    public static void SelectYes()
-    {
-        if (TryGetAddonByName<AtkUnitBase>("SelectYesno", out var addon))
-        {
+    public static void SelectYes() {
+        if (TryGetAddonByName<AtkUnitBase>("SelectYesno", out var addon)) {
             var evt = new AtkEvent() { Listener = &addon->AtkEventListener, Target = &AtkStage.Instance()->AtkEventTarget };
             var data = new AtkEventData();
             addon->ReceiveEvent(AtkEventType.ButtonClick, 0, &evt, &data);
         }
     }
 
-    public static void SelectString(int index)
-    {
-        if (TryGetAddonByName<AtkUnitBase>("SelectString", out var addon))
-        {
+    public static void SelectString(int index) {
+        if (TryGetAddonByName<AtkUnitBase>("SelectString", out var addon)) {
             AtkValue val = default;
             val.SetInt(index);
             addon->FireCallback(1, &val, true);
         }
     }
 
-    public static void ProgressMateriaAttachDialog()
-    {
-        if (TryGetAddonByName<AtkUnitBase>("MateriaAttachDialog", out var addon))
-        {
+    public static void ProgressMateriaAttachDialog() {
+        if (TryGetAddonByName<AtkUnitBase>("MateriaAttachDialog", out var addon)) {
             var evt = new AtkEvent() { Listener = &addon->AtkEventListener, Target = &AtkStage.Instance()->AtkEventTarget };
             var data = new AtkEventData();
             addon->ReceiveEvent(AtkEventType.ButtonClick, 0, &evt, &data);
         }
     }
 
-    public static void TeleportToAethernet(uint currentAetheryte, uint destinationAetheryte)
-    {
+    public static void TeleportToAethernet(uint currentAetheryte, uint destinationAetheryte) {
         Span<uint> payload = [4, destinationAetheryte];
         PacketDispatcher.SendEventCompletePacket(0x50000 | currentAetheryte, 0, 0, payload.GetPointer(0), (byte)payload.Length, null);
     }
 
-    public static void TeleportToFirmament(uint currentAetheryte)
-    {
+    public static void TeleportToFirmament(uint currentAetheryte) {
         Span<uint> payload = [9];
         PacketDispatcher.SendEventCompletePacket(0x50000 | currentAetheryte, 0, 0, payload.GetPointer(0), (byte)payload.Length, null);
     }
 
-    public enum ShopType
-    {
+    public enum ShopType {
         None = 0,
         GilShop = 1,
         FreeCompanyCreditShop = 2
     }
 
-    public static bool IsShopOpen(uint shopId = 0, ShopType shopType = ShopType.None)
-    {
+    public static bool IsShopOpen(uint shopId = 0, ShopType shopType = ShopType.None) {
         AgentInterface* agent = null;
-        switch (shopType)
-        {
+        switch (shopType) {
             case ShopType.GilShop:
                 agent = &AgentShop.Instance()->AgentInterface;
                 break;
@@ -103,24 +89,20 @@ public unsafe class Game
         return proxy->Handler == eh->Value;
     }
 
-    public static bool OpenShop(GameObject* vendor, uint shopId)
-    {
+    public static bool OpenShop(GameObject* vendor, uint shopId) {
         PluginLog.Debug($"Interacting with {(ulong)vendor->GetGameObjectId():X}");
         TargetSystem.Instance()->InteractWithObject(vendor, false);
         var selector = EventHandlerSelector.Instance();
         if (selector->Target == null)
             return true; // assume interaction was successful without selector
 
-        if (selector->Target != vendor)
-        {
+        if (selector->Target != vendor) {
             PluginLog.Error($"Unexpected selector target {(ulong)selector->Target->GetGameObjectId():X} when trying to interact with {(ulong)vendor->GetGameObjectId():X}");
             return false;
         }
 
-        for (var i = 0; i < selector->OptionsCount; ++i)
-        {
-            if (selector->Options[i].Handler->Info.EventId.Id == shopId)
-            {
+        for (var i = 0; i < selector->OptionsCount; ++i) {
+            if (selector->Options[i].Handler->Info.EventId.Id == shopId) {
                 PluginLog.Debug($"Selecting selector option {i} for shop {shopId:X}");
                 EventFramework.Instance()->InteractWithHandlerFromSelector(i);
                 return true;
@@ -131,19 +113,16 @@ public unsafe class Game
         return false;
     }
 
-    public static bool OpenShop(ulong vendorInstanceId, uint shopId)
-    {
+    public static bool OpenShop(ulong vendorInstanceId, uint shopId) {
         if (Svc.Objects.TryGetFirst(o => o.BaseId == vendorInstanceId, out var vendor))
             return OpenShop(vendor.Struct(), shopId);
-        else
-        {
+        else {
             PluginLog.Error($"Failed to find vendor {vendorInstanceId:X}");
             return false;
         }
     }
 
-    public static bool CloseShop()
-    {
+    public static bool CloseShop() {
         var agent = AgentShop.Instance();
         if (agent == null || agent->EventReceiver == null)
             return false;
@@ -155,27 +134,22 @@ public unsafe class Game
         return true;
     }
 
-    public static bool BuyItemFromShop(uint shopId, uint itemId, int count)
-    {
-        if (!EventFramework.Instance()->EventHandlerModule.EventHandlerMap.TryGetValuePointer(shopId, out var eh) || eh == null || eh->Value == null)
-        {
+    public static bool BuyItemFromShop(uint shopId, uint itemId, int count) {
+        if (!EventFramework.Instance()->EventHandlerModule.EventHandlerMap.TryGetValuePointer(shopId, out var eh) || eh == null || eh->Value == null) {
             PluginLog.Error($"Event handler for shop {shopId:X} not found");
             return false;
         }
 
-        if (!IsHandlerAShop(eh->Value->Info.EventId.ContentId))
-        {
+        if (!IsHandlerAShop(eh->Value->Info.EventId.ContentId)) {
             PluginLog.Error($"{shopId:X} is not a shop");
             return false;
         }
 
         var shop = (ShopEventHandler*)eh->Value;
         PluginLog.Debug($"{shop->VisibleItemsCount}");
-        for (var i = 0; i < shop->VisibleItemsCount; ++i)
-        {
+        for (var i = 0; i < shop->VisibleItemsCount; ++i) {
             var index = shop->VisibleItems[i];
-            if (shop->Items[index].ItemId == itemId)
-            {
+            if (shop->Items[index].ItemId == itemId) {
                 PluginLog.Debug($"Buying {count}x {itemId} from {shopId:X}");
                 shop->BuyItemIndex = index;
                 shop->ExecuteBuy(count);
@@ -187,16 +161,13 @@ public unsafe class Game
         return false;
     }
 
-    public static bool ShopTransactionInProgress(uint shopId)
-    {
-        if (!EventFramework.Instance()->EventHandlerModule.EventHandlerMap.TryGetValuePointer(shopId, out var eh) || eh == null || eh->Value == null)
-        {
+    public static bool ShopTransactionInProgress(uint shopId) {
+        if (!EventFramework.Instance()->EventHandlerModule.EventHandlerMap.TryGetValuePointer(shopId, out var eh) || eh == null || eh->Value == null) {
             PluginLog.Error($"Event handler for shop {shopId:X} not found");
             return false;
         }
 
-        if (!IsHandlerAShop(eh->Value->Info.EventId.ContentId))
-        {
+        if (!IsHandlerAShop(eh->Value->Info.EventId.ContentId)) {
             PluginLog.Error($"{shopId:X} is not a shop");
             return false;
         }
@@ -207,39 +178,31 @@ public unsafe class Game
 
     public static bool IsHandlerAShop(EventHandlerContent contentId) => contentId is EventHandlerContent.Shop or EventHandlerContent.FreeCompanyCreditShop;
 
-    public class NPCInfo(ulong id, Vector3 location, uint shopId)
-    {
+    public class NPCInfo(ulong id, Vector3 location, uint shopId) {
         public ulong Id = id;
         public Vector3 Location = location;
         public uint ShopId = shopId;
     }
 
-    public static NPCInfo? GetNPCInfo(uint enpcId, uint territoryId, uint itemId = 0)
-    {
+    public static NPCInfo? GetNPCInfo(uint enpcId, uint territoryId, uint itemId = 0) {
         var scene = GetRow<TerritoryType>(territoryId)!.Value.Bg.ToString();
         var filenameStart = scene.LastIndexOf('/') + 1;
         var planeventLayerGroup = "bg/" + scene[0..filenameStart] + "planevent.lgb";
         PluginLog.Debug($"Territory {territoryId} -> {planeventLayerGroup}");
         var lvb = Svc.Data.GetFile<LgbFile>(planeventLayerGroup);
-        if (lvb != null)
-        {
-            foreach (var layer in lvb.Layers)
-            {
-                foreach (var instance in layer.InstanceObjects)
-                {
+        if (lvb != null) {
+            foreach (var layer in lvb.Layers) {
+                foreach (var instance in layer.InstanceObjects) {
                     if (instance.AssetType != LayerEntryType.EventNPC)
                         continue;
                     var baseId = ((LayerCommon.ENPCInstanceObject)instance.Object).ParentData.ParentData.BaseId;
-                    if (baseId == enpcId)
-                    {
+                    if (baseId == enpcId) {
                         var npcId = (1ul << 32) | instance.InstanceId;
                         Vector3 npcLocation = new(instance.Transform.Translation.X, instance.Transform.Translation.Y, instance.Transform.Translation.Z);
                         PluginLog.Debug($"Found npc {baseId} {instance.InstanceId} '{GetRow<ENpcResident>(baseId)?.Singular}' at {npcLocation}");
-                        if (itemId != 0)
-                        {
+                        if (itemId != 0) {
                             var vendor = FindVendorItem(baseId, itemId);
-                            if (vendor.itemIndex >= 0)
-                            {
+                            if (vendor.itemIndex >= 0) {
                                 PluginLog.Debug($"Found shop #{vendor.shopId} and item index #{vendor.itemIndex}");
                                 return new NPCInfo(npcId, npcLocation, vendor.shopId);
                             }
@@ -252,24 +215,20 @@ public unsafe class Game
         return null;
     }
 
-    private static (uint shopId, int itemIndex) FindVendorItem(uint enpcId, uint itemId)
-    {
+    private static (uint shopId, int itemIndex) FindVendorItem(uint enpcId, uint itemId) {
         var enpcBase = GetRow<ENpcBase>(enpcId);
         if (enpcBase == null)
             return (0, -1);
 
-        foreach (var handler in enpcBase.Value.ENpcData)
-        {
+        foreach (var handler in enpcBase.Value.ENpcData) {
             var eventType = (EventHandlerContent)(handler.RowId >> 16);
-            switch (eventType)
-            {
+            switch (eventType) {
                 case EventHandlerContent.Shop:
                     var gilItems = GetSubRow<GilShopItem>(handler.RowId);
                     if (gilItems == null)
                         continue;
 
-                    for (var i = 0; i < gilItems.Value.Count; ++i)
-                    {
+                    for (var i = 0; i < gilItems.Value.Count; ++i) {
                         var shopItem = gilItems.Value[i];
                         if (shopItem.Item.RowId == itemId)
                             return (handler.RowId, i);
@@ -279,8 +238,7 @@ public unsafe class Game
                     var fccItems = GetRow<FccShop>(handler.RowId);
                     if (fccItems == null)
                         continue;
-                    for (var i = 0; i < fccItems.Value.ItemData.Count; ++i)
-                    {
+                    for (var i = 0; i < fccItems.Value.ItemData.Count; ++i) {
                         var shopItem = fccItems.Value.ItemData[i];
                         if (shopItem.Item.RowId == itemId)
                             return (handler.RowId, i);
@@ -298,8 +256,7 @@ public unsafe class Game
 
     public static bool UseItem(uint itemId) => ActionManager.Instance()->UseAction(ActionType.Item, itemId, extraParam: 65535);
 
-    public static bool InteractWith(ulong gameobjectId)
-    {
+    public static bool InteractWith(ulong gameobjectId) {
         var obj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(gameobjectId);
         if (obj == null)
             return false;
@@ -310,24 +267,20 @@ public unsafe class Game
         return true;
     }
 
-    public static bool IsTurnInRequestInProgress(uint itemId)
-    {
+    public static bool IsTurnInRequestInProgress(uint itemId) {
         var ui = UIState.Instance();
         var agent = AgentNpcTrade.Instance();
         return agent->IsAgentActive() && ui->NpcTrade.Requests.Count == 1 && ui->NpcTrade.Requests.Items[0].ItemId == itemId;
     }
 
-    public static void TurnInRequests()
-    {
+    public static void TurnInRequests() {
         var agent = AgentNpcTrade.Instance();
-        if (!agent->IsAgentActive())
-        {
+        if (!agent->IsAgentActive()) {
             PluginLog.Error("Agent not active...");
             return;
         }
 
-        if (agent->SelectedTurnInSlot >= 0)
-        {
+        if (agent->SelectedTurnInSlot >= 0) {
             PluginLog.Error($"Turn-in already in progress for slot {agent->SelectedTurnInSlot}");
             return;
         }
@@ -337,8 +290,7 @@ public unsafe class Game
         param[2].SetInt(0); // ???
         param[3].SetInt(0); // ???
         var res = new AtkValue();
-        for (var i = 0; i < UIState.Instance()->NpcTrade.Requests.Count; i++)
-        {
+        for (var i = 0; i < UIState.Instance()->NpcTrade.Requests.Count; i++) {
             param[1].SetInt(i); // slot
             agent->ReceiveEvent(&res, param.GetPointer(0), 4, 0);
         }
@@ -350,8 +302,7 @@ public unsafe class Game
         //param[3].SetInt(0); // ???
         //agent->ReceiveEvent(&res, param.GetPointer(0), 4, 0);
 
-        if (agent->SelectedTurnInSlot != 0 || agent->SelectedTurnInSlotItemOptions <= 0)
-        {
+        if (agent->SelectedTurnInSlot != 0 || agent->SelectedTurnInSlotItemOptions <= 0) {
             PluginLog.Error($"Failed to start turn-in: cur slot={agent->SelectedTurnInSlot}, count={agent->SelectedTurnInSlotItemOptions}");
             return;
         }
@@ -360,8 +311,7 @@ public unsafe class Game
         param[1].SetInt(0); // option #0
         agent->ReceiveEvent(&res, param.GetPointer(0), 4, 1);
 
-        if (agent->SelectedTurnInSlot >= 0)
-        {
+        if (agent->SelectedTurnInSlot >= 0) {
             PluginLog.Error($"Turn-in not confirmed: cur slot={agent->SelectedTurnInSlot}");
             return;
         }
@@ -378,8 +328,7 @@ public unsafe class Game
 
     public static bool IsTerritoryLoaded() => GameMain.Instance()->TerritoryLoadState == 2;
 
-    public static bool IsCastingTeleport()
-    {
+    public static bool IsCastingTeleport() {
         var info = Player.Character->GetCastInfo();
         return info is not null && info->IsCasting && info->ActionType == ActionType.Action && info->ActionId == 5;
     }

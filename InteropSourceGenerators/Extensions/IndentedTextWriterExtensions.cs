@@ -5,8 +5,7 @@ namespace InteropSourceGenerators.Extensions;
 /// <summary>
 /// Extension methods for <see cref="IndentedTextWriter"/> to support block scoping.
 /// </summary>
-internal static class IndentedTextWriterExtensions
-{
+internal static class IndentedTextWriterExtensions {
     /// <summary>
     /// Writes an opening brace and increases indentation.
     /// Returns a disposable that will write the closing brace and decrease indentation.
@@ -14,10 +13,8 @@ internal static class IndentedTextWriterExtensions
     /// <param name="writer">The writer to use.</param>
     /// <param name="openingBrace">Optional opening text before the brace (e.g., "if (condition)").</param>
     /// <returns>A disposable that will close the block.</returns>
-    public static IDisposable Block(this IndentedTextWriter writer, string? openingBrace = null)
-    {
-        if (!string.IsNullOrEmpty(openingBrace))
-        {
+    public static IDisposable Block(this IndentedTextWriter writer, string? openingBrace = null) {
+        if (!string.IsNullOrEmpty(openingBrace)) {
             writer.Write(openingBrace);
             writer.WriteLine();
         }
@@ -33,20 +30,17 @@ internal static class IndentedTextWriterExtensions
     /// <param name="writer">The writer to use.</param>
     /// <param name="openingBrace">The text to write before the opening brace (e.g., "if (condition)").</param>
     /// <returns>A disposable that will close the block.</returns>
-    public static IDisposable InlineBlock(this IndentedTextWriter writer, string openingBrace)
-    {
+    public static IDisposable InlineBlock(this IndentedTextWriter writer, string openingBrace) {
         writer.Write(openingBrace);
         writer.WriteLine(" {");
         writer.Indent++;
         return new BlockScope(writer);
     }
 
-    private sealed class BlockScope(IndentedTextWriter writer) : IDisposable
-    {
+    private sealed class BlockScope(IndentedTextWriter writer) : IDisposable {
         private bool _disposed;
 
-        public void Dispose()
-        {
+        public void Dispose() {
             if (_disposed)
                 return;
 

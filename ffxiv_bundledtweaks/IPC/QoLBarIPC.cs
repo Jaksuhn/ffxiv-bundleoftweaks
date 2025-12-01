@@ -5,8 +5,7 @@ namespace ComplexTweaks.IPC;
 #nullable disable
 #pragma warning disable CS0649
 [Ipc(Ipc.QoLBar)]
-internal class QoLBarIPC : BaseIPC
-{
+internal class QoLBarIPC : BaseIPC {
     public override string Name => "QoLBar";
     public override string Repo => Main;
     public QoLBarIPC() => EzIPC.Init(this, Name);

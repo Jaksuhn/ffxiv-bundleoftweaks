@@ -11,8 +11,7 @@ using Task = System.Threading.Tasks.Task;
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
-internal class AutoEquipXPBoosts : Tweak
-{
+internal class AutoEquipXPBoosts : Tweak {
     public override string Name => "Auto Equip Exp Items";
     public override string Description => "Automatically equips any exp boosting item on level change.";
 
@@ -32,8 +31,7 @@ internal class AutoEquipXPBoosts : Tweak
         new ExpItem(RowRef(44410), 60, 30), // Neophyte's ring
     ];
 
-    private unsafe void CheckForLevelSync(uint classJobId, uint level)
-    {
+    private unsafe void CheckForLevelSync(uint classJobId, uint level) {
         var expItems = _expItems.GroupBy(x => x.Item.Value.EquipSlotCategory.RowId)
             .Where(group => group.Any(x => level <= x.MaxLevel && Inventory.HasItem(x.Item.RowId)))
             .Select(group => group.Where(x => level <= x.MaxLevel && Inventory.HasItem(x.Item.RowId))
@@ -43,29 +41,23 @@ internal class AutoEquipXPBoosts : Tweak
         Service.Automation.Start(new EquipItems(expItems));
     }
 
-    private readonly unsafe struct ExpItem(RowRef<Item> Item, int MaxLevel, int Percent)
-    {
+    private readonly unsafe struct ExpItem(RowRef<Item> Item, int MaxLevel, int Percent) {
         public RowRef<Item> Item { get; init; } = Item;
         public int MaxLevel { get; init; } = MaxLevel;
         public int Percent { get; init; } = Percent;
         public readonly ExcelRow* Row = Framework.Instance()->ExcelModuleInterface->ExdModule->GetRowBySheetIndexAndRowIndex(10, Item.RowId);
     }
 
-    private sealed class EquipItems(List<ExpItem> expItems) : CommonTasks
-    {
-        protected override async Task Execute()
-        {
+    private sealed class EquipItems(List<ExpItem> expItems) : CommonTasks {
+        protected override async Task Execute() {
             using var scope = BeginScope("EquipItems");
             await WaitUntil(() => Player.ReadyAndLoaded, "WaitForLoad");
             if (Player.TerritoryIntendedUse is not (TerritoryIntendedUseEnum.Dungeon or TerritoryIntendedUseEnum.Raid or TerritoryIntendedUseEnum.Raid_2 or TerritoryIntendedUseEnum.Alliance_Raid)) return;
             if (GetRow<ContentFinderCondition>(Player.CurrentCfc) is { ContentType.RowId: 28 }) return; // skip ults
 
-            foreach (var expItem in expItems)
-            {
-                unsafe
-                {
-                    if (InventoryManager.CanEquip(expItem.Item.RowId, Player.Race, Player.Sex, (ushort)Player.Level, (byte)Player.JobId, (byte)Player.GrandCompany, Player.PvPRank, expItem.Row) != 0)
-                    {
+            foreach (var expItem in expItems) {
+                unsafe {
+                    if (InventoryManager.CanEquip(expItem.Item.RowId, Player.Race, Player.Sex, (ushort)Player.Level, (byte)Player.JobId, (byte)Player.GrandCompany, Player.PvPRank, expItem.Row) != 0) {
                         Log($"Can't equip [#{expItem.Item.RowId}] {expItem.Item.Value.Name}");
                         continue;
                     }

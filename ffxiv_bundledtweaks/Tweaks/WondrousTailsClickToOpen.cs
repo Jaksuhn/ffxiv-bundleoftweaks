@@ -12,58 +12,48 @@ using static FFXIVClientStructs.FFXIV.Client.Game.UI.ContentsFinderQueueInfo.Que
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
-internal class WondrousTailsClickToOpen : Tweak
-{
+internal class WondrousTailsClickToOpen : Tweak {
     public override string Name => "Wondrous Tails Click To Open";
     public override string Description => "Click on a WT duty to open the duty finder to it. Ctrl+click to queue into the duty semi-smartly.";
 
     private List<ContentFinderCondition> _sheet = null!;
     private unsafe ContentsFinderQueueInfo* QueueInfo => ContentsFinder.Instance()->GetQueueInfo();
 
-    public override void Enable()
-    {
+    public override void Enable() {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyBingo", OnAddonSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddonFinalize);
         _sheet = [.. GetSheet<ContentFinderCondition>().Where(x => !x.MSQRoulette)];
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         Svc.AddonLifecycle.UnregisterListener(OnAddonSetup);
         Svc.AddonLifecycle.UnregisterListener(OnAddonFinalize);
     }
 
-    private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
-    {
+    private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args) {
         var addonWeeklyBingo = (AddonWeeklyBingo*)args.ToPtr();
         ResetEventHandles();
-        foreach (var index in Enumerable.Range(0, 16))
-        {
+        foreach (var index in Enumerable.Range(0, 16)) {
             var dutySlot = addonWeeklyBingo->DutySlotList[index];
             eventHandles[index] = Svc.AddonEventManager.AddEvent((nint)addonWeeklyBingo, (nint)dutySlot.DutyButton->OwnerNode, AddonEventType.ButtonClick, OnDutySlotClick);
         }
     }
 
-    private unsafe void QueueDuty(List<uint> duties, bool roulette)
-    {
+    private unsafe void QueueDuty(List<uint> duties, bool roulette) {
         if (duties.Count == 0) return;
         if (QueueInfo->QueueState is Pending or Queued) QueueInfo->CancelQueue();
 
-        if (roulette)
-        {
+        if (roulette) {
             ContentsFinder.Instance()->ResetFlags();
             QueueInfo->QueueRoulette((byte)duties.First());
         }
-        else
-        {
-            if (GetRow<ContentFinderCondition>(duties.First())?.ClassJobLevelRequired < PlayerState.Instance()->MaxLevel - 20)
-            {
+        else {
+            if (GetRow<ContentFinderCondition>(duties.First())?.ClassJobLevelRequired < PlayerState.Instance()->MaxLevel - 20) {
                 ContentsFinder.Instance()->IsUnrestrictedParty = true;
                 var d = duties.First();
                 QueueInfo->QueueDuties(&d, 1);
             }
-            else
-            {
+            else {
                 ContentsFinder.Instance()->ResetFlags();
                 var array = stackalloc uint[duties.Count];
                 for (var i = 0; i < duties.Count; i++)
@@ -74,8 +64,7 @@ internal class WondrousTailsClickToOpen : Tweak
         }
     }
 
-    private unsafe void OpenDuty(List<uint> duties, bool roulette)
-    {
+    private unsafe void OpenDuty(List<uint> duties, bool roulette) {
         if (duties.Count == 0) return;
         Log($"Opening {duties.FirstOrDefault()} from [{string.Join(", ", duties)}]");
         if (roulette)
@@ -86,19 +75,16 @@ internal class WondrousTailsClickToOpen : Tweak
 
     private void OnAddonFinalize(AddonEvent type, AddonArgs args) => ResetEventHandles();
 
-    private unsafe void OnDutySlotClick(AddonEventType atkEventType, AddonEventData data)
-    {
+    private unsafe void OnDutySlotClick(AddonEventType atkEventType, AddonEventData data) {
         var dutyButtonNode = (AtkResNode*)data.NodeTargetPointer;
         var tileIndex = (int)dutyButtonNode->NodeId - 12;
         var selectedTask = PlayerState.Instance()->GetWeeklyBingoTaskStatus(tileIndex);
         var bingoData = PlayerState.Instance()->WeeklyBingoOrderData[tileIndex];
 
-        if (selectedTask is PlayerState.WeeklyBingoTaskStatus.Open)
-        {
+        if (selectedTask is PlayerState.WeeklyBingoTaskStatus.Open) {
             var dutiesForTask = GetInstanceListFromId(bingoData);
             var duties = FindRows<ContentFinderCondition>(c => dutiesForTask.Contains(c.TerritoryType.RowId)).Select(x => x.RowId).ToList();
-            if (ImGuiEx.Ctrl)
-            {
+            if (ImGuiEx.Ctrl) {
                 if (GetRow<ContentFinderCondition>(duties.First())?.ClassJobLevelRequired < PlayerState.Instance()->MaxLevel - 20)
                     QueueDuty([duties.First()], false);
                 else
@@ -110,24 +96,19 @@ internal class WondrousTailsClickToOpen : Tweak
     }
 
     private readonly IAddonEventHandle?[] eventHandles = new IAddonEventHandle?[16];
-    private void ResetEventHandles()
-    {
-        foreach (var index in Enumerable.Range(0, 16))
-        {
-            if (eventHandles[index] is { } handle)
-            {
+    private void ResetEventHandles() {
+        foreach (var index in Enumerable.Range(0, 16)) {
+            if (eventHandles[index] is { } handle) {
                 Svc.AddonEventManager.RemoveEvent(handle);
                 eventHandles[index] = null;
             }
         }
     }
 
-    private unsafe List<uint> GetInstanceListFromId(uint orderDataId)
-    {
+    private unsafe List<uint> GetInstanceListFromId(uint orderDataId) {
         var bingoOrderData = GetSheet<WeeklyBingoOrderData>().GetRow(orderDataId);
         Debug($"{nameof(OnDutySlotClick)}: [row={bingoOrderData.RowId}; type={bingoOrderData.Type}; text={bingoOrderData.Text.Value.Description};]");
-        switch (bingoOrderData.Type)
-        {
+        switch (bingoOrderData.Type) {
             // Specific Duty
             case 0:
                 return [.. _sheet
@@ -154,15 +135,13 @@ internal class WondrousTailsClickToOpen : Tweak
             // Special categories
             case 3:
                 // handling AgentContentsFinder here is such a hack
-                switch (bingoOrderData.Unknown1)
-                {
+                switch (bingoOrderData.Unknown1) {
                     // Treasure Maps, nothing to do
                     case 1: return [];
 
                     // PvP
                     case 2:
-                        switch (bingoOrderData.RowId)
-                        {
+                        switch (bingoOrderData.RowId) {
                             // Crystalline Conflict
                             case 52:
                                 if (ImGuiEx.Ctrl)

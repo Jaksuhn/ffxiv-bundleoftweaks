@@ -14,10 +14,8 @@ using System.Reflection;
 
 namespace ComplexTweaks.TweakSystem;
 
-public abstract partial class Tweak : ITweak
-{
-    public Tweak()
-    {
+public abstract partial class Tweak : ITweak {
+    public Tweak() {
         CachedType = GetType();
         InternalName = CachedType.Name;
         IncompatibilityWarnings = [.. CachedType.GetCustomAttributes<IncompatibilityWarningAttribute>()];
@@ -29,25 +27,21 @@ public abstract partial class Tweak : ITweak
         IsDebug = tweakAttr?.Debug ?? false;
         Requirements = Service.IPC.GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct()]);
 
-        try
-        {
+        try {
             EzSignatureHelper.Initialize(this);
             Svc.Hook.InitializeFromAttributes(this);
         }
-        catch (SignatureException ex)
-        {
+        catch (SignatureException ex) {
             Error(ex, "SignatureException, flagging as outdated");
             Outdated = true;
             LastInternalException = ex;
             return;
         }
 
-        try
-        {
+        try {
             SetupHooks();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during SetupHooks");
             LastInternalException = ex;
             return;
@@ -83,10 +77,8 @@ public abstract partial class Tweak : ITweak
 
     protected virtual object? GetConfigObject() => null;
 
-    public TConfig? GetConfig<TConfig>() where TConfig : class
-    {
-        if (CachedConfigType == typeof(TConfig))
-        {
+    public TConfig? GetConfig<TConfig>() where TConfig : class {
+        if (CachedConfigType == typeof(TConfig)) {
             var config = GetConfigObject();
             if (config is TConfig typedConfig)
                 return typedConfig;
@@ -113,22 +105,18 @@ public abstract partial class Tweak : ITweak
     public virtual void Enable() { }
     public virtual void Disable() { }
     public virtual void Dispose() { }
-    public virtual void DrawConfig()
-    {
+    public virtual void DrawConfig() {
         var config = GetConfigObject();
-        if (CachedConfigType != null && config != null)
-        {
+        if (CachedConfigType != null && config != null) {
             var configFields = CachedConfigType.GetFields()
                 .Select(fieldInfo => (FieldInfo: fieldInfo, Attribute: fieldInfo.GetCustomAttribute<BaseConfigAttribute>()))
                 .Where((tuple) => tuple.Attribute != null)
                 .Cast<(FieldInfo, BaseConfigAttribute)>();
 
-            if (configFields.Any())
-            {
+            if (configFields.Any()) {
                 ImGui.DrawSection("Configuration");
 
-                foreach (var (field, attr) in configFields)
-                {
+                foreach (var (field, attr) in configFields) {
                     var hasDependency = !string.IsNullOrEmpty(attr.DependsOn);
                     var isDisabled = hasDependency && (bool?)CachedConfigType.GetField(attr.DependsOn)?.GetValue(config) == false;
 
@@ -162,10 +150,8 @@ public abstract partial class Tweak // Internal
         .GetFields(ReflectionHelper.AllFlags)
         .Where(f => f.FieldType.IsGenericType && f.FieldType?.GetGenericTypeDefinition() == typeof(EzHook<>));
 
-    protected void CallHooks(string methodName)
-    {
-        foreach (var property in Hooks)
-        {
+    protected void CallHooks(string methodName) {
+        foreach (var property in Hooks) {
             var hook = property.GetValue(this);
             if (hook == null) continue;
 
@@ -178,38 +164,31 @@ public abstract partial class Tweak // Internal
 
         if (methodName is "Enable" or "Disable") // EzHook doesn't have Dispose
         {
-            foreach (var field in EzHooks)
-            {
+            foreach (var field in EzHooks) {
                 if (field.GetValue(this) is { } hook)
                     hook?.GetType()?.GetMethod(methodName)?.Invoke(hook, null);
             }
         }
     }
 
-    internal virtual void EnableInternal()
-    {
+    internal virtual void EnableInternal() {
         if (!Ready || Outdated || Disabled) return;
-        if (Requirements.Any(r => !r.IsLoaded))
-        {
+        if (Requirements.Any(r => !r.IsLoaded)) {
             // TODO: append a button to re-enable
             ModuleMessage("Feature not enabled due to missing dependencies. Please install them then re-enable this feature.");
             return;
         }
 
-        if (CachedWindowType != null && _window == null)
-        {
-            try
-            {
+        if (CachedWindowType != null && _window == null) {
+            try {
                 var getWindowMethod = typeof(EzConfigGui).GetMethod("GetWindow", [])?.MakeGenericMethod(CachedWindowType);
                 if (getWindowMethod?.Invoke(null, null) is Window existingWindow)
                     _window = existingWindow;
-                else
-                {
+                else {
                     var constructor = CachedWindowType.GetConstructor([CachedType]);
                     if (constructor != null)
                         _window = (Window?)constructor.Invoke([this]);
-                    else
-                    {
+                    else {
                         constructor = CachedWindowType.GetConstructor([]);
                         _window = constructor != null
                             ? (Window?)constructor.Invoke([])
@@ -220,52 +199,43 @@ public abstract partial class Tweak // Internal
                         EzConfigGui.WindowSystem.AddWindow(_window);
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Error(ex, $"Failed to create window {CachedWindowType.Name}");
                 LastInternalException = ex;
                 return;
             }
         }
 
-        try
-        {
+        try {
             EnableCommands();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Enable (Commands)");
             LastInternalException = ex;
         }
 
-        try
-        {
+        try {
             if (EventHandlers.Any(eh => eh.GetCustomAttribute<TweakEventAttribute>()?.AutoEnable != false))
                 EnableEventHandlers();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Enable (Event Handlers)");
             LastInternalException = ex;
         }
 
-        try
-        {
+        try {
             CallHooks("Enable");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Enable (Hooks)");
             LastInternalException = ex;
             return;
         }
 
-        try
-        {
+        try {
             Enable();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Enable");
             LastInternalException = ex;
             return;
@@ -277,63 +247,50 @@ public abstract partial class Tweak // Internal
 
     public bool CanBeEnabled() => Ready && !Outdated && !Disabled && Requirements.All(r => r.IsLoaded);
 
-    internal virtual void DisableInternal(bool isDisposing = false)
-    {
+    internal virtual void DisableInternal(bool isDisposing = false) {
         if (!Enabled) return;
 
-        try
-        {
+        try {
             DisableCommands();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Disable (Commands)");
             LastInternalException = ex;
         }
 
-        try
-        {
+        try {
             if (AreEventHandlersEnabled)
                 DisableEventHandlers();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Disable (Event Handlers)");
             LastInternalException = ex;
         }
 
-        if (!isDisposing)
-        {
-            try
-            {
+        if (!isDisposing) {
+            try {
                 CallHooks("Disable");
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Error(ex, "Unexpected error during Disable (Hooks)");
                 LastInternalException = ex;
             }
         }
 
-        try
-        {
+        try {
             Disable();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Disable");
             LastInternalException = ex;
         }
 
-        if (_window != null && CachedWindowType != null)
-        {
-            try
-            {
+        if (_window != null && CachedWindowType != null) {
+            try {
                 EzConfigGui.WindowSystem.RemoveWindow(_window);
                 _window = null;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Error(ex, $"Failed to remove window {CachedWindowType.Name}");
             }
         }
@@ -341,29 +298,24 @@ public abstract partial class Tweak // Internal
         Enabled = false;
     }
 
-    internal virtual void DisposeInternal()
-    {
+    internal virtual void DisposeInternal() {
         if (Disposed)
             return;
 
         DisableInternal(true);
 
-        try
-        {
+        try {
             CallHooks("Dispose");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Dispose (Hooks)");
             LastInternalException = ex;
         }
 
-        try
-        {
+        try {
             Dispose();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during Dispose");
             LastInternalException = ex;
         }
@@ -372,28 +324,23 @@ public abstract partial class Tweak // Internal
         Disposed = true;
     }
 
-    internal virtual void OnConfigChangeInternal(string fieldName)
-    {
-        foreach (var methodInfo in CommandHandlers)
-        {
+    internal virtual void OnConfigChangeInternal(string fieldName) {
+        foreach (var methodInfo in CommandHandlers) {
             var attr = methodInfo.GetCustomAttribute<CommandHandlerAttribute>()!;
             if (attr.ConfigFieldName != fieldName)
                 continue;
 
             var enabled = string.IsNullOrEmpty(attr.ConfigFieldName);
 
-            if (!string.IsNullOrEmpty(attr.ConfigFieldName) && CachedConfigType != null)
-            {
+            if (!string.IsNullOrEmpty(attr.ConfigFieldName) && CachedConfigType != null) {
                 var config = GetConfigObject();
                 if (config != null)
                     enabled |= (CachedConfigType.GetField(attr.ConfigFieldName)?.GetValue(config) as bool?)
                         ?? throw new InvalidOperationException($"Configuration field {attr.ConfigFieldName} in {CachedConfigType.Name} not found.");
             }
 
-            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs)
-            {
-                if (!Service.IPC.AreAllLoaded(reqs))
-                {
+            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs) {
+                if (!Service.IPC.AreAllLoaded(reqs)) {
                     var missing = Service.IPC.GetMissing(reqs);
                     Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {string.Join(", ", missing.Select(ipc => ipc.Name))}");
                     enabled = false;
@@ -408,37 +355,30 @@ public abstract partial class Tweak // Internal
                     DisableCommand(c);
         }
 
-        try
-        {
+        try {
             OnConfigChange(fieldName);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Error(ex, "Unexpected error during OnConfigChange");
             LastInternalException = ex;
             return;
         }
     }
 
-    protected virtual void EnableCommands()
-    {
-        foreach (var methodInfo in CommandHandlers)
-        {
+    protected virtual void EnableCommands() {
+        foreach (var methodInfo in CommandHandlers) {
             var attr = methodInfo.GetCustomAttribute<CommandHandlerAttribute>()!;
             var enabled = string.IsNullOrEmpty(attr.ConfigFieldName);
 
-            if (!string.IsNullOrEmpty(attr.ConfigFieldName) && CachedConfigType != null)
-            {
+            if (!string.IsNullOrEmpty(attr.ConfigFieldName) && CachedConfigType != null) {
                 var config = GetConfigObject();
                 if (config != null)
                     enabled |= (CachedConfigType.GetField(attr.ConfigFieldName)?.GetValue(config) as bool?)
                         ?? throw new InvalidOperationException($"Configuration field {attr.ConfigFieldName} in {CachedConfigType.Name} not found.");
             }
 
-            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs)
-            {
-                if (!Service.IPC.AreAllLoaded(reqs))
-                {
+            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs) {
+                if (!Service.IPC.AreAllLoaded(reqs)) {
                     var missing = Service.IPC.GetMissing(reqs);
                     var missingNames = missing.Length > 0 ? string.Join(", ", missing.Select(ipc => ipc.Name)) : "one or more required IPCs are not registered";
                     Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {missingNames}");
@@ -452,15 +392,12 @@ public abstract partial class Tweak // Internal
         }
     }
 
-    protected virtual void DisableCommands()
-    {
-        foreach (var methodInfo in CommandHandlers)
-        {
+    protected virtual void DisableCommands() {
+        foreach (var methodInfo in CommandHandlers) {
             var attr = methodInfo.GetCustomAttribute<CommandHandlerAttribute>()!;
             var enabled = string.IsNullOrEmpty(attr.ConfigFieldName);
 
-            if (!string.IsNullOrEmpty(attr.ConfigFieldName) && CachedConfigType != null)
-            {
+            if (!string.IsNullOrEmpty(attr.ConfigFieldName) && CachedConfigType != null) {
                 var config = GetConfigObject();
                 if (config != null)
                     enabled |= (CachedConfigType.GetField(attr.ConfigFieldName)?.GetValue(config) as bool?)
@@ -473,36 +410,29 @@ public abstract partial class Tweak // Internal
         }
     }
 
-    public void EnableEventHandlers()
-    {
+    public void EnableEventHandlers() {
         if (AreEventHandlersEnabled)
             return;
 
-        foreach (var methodInfo in EventHandlers)
-        {
+        foreach (var methodInfo in EventHandlers) {
             var attr = methodInfo.GetCustomAttribute<TweakEventAttribute>()!;
             var parameters = methodInfo.GetParameters();
 
-            if (parameters.Length != 2 || parameters[0].ParameterType != typeof(Type) || parameters[1].ParameterType != typeof(EventArgs))
-            {
+            if (parameters.Length != 2 || parameters[0].ParameterType != typeof(Type) || parameters[1].ParameterType != typeof(EventArgs)) {
                 Error($"Event handler method {methodInfo.Name} in {CachedType.Name} must have exactly two parameters: (Type, EventArgs)");
                 continue;
             }
 
-            void handler(Type senderType, EventArgs args)
-            {
-                try
-                {
+            void handler(Type senderType, EventArgs args) {
+                try {
                     methodInfo.Invoke(this, [senderType, args]);
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Error(ex, $"Error invoking event handler {methodInfo.Name}");
                 }
             }
 
-            foreach (var eventEnum in attr.Events)
-            {
+            foreach (var eventEnum in attr.Events) {
                 Service.TweakEventManager.Subscribe(eventEnum, handler);
                 if (!_eventHandlers.ContainsKey(eventEnum))
                     _eventHandlers[eventEnum] = [];
@@ -513,8 +443,7 @@ public abstract partial class Tweak // Internal
         AreEventHandlersEnabled = true;
     }
 
-    public void DisableEventHandlers()
-    {
+    public void DisableEventHandlers() {
         if (!AreEventHandlersEnabled)
             return;
 
@@ -527,8 +456,7 @@ public abstract partial class Tweak // Internal
 
     public bool AreEventHandlersEnabled { get; private set; } = false;
 
-    protected void DrawCommands()
-    {
+    protected void DrawCommands() {
         var commandHandlers = CommandHandlers
         .Select(m => m.GetCustomAttribute<CommandHandlerAttribute>()!)
         .Where(attr =>
@@ -538,25 +466,19 @@ public abstract partial class Tweak // Internal
             (CachedConfigType != null && GetConfigObject() != null && (bool?)CachedConfigType.GetField(attr.ConfigFieldName)?.GetValue(GetConfigObject()) == true))
         .Where(attr => attr.Commands.Any(cmd => Svc.Commands.Commands.ContainsKey(cmd)));
 
-        if (commandHandlers.Any())
-        {
+        if (commandHandlers.Any()) {
             ImGui.DrawSection("Available Commands");
-            foreach (var attr in commandHandlers)
-            {
-                foreach (var cmd in attr.Commands.Where(Svc.Commands.Commands.ContainsKey))
-                {
+            foreach (var attr in commandHandlers) {
+                foreach (var cmd in attr.Commands.Where(Svc.Commands.Commands.ContainsKey)) {
                     var commandInfo = Svc.Commands.Commands[cmd];
                     ImGui.Text($"{cmd}");
-                    if (!string.IsNullOrEmpty(commandInfo.HelpMessage))
-                    {
+                    if (!string.IsNullOrEmpty(commandInfo.HelpMessage)) {
                         ImGui.SameLine();
                         ImGui.TextColoredWrapped(Colors.Grey, commandInfo.HelpMessage);
                     }
 
-                    if (attr.SubCommands.Count != 0)
-                    {
-                        foreach (var subCmd in attr.SubCommands)
-                        {
+                    if (attr.SubCommands.Count != 0) {
+                        foreach (var subCmd in attr.SubCommands) {
                             using var subIndent = ImGui.ConfigIndent();
                             ImGui.Text($"{cmd} {subCmd.Subcommand}");
                             ImGui.SameLine();
@@ -568,15 +490,11 @@ public abstract partial class Tweak // Internal
         }
     }
 
-    private void EnableCommand(string command, string helpMessage, MethodInfo methodInfo, CommandHandlerAttribute attr)
-    {
+    private void EnableCommand(string command, string helpMessage, MethodInfo methodInfo, CommandHandlerAttribute attr) {
         var originalHandler = methodInfo.CreateDelegate<IReadOnlyCommandInfo.HandlerDelegate>(this);
-        void handler(string cmd, string args)
-        {
-            if (methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs)
-            {
-                if (!Service.IPC.AreAllLoaded(reqs))
-                {
+        void handler(string cmd, string args) {
+            if (methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs) {
+                if (!Service.IPC.AreAllLoaded(reqs)) {
                     var missing = Service.IPC.GetMissing(reqs);
                     ModuleMessage($"Command {cmd} requires: {string.Join(", ", missing.Select(ipc => ipc.Name))}");
                     return;
@@ -592,8 +510,7 @@ public abstract partial class Tweak // Internal
             Warning($"Could not add CommandHandler for {command}");
     }
 
-    private void DisableCommand(string command)
-    {
+    private void DisableCommand(string command) {
         if (Svc.Commands.RemoveHandler(command))
             Log($"Removed CommandHandler for {command}");
         else
@@ -646,10 +563,8 @@ public abstract partial class Tweak // Logging
         => exception.LogFatal($"[{InternalName}] {messageTemplate}");
 
     public void ModuleMessage(SeString messageTemplate) => ModuleMessage(messageTemplate.TextValue);
-    public void ModuleMessage(string messageTemplate)
-    {
-        var message = new XivChatEntry
-        {
+    public void ModuleMessage(string messageTemplate) {
+        var message = new XivChatEntry {
             Message = new SeStringBuilder()
                 .AddUiForeground($"[{Name}] ", 62)
                 .Append(messageTemplate)

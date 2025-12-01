@@ -1,15 +1,12 @@
 ﻿namespace ComplexTweaks.Utilities;
 
-public static class Enums
-{
-    public enum MovementType
-    {
+public static class Enums {
+    public enum MovementType {
         Direct,
         Pathfind
     }
 
-    public enum ExecuteCommandFlag
-    {
+    public enum ExecuteCommandFlag {
         DrawOrSheatheWeapon = 1,
         AutoAttack = 2,
         Target = 3,
@@ -161,8 +158,7 @@ public static class Enums
         Retainer = 9003
     }
 
-    public enum ExecuteCommandComplexFlag
-    {
+    public enum ExecuteCommandComplexFlag {
         Dismount = 101,
         PlaceMarker = 301,
         Emote = 500,
@@ -173,8 +169,7 @@ public static class Enums
         BgcArmyAction = 1810
     }
 
-    public enum LinkHandlerId : uint
-    {
+    public enum LinkHandlerId : uint {
         RelayLinkPayload,
     }
 }

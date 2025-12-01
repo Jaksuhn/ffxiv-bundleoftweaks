@@ -6,8 +6,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 namespace ComplexTweaks.Tweaks;
 
 [Tweak(debug: true)]
-public unsafe partial class InstantReturn : Tweak
-{
+public unsafe partial class InstantReturn : Tweak {
     public override string Name => "Quick Return";
     public override string Description => "Calls the return function directly";
 
@@ -15,13 +14,11 @@ public unsafe partial class InstantReturn : Tweak
     public override void Disable() => Svc.AddonLifecycle.UnregisterListener(HandleReturn);
 
     [AddressHook<AgentReturn>(nameof(AgentReturn.MemberFunctionPointers.Return))]
-    private byte AgentReturn_Return(AgentInterface* agent)
-    {
+    private byte AgentReturn_Return(AgentInterface* agent) {
         if (ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 6) != 0 || Player.IsInPvP)
             return AgentReturn_ReturnHook.Original(agent);
 
-        if (Svc.Party.Length > 1)
-        {
+        if (Svc.Party.Length > 1) {
             if (Svc.Party[0]?.Name == Svc.ClientState.LocalPlayer?.Name)
                 Chat.SendMessage("/partycmd breakup");
             else
@@ -32,8 +29,7 @@ public unsafe partial class InstantReturn : Tweak
         return 1;
     }
 
-    private void HandleReturn(AddonEvent type, AddonArgs args)
-    {
+    private void HandleReturn(AddonEvent type, AddonArgs args) {
         var agent = AgentModule.Instance()->GetAgentByInternalId(AgentId.Return);
         if (agent is null || agent->AddonId != args.Addon.Id) return;
 

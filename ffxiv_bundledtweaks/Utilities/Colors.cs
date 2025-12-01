@@ -3,8 +3,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace ComplexTweaks.Utilities;
 
-public static class Colors
-{
+public static class Colors {
     public static EzColor Gold { get; } = new(0.847f, 0.733f, 0.49f);
     public static EzColor Grey { get; } = new(0.73f, 0.73f, 0.73f);
     public static EzColor Grey2 { get; } = new(0.87f, 0.87f, 0.87f);

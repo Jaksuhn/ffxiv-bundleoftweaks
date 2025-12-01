@@ -6,10 +6,8 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Utilities;
 
-public static class Coords
-{
-    public static Vector3 PixelCoordsToWorldCoords(int x, int z, uint mapId)
-    {
+public static class Coords {
+    public static Vector3 PixelCoordsToWorldCoords(int x, int z, uint mapId) {
         var map = GetRow<Sheets.Map>(mapId);
         var scale = (map?.SizeFactor ?? 100) * 0.01f;
         var wx = PixelCoordToWorldCoord(x, scale, map?.OffsetX ?? 0);
@@ -19,8 +17,7 @@ public static class Coords
 
     // see: https://github.com/xivapi/ffxiv-datamining/blob/master/docs/MapCoordinates.md
     // see: dalamud MapLinkPayload class
-    public static float PixelCoordToWorldCoord(float coord, float scale, short offset)
-    {
+    public static float PixelCoordToWorldCoord(float coord, float scale, short offset) {
         // +1 - networkAdjustment == 0
         // (coord / scale * 2) * (scale / 100) = coord / 50
         // * 2048 / 41 / 50 = 0.999024
@@ -29,8 +26,7 @@ public static class Coords
     }
 
     public static uint? FindClosestAetheryte(FlagMapMarker flag, bool includeAethernet = true) => FindClosestAetheryte(flag.TerritoryId, FlagToWorld(flag), includeAethernet);
-    public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true)
-    {
+    public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true) {
         if (territoryTypeId == 886) // Firmament
             return 70; // Ishgard
         if (territoryTypeId == 478) // Hinterlands
@@ -41,8 +37,7 @@ public static class Coords
     }
 
     public static Vector3 AetherytePosition(uint aetheryteId) => AetherytePosition(GetRow<Sheets.Aetheryte>(aetheryteId)!.Value);
-    public static Vector3 AetherytePosition(Sheets.Aetheryte a)
-    {
+    public static Vector3 AetherytePosition(Sheets.Aetheryte a) {
         // stolen from HTA, uses pixel coordinates
         var level = a.Level[0].ValueNullable;
         if (level != null)
@@ -52,8 +47,7 @@ public static class Coords
         return PixelCoordsToWorldCoords(marker.Value.X, marker.Value.Y, a.Territory.Value.Map.RowId);
     }
 
-    public static bool IsTeleportingFaster(Vector3 dest)
-    {
+    public static bool IsTeleportingFaster(Vector3 dest) {
         if (FindClosestAetheryte(Player.Territory, dest, false) is not { } aetheryteId) return false;
         var aetherytePos = AetherytePosition(aetheryteId);
         Svc.Log.Info($"DistFromAetheryte: {(dest - aetherytePos).Length()}, DistFromPlayer: {(dest - Player.Position).Length()}");
@@ -61,8 +55,7 @@ public static class Coords
     }
 
     // if aetheryte is 'primary' (i.e. can be teleported to), return it; otherwise (i.e. aethernet shard) find and return primary aetheryte from same group
-    public static uint FindPrimaryAetheryte(uint aetheryteId)
-    {
+    public static uint FindPrimaryAetheryte(uint aetheryteId) {
         if (aetheryteId == 0)
             return 0;
         var row = GetRow<Sheets.Aetheryte>(aetheryteId)!.Value;
@@ -74,8 +67,7 @@ public static class Coords
 
     public static unsafe bool ExecuteTeleport(uint aetheryteId) => UIState.Instance()->Telepo.Teleport(aetheryteId, 0);
 
-    public static unsafe (ulong id, Vector3 pos) FindAetheryte(uint id)
-    {
+    public static unsafe (ulong id, Vector3 pos) FindAetheryte(uint id) {
         foreach (var obj in GameObjectManager.Instance()->Objects.IndexSorted)
             if (obj.Value != null && obj.Value->ObjectKind == ObjectKind.Aetheryte && obj.Value->BaseId == id)
                 return (obj.Value->GetGameObjectId(), *obj.Value->GetPosition());

@@ -6,19 +6,16 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Tweaks;
 
-public class SimpleCurrencyAlertConfig
-{
+public class SimpleCurrencyAlertConfig {
     public List<SimpleCurrencyAlert.Alert> Alerts = [];
 }
 
 [Tweak]
-public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig>
-{
+public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig> {
     public override string Name => "Simple Currency Alert";
     public override string Description => "Probably won't reset your config every update. Triggers on zone change.";
 
-    public class Alert
-    {
+    public class Alert {
         public uint ItemId;
         public int Threshold;
         public Level Level;
@@ -26,20 +23,17 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig>
         public string Name => GetRow<Item>(ItemId)?.Name.ToString() ?? string.Empty;
     }
 
-    public enum Level
-    {
+    public enum Level {
         Over,
         Under,
     }
 
-    public override void DrawConfig()
-    {
+    public override void DrawConfig() {
         base.DrawConfig();
         if (ImGuiEx.ExcelSheetCombo<Item>("##Search", out var item, _ => string.Empty, x => x.Name.ToString(), x => !x.Name.ToString().IsNullOrEmpty()))
             Config.Alerts.Add(new Alert() { ItemId = item.RowId });
 
-        foreach (var i in Config.Alerts.ToList())
-        {
+        foreach (var i in Config.Alerts.ToList()) {
             ImGui.Icon(i.Icon, 25);
             ImGui.SameLine();
             ImGui.SetNextItemWidth(100);
@@ -55,8 +49,7 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig>
 
     public override void Enable() => Svc.ClientState.TerritoryChanged += OnTerritoryChanged;
     public override void Disable() => Svc.ClientState.TerritoryChanged -= OnTerritoryChanged;
-    private unsafe void OnTerritoryChanged(ushort obj)
-    {
+    private unsafe void OnTerritoryChanged(ushort obj) {
         foreach (var currency in Config.Alerts)
             if (currency.Level == Level.Over && InventoryManager.Instance()->GetInventoryItemCount(currency.ItemId) >= currency.Threshold
                 || currency.Level == Level.Under && InventoryManager.Instance()->GetInventoryItemCount(currency.ItemId) <= currency.Threshold)

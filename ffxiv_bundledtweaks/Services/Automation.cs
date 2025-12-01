@@ -7,31 +7,26 @@ namespace ComplexTweaks.Services;
 // all tasks are cancellable, and all continuations are executed on the main thread (in framework update)
 // tasks also support progress reporting
 // note: it's assumed that any created task will be executed (either by calling Run directly or by passing to Automation.Start)
-public abstract class AutoTask
-{
+public abstract class AutoTask {
     // debug context scope
-    protected readonly struct DebugContext : IDisposable
-    {
+    protected readonly struct DebugContext : IDisposable {
         private readonly AutoTask _ctx;
         private readonly int _depth;
 
-        public DebugContext(AutoTask ctx, string name)
-        {
+        public DebugContext(AutoTask ctx, string name) {
             _ctx = ctx;
             _depth = _ctx._debugContext.Count;
             _ctx._debugContext.Add(name);
             _ctx.Log("Scope enter");
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             _ctx.Log($"Scope exit (depth={_depth}, cur={_ctx._debugContext.Count - 1})");
             if (_depth < _ctx._debugContext.Count)
                 _ctx._debugContext.RemoveRange(_depth, _ctx._debugContext.Count - _depth);
         }
 
-        public void Rename(string newName)
-        {
+        public void Rename(string newName) {
             _ctx.Log($"Transition to {newName} @ {_depth}");
             if (_depth < _ctx._debugContext.Count)
                 _ctx._debugContext[_depth] = newName;
@@ -48,27 +43,22 @@ public abstract class AutoTask
     internal static AutoTask? ActiveTask => _activeTask.Value;
     internal void RegisterCleanup(IDisposable disposable) => _disposables.Add(disposable);
 
-    private void InvokeDisposables()
-    {
+    private void InvokeDisposables() {
         for (var i = _disposables.Count - 1; i >= 0; --i)
             _disposables[i].Dispose();
         _disposables.Clear();
     }
 
-    public void Cancel()
-    {
+    public void Cancel() {
         _cts.Cancel();
         InvokeDisposables();
     }
 
-    public void Run(Action completed, Action? OnCompleted = null)
-    {
-        Svc.Framework.Run(async () =>
-        {
+    public void Run(Action completed, Action? OnCompleted = null) {
+        Svc.Framework.Run(async () => {
             _activeTask.Value = this;
 
-            if (this is IAutoTaskHooks hookable)
-            {
+            if (this is IAutoTaskHooks hookable) {
                 hookable.SetupHooks();
                 hookable.EnableHooks();
                 RegisterCleanup(new AutoTaskHookCleanup(hookable));
@@ -97,12 +87,10 @@ public abstract class AutoTask
     /// <summary>
     /// Wait until condition function returns false, checking once every N frames
     /// </summary>
-    protected async Task WaitWhile(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false)
-    {
+    protected async Task WaitWhile(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) {
         using var scope = BeginScope(scopeName);
         Log("waiting...");
-        while (condition())
-        {
+        while (condition()) {
             if (logContinuously)
                 Log("waiting...");
             await NextFrame(checkFrequency);
@@ -118,8 +106,7 @@ public abstract class AutoTask
     /// Wait until a condition function returns true, then wait until it returns false.
     /// </summary>
     /// <remarks> Meant for functions like checking if an ipc is busy then checking til it's not. </remarks>
-    protected async Task WaitUntilThenFalse(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false)
-    {
+    protected async Task WaitUntilThenFalse(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) {
         using var scope = BeginScope(scopeName);
         await WaitUntil(condition, scopeName, checkFrequency, logContinuously);
         await WaitWhile(condition, scopeName, checkFrequency, logContinuously);
@@ -135,22 +122,18 @@ public abstract class AutoTask
     /// <param name="checkFrequency">How often to check the success condition</param>
     /// <param name="logContinuously">Whether to log waiting status continuously</param>
     /// <param name="maxRetries">Maximum number of retry attempts (0 for infinite)</param>
-    protected async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, int timeoutFrames = 60, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0)
-    {
+    protected async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, int timeoutFrames = 60, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0) {
         using var scope = BeginScope(scopeName);
         var attempts = 0;
-        while (maxRetries == 0 || attempts < maxRetries)
-        {
+        while (maxRetries == 0 || attempts < maxRetries) {
             attempts++;
             Log($"Attempt {attempts}{(maxRetries > 0 ? $"/{maxRetries}" : "")}...");
             action();
 
             // Wait for success condition
             var success = false;
-            for (var i = 0; i < timeoutFrames; i += checkFrequency)
-            {
-                if (successCondition())
-                {
+            for (var i = 0; i < timeoutFrames; i += checkFrequency) {
+                if (successCondition()) {
                     success = true;
                     break;
                 }
@@ -159,18 +142,15 @@ public abstract class AutoTask
                 await NextFrame(checkFrequency);
             }
 
-            if (success)
-            {
+            if (success) {
                 Log("Action succeeded");
                 break;
             }
 
-            if (maxRetries > 0 && attempts >= maxRetries)
-            {
+            if (maxRetries > 0 && attempts >= maxRetries) {
                 Error($"Action failed after {maxRetries} attempts");
             }
-            else
-            {
+            else {
                 Log("Action timed out, retrying...");
             }
         }
@@ -178,8 +158,7 @@ public abstract class AutoTask
 
     protected void Log(string message) => PluginLog.Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void Warning(string message) => PluginLog.Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
-    protected void WarningIf(bool condition, string message)
-    {
+    protected void WarningIf(bool condition, string message) {
         if (condition)
             Warning(message);
     }
@@ -188,40 +167,34 @@ public abstract class AutoTask
     protected DebugContext BeginScope(string name) => new(this, name);
 
     // abort a task unconditionally
-    protected void Error(string message)
-    {
+    protected void Error(string message) {
         Log($"Error: {message}");
         throw new Exception($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     }
 
     // abort a task if condition is true
-    protected void ErrorIf(bool condition, string message)
-    {
+    protected void ErrorIf(bool condition, string message) {
         if (condition)
             Error(message);
     }
 }
 
-internal interface IAutoTaskHooks
-{
+internal interface IAutoTaskHooks {
     void SetupHooks();
     void EnableHooks();
     void DisableHooks();
     void DisposeHooks();
 }
 
-internal sealed class AutoTaskHookCleanup(IAutoTaskHooks hooks) : IDisposable
-{
-    public void Dispose()
-    {
+internal sealed class AutoTaskHookCleanup(IAutoTaskHooks hooks) : IDisposable {
+    public void Dispose() {
         hooks.DisableHooks();
         hooks.DisposeHooks();
     }
 }
 
 // utility that allows concurrently executing only one task; starting a new task if one is already in progress automatically cancels olds one
-public sealed class Automation : IDisposable
-{
+public sealed class Automation : IDisposable {
     public AutoTask? CurrentTask { get; private set; }
     public bool Running => CurrentTask != null;
     public string Name => CurrentTask?.GetType().Name ?? "None";
@@ -230,19 +203,16 @@ public sealed class Automation : IDisposable
 
     // stop executing any running task
     // this requires tasks to cooperate by checking the token
-    public void Stop()
-    {
+    public void Stop() {
         CurrentTask?.Cancel();
         CurrentTask = null;
     }
 
     // if any other task is running, it's cancelled
-    public void Start(AutoTask task, Action? OnCompleted = null)
-    {
+    public void Start(AutoTask task, Action? OnCompleted = null) {
         Stop();
         CurrentTask = task;
-        task.Run(() =>
-        {
+        task.Run(() => {
             if (CurrentTask == task)
                 CurrentTask = null;
             // else: some other task is now executing
@@ -250,14 +220,11 @@ public sealed class Automation : IDisposable
     }
 }
 
-public sealed class OnDispose : IDisposable
-{
-    private sealed class CleanupHandle(Action action) : IDisposable
-    {
+public sealed class OnDispose : IDisposable {
+    private sealed class CleanupHandle(Action action) : IDisposable {
         private int _ran;
 
-        public void Dispose()
-        {
+        public void Dispose() {
             if (Interlocked.Exchange(ref _ran, 1) == 0)
                 action();
         }
@@ -265,8 +232,7 @@ public sealed class OnDispose : IDisposable
 
     private readonly CleanupHandle _handle;
 
-    public OnDispose(Action action)
-    {
+    public OnDispose(Action action) {
         var handle = new CleanupHandle(action);
         _handle = handle;
         AutoTask.ActiveTask?.RegisterCleanup(handle);

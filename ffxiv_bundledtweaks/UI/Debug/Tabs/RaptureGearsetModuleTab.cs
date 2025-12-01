@@ -5,18 +5,15 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.UI.Debug.Tabs;
 
-public unsafe class RaptureGearsetModuleTab : DebugTab
-{
-    public override void Draw()
-    {
+public unsafe class RaptureGearsetModuleTab : DebugTab {
+    public override void Draw() {
         var gsm = RaptureGearsetModule.Instance();
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        for (var i = 0; i < 100; i++)
-        {
+        for (var i = 0; i < 100; i++) {
             if (!gsm->IsValidGearset(i)) continue;
 
             var gearset = gsm->GetGearset(i);
@@ -45,8 +42,7 @@ public unsafe class RaptureGearsetModuleTab : DebugTab
             ImGui.TableSetupScrollFreeze(3, 1);
             ImGui.TableHeadersRow();
 
-            for (var j = 0; j < gearset->Items.Length; j++)
-            {
+            for (var j = 0; j < gearset->Items.Length; j++) {
                 var item = gearset->GetItem((RaptureGearsetModule.GearsetItemIndex)j);
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();

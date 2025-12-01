@@ -3,8 +3,7 @@ using System.Reflection;
 
 namespace ComplexTweaks.Services;
 
-public class Service
-{
+public class Service {
     public static Provider Provider { get; private set; } = null!;
     public static AutoRetainerApi AutoRetainerApi { get; private set; } = null!;
     public static AutoRetainerIPC AutoRetainerIPC { get; private set; } = null!;
@@ -22,49 +21,40 @@ public class Service
     public static TweakEventManager TweakEventManager { get; private set; } = null!;
 }
 
-public class IPCRegistry
-{
+public class IPCRegistry {
     private readonly Dictionary<Ipc, BaseIPC>? _byId = [];
 
-    public IPCRegistry()
-    {
-        foreach (var prop in typeof(Service).GetProperties().Where(prop => typeof(BaseIPC).IsAssignableFrom(prop.PropertyType)))
-        {
-            try
-            {
+    public IPCRegistry() {
+        foreach (var prop in typeof(Service).GetProperties().Where(prop => typeof(BaseIPC).IsAssignableFrom(prop.PropertyType))) {
+            try {
                 if (prop.GetValue(null) is BaseIPC ipc)
                     MapByEnum(ipc);
             }
-            catch
-            {
+            catch {
                 Svc.Log.Warning($"[{nameof(IPCRegistry)}] Failed to register {prop.Name}");
             }
         }
     }
 
-    private void MapByEnum(BaseIPC ipc)
-    {
+    private void MapByEnum(BaseIPC ipc) {
         if (_byId == null) return;
         if (ipc.GetType().GetCustomAttribute<IpcAttribute>(inherit: false) is { } attr)
             _byId[attr.Id] = ipc;
     }
 
-    public BaseIPC? Get(Ipc id)
-    {
+    public BaseIPC? Get(Ipc id) {
         if (_byId == null)
             return null;
         return _byId.TryGetValue(id, out var ipc) ? ipc : null;
     }
 
-    public BaseIPC[] GetMany(params Ipc[] ids)
-    {
+    public BaseIPC[] GetMany(params Ipc[] ids) {
         if (_byId == null || ids.Length == 0)
             return [];
         return [.. ids.Select(Get).Where(ipc => ipc != null).Cast<BaseIPC>()];
     }
 
-    public bool AreAllLoaded(params Ipc[] ids)
-    {
+    public bool AreAllLoaded(params Ipc[] ids) {
         if (_byId == null || ids.Length == 0)
             return ids.Length == 0;
 
@@ -78,14 +68,12 @@ public class IPCRegistry
     public BaseIPC[] GetMissing(MethodInfo? method)
         => method == null ? [] : GetMissing([.. method.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray()]);
 
-    public BaseIPC[] GetMissing(params Ipc[] ids)
-    {
+    public BaseIPC[] GetMissing(params Ipc[] ids) {
         if (_byId == null || ids.Length == 0)
             return [];
 
         var missing = new List<BaseIPC>();
-        foreach (var id in ids)
-        {
+        foreach (var id in ids) {
             if (!_byId.TryGetValue(id, out var ipc))
                 continue;
             if (!ipc.IsLoaded)

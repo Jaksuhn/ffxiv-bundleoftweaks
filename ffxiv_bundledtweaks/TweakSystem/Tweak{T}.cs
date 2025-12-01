@@ -3,19 +3,16 @@ using Dalamud.Interface.Windowing;
 
 namespace ComplexTweaks.TweakSystem;
 
-public abstract class Tweak<T> : Tweak
-{
+public abstract class Tweak<T> : Tweak {
     private static readonly Type WindowType = typeof(Window);
     private static readonly Type TweakConfigsType = typeof(TweakConfigs);
 
-    public Tweak() : base()
-    {
+    public Tweak() : base() {
         var type = typeof(T);
 
         if (WindowType.IsAssignableFrom(type))
             CachedWindowType = type;
-        else if (IsConfigType(type))
-        {
+        else if (IsConfigType(type)) {
             CachedConfigType = type;
             Config = (T)(TweakConfigsType
                 .GetProperties()?
@@ -34,13 +31,11 @@ public abstract class Tweak<T> : Tweak
     protected override object? GetConfigObject() => CachedConfigType != null ? Config : null;
 }
 
-public abstract class Tweak<TConfig, TWindow> : Tweak where TWindow : Window
-{
+public abstract class Tweak<TConfig, TWindow> : Tweak where TWindow : Window {
     private static readonly Type WindowType = typeof(Window);
     private static readonly Type TweakConfigsType = typeof(TweakConfigs);
 
-    public Tweak() : base()
-    {
+    public Tweak() : base() {
         var configType = typeof(TConfig);
         var windowType = typeof(TWindow);
 

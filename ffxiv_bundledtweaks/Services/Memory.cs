@@ -6,10 +6,8 @@ using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Services;
 #pragma warning disable CS0649
-public unsafe class Memory
-{
-    public static class Signatures
-    {
+public unsafe class Memory {
+    public static class Signatures {
         internal const string BewitchProc = "40 53 48 83 EC 50 45 33 C0";
         internal const string EnqueueSnipeTask = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 50 48 8B F9 48 8D 4C 24 ??"; // xan
         internal const string FollowQuestRecast = "F3 0F 11 7C 24 ?? E8 ?? ?? ?? ?? 48 8B 9C 24 ?? ?? ?? ??"; // atmo
@@ -24,8 +22,7 @@ public unsafe class Memory
         internal const string ProcessPacketUpdateClassInfo = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B DA 48 8D 0D ?? ?? ?? ??";
     }
 
-    public static class Delegates
-    {
+    public static class Delegates {
         internal delegate nint AgentWorldTravelReceiveEventDelegate(Structs.AgentWorldTravel* agent, nint a2, nint a3, nint a4, long eventCase);
         internal delegate ulong EnqueueSnipeTaskDelegate(EventSceneModuleImplBase* scene, lua_State* state);
         internal delegate void FreeCompanyDialogPacketReceiveDelegate(InfoProxyInterface* ptr, byte* packetData);
@@ -39,33 +36,27 @@ public unsafe class Memory
 
     public Memory() => EzSignatureHelper.Initialize(this);
 
-    public class Hook
-    {
+    public class Hook {
         public Hook() => EzSignatureHelper.Initialize(this);
     }
 
     public void Dispose() { }
 
     #region Bewitch
-    public class BewitchProc : Hook
-    {
+    public class BewitchProc : Hook {
         [EzHook(Signatures.BewitchProc, false)]
         internal readonly EzHook<Delegates.NoBewitchActionDelegate>? BewitchHook;
 
-        private unsafe nint BewitchDetour(CSGameObject* gameObj, float x, float y, float z, int a5, nint a6)
-        {
-            try
-            {
-                if (gameObj->IsCharacter())
-                {
+        private unsafe nint BewitchDetour(CSGameObject* gameObj, float x, float y, float z, int a5, nint a6) {
+            try {
+                if (gameObj->IsCharacter()) {
                     var chara = gameObj->Character();
                     if (chara->GetStatusManager()->HasStatus(3023) || chara->GetStatusManager()->HasStatus(3024))
                         return nint.Zero;
                 }
                 return BewitchHook!.Original(gameObj, x, y, z, a5, a6);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Svc.Log.Error(ex.Message, ex);
                 return BewitchHook!.Original(gameObj, x, y, z, a5, a6);
             }
@@ -74,8 +65,7 @@ public unsafe class Memory
     #endregion
 
     #region Knockback
-    public class KnockbackProc : Hook
-    {
+    public class KnockbackProc : Hook {
         [EzHook(Signatures.KnockbackProc, false)]
         internal readonly EzHook<Delegates.KbProcDelegate>? KBProcHook;
 
@@ -85,8 +75,7 @@ public unsafe class Memory
 
     #region Speed
     // this persists through LocalPlayer going null unlike setting via PMC
-    public static void SetSpeed(float speedBase)
-    {
+    public static void SetSpeed(float speedBase) {
         Svc.SigScanner.TryScanText(Signatures.PlayerGroundSpeed, out var address);
         address = address + 4 + Marshal.ReadInt32(address + 4) + 4;
         Dalamud.SafeMemory.Write(address + 20, speedBase);
@@ -98,28 +87,24 @@ public unsafe class Memory
     #endregion
 
     #region Server IPC Packet Receive
-    public class FreeCompanyDialogIPCReceive : Hook
-    {
+    public class FreeCompanyDialogIPCReceive : Hook {
         [EzHook(Signatures.FreeCompanyDialogPacketReceive, false)]
         internal readonly EzHook<Delegates.FreeCompanyDialogPacketReceiveDelegate> FreeCompanyDialogPacketReceiveHook = null!;
 
         internal DateTime LastPacketTimestamp = DateTime.MinValue;
-        private void FreeCompanyDialogPacketReceiveDetour(InfoProxyInterface* ptr, byte* packetData)
-        {
+        private void FreeCompanyDialogPacketReceiveDetour(InfoProxyInterface* ptr, byte* packetData) {
             LastPacketTimestamp = DateTime.Now;
             Svc.Log.Info($"{nameof(FreeCompanyDialogPacketReceiveDetour)}: Packet received at {LastPacketTimestamp}");
             FreeCompanyDialogPacketReceiveHook.Original(ptr, packetData);
         }
     }
 
-    public class ClassJobInfoSetupIPCReceive : Hook
-    {
+    public class ClassJobInfoSetupIPCReceive : Hook {
         [EzHook(Signatures.ProcessPacketUpdateClassInfo, false)]
         internal readonly EzHook<Delegates.ProcessPacketUpdateClassInfoDelegate> ProcessPacketUpdateClassInfoHook = null!;
 
         internal DateTime LastPacketTimestamp = DateTime.MinValue;
-        private void ProcessPacketUpdateClassInfoDetour(InfoProxyInterface* ptr, byte* packetData)
-        {
+        private void ProcessPacketUpdateClassInfoDetour(InfoProxyInterface* ptr, byte* packetData) {
             LastPacketTimestamp = DateTime.Now;
             Svc.Log.Info($"{nameof(ProcessPacketUpdateClassInfoDetour)}: Packet received at {LastPacketTimestamp}");
             ProcessPacketUpdateClassInfoHook.Original(ptr, packetData);

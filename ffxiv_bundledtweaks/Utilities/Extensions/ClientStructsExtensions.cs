@@ -7,10 +7,8 @@ using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace ComplexTweaks.Utilities.Extensions;
 
-public static unsafe class ClientStructsExtensions
-{
-    public static unsafe string ValueString(this AtkValue v) => v.Type switch
-    {
+public static unsafe class ClientStructsExtensions {
+    public static unsafe string ValueString(this AtkValue v) => v.Type switch {
         ValueType.Int => $"{v.Int}",
         ValueType.String => Marshal.PtrToStringUTF8(new IntPtr(v.String)) ?? string.Empty,
         ValueType.UInt => $"{v.UInt}",
@@ -22,8 +20,7 @@ public static unsafe class ClientStructsExtensions
         _ => $"Unknown Type: {v.Type}"
     };
 
-    public static void ResetFlags(this ContentsFinder cf)
-    {
+    public static void ResetFlags(this ContentsFinder cf) {
         cf.IsExplorerMode = false;
         cf.IsLevelSync = false;
         cf.IsLimitedLevelingRoulette = false;
@@ -33,8 +30,7 @@ public static unsafe class ClientStructsExtensions
         cf.LootRules = ContentsFinder.LootRule.Normal;
     }
 
-    public static unsafe uint* ToPtr(this StdVector<ContentsId> contentsIds)
-    {
+    public static unsafe uint* ToPtr(this StdVector<ContentsId> contentsIds) {
         var ids = contentsIds.Select(x => x.Id).ToList();
         var array = stackalloc uint[ids.Count];
         for (var i = 0; i < ids.Count; i++)
@@ -42,16 +38,13 @@ public static unsafe class ClientStructsExtensions
         return array;
     }
 
-    public static List<T> ToList<T>(this StdVector<T> stdVector) where T : unmanaged
-    {
+    public static List<T> ToList<T>(this StdVector<T> stdVector) where T : unmanaged {
         var list = new List<T>();
         var size = stdVector.LongCount;
 
-        unsafe
-        {
+        unsafe {
             var current = stdVector.First;
-            for (var i = 0; i < size; i++)
-            {
+            for (var i = 0; i < size; i++) {
                 list.Add(current[i]);
             }
         }

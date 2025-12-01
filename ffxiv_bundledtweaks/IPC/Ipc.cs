@@ -1,8 +1,7 @@
 namespace ComplexTweaks.IPC;
 
 [Flags]
-public enum Ipc
-{
+public enum Ipc {
     None = 0,
     AutoRetainer = 1 << 0,
     BossMod = 1 << 1,

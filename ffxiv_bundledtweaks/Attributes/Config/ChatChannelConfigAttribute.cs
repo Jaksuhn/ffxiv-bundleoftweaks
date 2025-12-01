@@ -5,8 +5,7 @@ using System.Reflection;
 namespace ComplexTweaks.Attributes.Config;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class ChatChannelConfigAttribute : BaseConfigAttribute
-{
+public class ChatChannelConfigAttribute : BaseConfigAttribute {
     public ChatChannelMode Mode { get; set; } = ChatChannelMode.All;
     public XivChatType[]? CustomChannels { get; set; }
 
@@ -40,15 +39,13 @@ public class ChatChannelConfigAttribute : BaseConfigAttribute
         XivChatType.CrossLinkShell8,
     ];
 
-    public enum ChatChannelMode
-    {
+    public enum ChatChannelMode {
         All,
         PlayerChat,
         Custom
     }
 
-    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo)
-    {
+    public override void Draw(Tweak tweak, object config, FieldInfo fieldInfo) {
         var value = (List<XivChatType>)fieldInfo.GetValue(config)!;
         var attr = fieldInfo.GetCustomAttribute<BaseConfigAttribute>();
 
@@ -56,8 +53,7 @@ public class ChatChannelConfigAttribute : BaseConfigAttribute
 
         using var indent = ImGui.ConfigIndent();
 
-        var chatTypes = Mode switch
-        {
+        var chatTypes = Mode switch {
             ChatChannelMode.All => [.. Enum.GetValues<XivChatType>()],
             ChatChannelMode.PlayerChat => [.. PlayerChatChannels],
             ChatChannelMode.Custom => CustomChannels?.ToList() ?? [],
@@ -81,13 +77,10 @@ public class ChatChannelConfigAttribute : BaseConfigAttribute
         // Calculate actual column width to fill available space
         var columnWidth = availableWidth / columns;
 
-        if (ImGui.BeginTable("ChatChannels", columns, ImGuiTableFlags.NoBordersInBody))
-        {
-            for (var row = 0; row < rows; row++)
-            {
+        if (ImGui.BeginTable("ChatChannels", columns, ImGuiTableFlags.NoBordersInBody)) {
+            for (var row = 0; row < rows; row++) {
                 ImGui.TableNextRow();
-                for (var col = 0; col < columns; col++)
-                {
+                for (var col = 0; col < columns; col++) {
                     var index = row * columns + col;
                     if (index >= chatTypes.Count) break;
 
@@ -95,8 +88,7 @@ public class ChatChannelConfigAttribute : BaseConfigAttribute
                     var chatType = chatTypes[index];
                     var isSelected = value.Contains(chatType);
 
-                    if (ImGui.Checkbox($"{chatType}##{chatType}", ref isSelected))
-                    {
+                    if (ImGui.Checkbox($"{chatType}##{chatType}", ref isSelected)) {
                         if (isSelected)
                             value.Add(chatType);
                         else

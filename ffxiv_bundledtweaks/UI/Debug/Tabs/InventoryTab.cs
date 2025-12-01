@@ -8,15 +8,11 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.UI.Debug.Tabs;
 
-internal unsafe class InventoryTab : DebugTab
-{
-    private unsafe List<Pointer<InventoryItem>> InventoryItems
-    {
-        get
-        {
+internal unsafe class InventoryTab : DebugTab {
+    private unsafe List<Pointer<InventoryItem>> InventoryItems {
+        get {
             List<Pointer<InventoryItem>> items = [];
-            foreach (var inv in Inventory.Equippable)
-            {
+            foreach (var inv in Inventory.Equippable) {
                 var cont = InventoryManager.Instance()->GetInventoryContainer(inv);
                 for (var i = 0; i < cont->Size; ++i)
                     if (cont->GetInventorySlot(i)->ItemId != 0)
@@ -29,14 +25,12 @@ internal unsafe class InventoryTab : DebugTab
     private unsafe List<Pointer<InventoryItem>> FilteredItems => [.. InventoryItems.Where(x => GetRow<Item>(x.Value->ItemId)?.Name.ExtractText().ToLowerInvariant().Contains(searchFilter.ToLowerInvariant()) ?? false)];
     private string searchFilter = "";
 
-    public override void Draw()
-    {
+    public override void Draw() {
         ImGui.TextUnformatted($"{nameof(RaptureAtkModule.AgentUpdateFlag.InventoryUpdate)}: {RaptureAtkModule.Instance()->AgentUpdateFlag.HasFlag(RaptureAtkModule.AgentUpdateFlags.InventoryUpdate)}");
         ImGui.DrawPaddedSeparator();
         ImGui.InputText("Filter", ref searchFilter, 256);
         using (var table = ImRaii.Table("InventoryItems", 6, ImGuiTableFlags.SizingFixedFit))
-            if (table)
-            {
+            if (table) {
                 ImGui.DrawTableColumn("Name");
                 ImGui.DrawTableColumn("Container");
                 ImGui.DrawTableColumn("Slot (IM)");
@@ -44,12 +38,10 @@ internal unsafe class InventoryTab : DebugTab
                 ImGui.DrawTableColumn("Page");
                 ImGui.DrawTableColumn("Index");
 
-                foreach (var container in Inventory.Equippable)
-                {
+                foreach (var container in Inventory.Equippable) {
                     if (container == InventoryType.KeyItems) continue;
                     var cont = InventoryManager.Instance()->GetInventoryContainer(container);
-                    for (var i = 0; i < cont->Size; i++)
-                    {
+                    for (var i = 0; i < cont->Size; i++) {
                         var slot = cont->GetInventorySlot(i);
                         if (!searchFilter.IsNullOrEmpty() && GetRow<Item>(slot->ItemId) is { Name: var name } && name.ExtractText().Contains(searchFilter)) continue;
                         ImGui.TableNextColumn();
@@ -80,8 +72,7 @@ internal unsafe class InventoryTab : DebugTab
     private static ItemOrderModuleSorterItemEntry* GetItemOrderData(InventoryType type, int slot)
         => GetInventorySorter(type)->Items[slot + GetInventoryStartIndex(type)];
 
-    private static ItemOrderModuleSorter* GetInventorySorter(InventoryType type) => type switch
-    {
+    private static ItemOrderModuleSorter* GetInventorySorter(InventoryType type) => type switch {
         InventoryType.Inventory1 => ItemOrderModule.Instance()->InventorySorter,
         InventoryType.Inventory2 => ItemOrderModule.Instance()->InventorySorter,
         InventoryType.Inventory3 => ItemOrderModule.Instance()->InventorySorter,
@@ -101,8 +92,7 @@ internal unsafe class InventoryTab : DebugTab
         _ => throw new Exception($"Type Not Implemented: {type}"),
     };
 
-    private static int GetInventoryStartIndex(InventoryType type) => type switch
-    {
+    private static int GetInventoryStartIndex(InventoryType type) => type switch {
         InventoryType.Inventory2 => GetInventorySorter(type)->ItemsPerPage,
         InventoryType.Inventory3 => GetInventorySorter(type)->ItemsPerPage * 2,
         InventoryType.Inventory4 => GetInventorySorter(type)->ItemsPerPage * 3,

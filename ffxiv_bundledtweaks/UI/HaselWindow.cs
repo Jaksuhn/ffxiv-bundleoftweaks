@@ -5,12 +5,10 @@ using ECommons.ImGuiMethods;
 
 namespace ComplexTweaks.UI;
 
-public partial class HaselWindow : Window
-{
+public partial class HaselWindow : Window {
     // Style from HaselTweaks
     // https://github.com/Haselnussbomber/HaselTweaks
-    public HaselWindow() : base($"{Name} v{P.Version.ToString(2)}###{nameof(HaselWindow)}")
-    {
+    public HaselWindow() : base($"{Name} v{P.Version.ToString(2)}###{nameof(HaselWindow)}") {
         Size = new(SidebarWidth * 3.5f + ImGui.GetStyle().ItemSpacing.X + ImGui.GetStyle().FramePadding.X * 2, 500);
         Flags |= ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings;
         AllowClickthrough = false;
@@ -24,21 +22,18 @@ public partial class HaselWindow : Window
 
     private Tweak? SelectedTweak => Plugin.Tweaks.FirstOrDefault(t => t.Name == _selectedTweak);
 
-    public override void OnClose()
-    {
+    public override void OnClose() {
         _splashText = null;
         AsciiSplash.Reset();
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         DrawSidebar();
         ImGui.SameLine();
         DrawConfig();
     }
 
-    private void DrawSidebar()
-    {
+    private void DrawSidebar() {
         var scale = ImGuiHelpers.GlobalScale;
         using var child = ImRaii.Child("##Sidebar", new Vector2(SidebarWidth * scale, -1), true);
         if (!child.Success)
@@ -51,16 +46,14 @@ public partial class HaselWindow : Window
         ImGui.TableSetupColumn("Checkbox", ImGuiTableColumnFlags.WidthFixed);
         ImGui.TableSetupColumn("Tweak Name", ImGuiTableColumnFlags.WidthStretch);
 
-        foreach (var tweak in Plugin.Tweaks.Where(t => !t.Disabled && (!t.IsDebug || C.ShowDebug)).OrderBy(t => t.Name))
-        {
+        foreach (var tweak in Plugin.Tweaks.Where(t => !t.Disabled && (!t.IsDebug || C.ShowDebug)).OrderBy(t => t.Name)) {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             var enabled = tweak.Enabled;
             var fixY = false;
 
-            if (!tweak.Ready || tweak.Outdated)
-            {
+            if (!tweak.Ready || tweak.Outdated) {
                 var startPos = ImGui.GetCursorPos();
                 var drawList = ImGui.GetWindowDrawList();
                 var pos = ImGui.GetWindowPos() + startPos - new Vector2(0, ImGui.GetScrollY());
@@ -70,8 +63,7 @@ public partial class HaselWindow : Window
                 ImGui.SetCursorPos(startPos);
                 ImGui.Dummy(size);
 
-                if (ImGui.IsItemHovered())
-                {
+                if (ImGui.IsItemHovered()) {
                     var (status, color) = GetTweakStatus(tweak);
                     using var tooltip = ImRaii.Tooltip();
                     if (tooltip.Success)
@@ -94,8 +86,7 @@ public partial class HaselWindow : Window
 
                 fixY = true;
             }
-            else
-            {
+            else {
                 ImGuiEx.CollectionCheckbox($"##Enabled_{tweak.InternalName}", tweak.InternalName, C.EnabledTweaks);
             }
 
@@ -111,15 +102,13 @@ public partial class HaselWindow : Window
         }
     }
 
-    private void DrawConfig()
-    {
+    private void DrawConfig() {
         using var child = ImRaii.Child("##Config", new Vector2(-1), true);
         if (!child.Success)
             return;
 
         var tweak = SelectedTweak;
-        if (tweak == null)
-        {
+        if (tweak == null) {
             DrawSplash();
             DrawBottomBar();
             return;
@@ -139,36 +128,30 @@ public partial class HaselWindow : Window
 
         ImGuiEx.Text(color.Vector4, status);
 
-        if (tweak.DisabledReason is { } reason)
-        {
+        if (tweak.DisabledReason is { } reason) {
             ImGui.TextColoredWrapped(Colors.Grey2, reason);
             return;
         }
-        else
-        {
-            if (!string.IsNullOrEmpty(tweak.Description))
-            {
+        else {
+            if (!string.IsNullOrEmpty(tweak.Description)) {
                 ImGui.DrawPaddedSeparator();
                 ImGui.TextColoredWrapped(Colors.Grey2, tweak.Description);
             }
         }
 
-        if (tweak.Requirements.Any(r => !r.IsLoaded))
-        {
+        if (tweak.Requirements.Any(r => !r.IsLoaded)) {
             ImGui.DrawSection("Required Dependencies");
             ImGui.Icon(60074, 24);
             ImGui.SameLine();
             ImGuiEx.TextV(Colors.Grey2, $"Missing {tweak.Requirements.Count(r => !r.IsLoaded)} of the required plugins for this feature to work:");
-            foreach (var entry in tweak.Requirements.Where(r => !r.IsLoaded))
-            {
+            foreach (var entry in tweak.Requirements.Where(r => !r.IsLoaded)) {
                 ImGui.TextColoredWrapped(Colors.Grey2, $"{entry.Name}:");
                 ImGui.SameLine();
                 ImGuiEx.TextCopy(entry.Repo);
             }
         }
 
-        if (tweak.IncompatibilityWarnings.Any(entry => entry.IsLoaded))
-        {
+        if (tweak.IncompatibilityWarnings.Any(entry => entry.IsLoaded)) {
             ImGui.DrawSection("Incompatibility Warning");
             ImGui.Icon(60073, 24);
             ImGui.SameLine();
@@ -176,15 +159,12 @@ public partial class HaselWindow : Window
 
             static string getConfigName(string tweakName, string configName) => $"{tweakName}: {configName}";
 
-            if (tweak.IncompatibilityWarnings.Length == 1)
-            {
+            if (tweak.IncompatibilityWarnings.Length == 1) {
                 var entry = tweak.IncompatibilityWarnings[0];
                 var pluginName = $"{entry.InternalName}";
 
-                if (entry.IsLoaded)
-                {
-                    switch (entry.ConfigNames.Length)
-                    {
+                if (entry.IsLoaded) {
+                    switch (entry.ConfigNames.Length) {
                         case 0:
                             ImGui.TextColoredWrapped(Colors.Grey2, $"In order for this tweak to work properly, please make sure {pluginName} is disabled.");
                             break;
@@ -199,27 +179,22 @@ public partial class HaselWindow : Window
                     }
                 }
             }
-            else if (tweak.IncompatibilityWarnings.Length > 1)
-            {
+            else if (tweak.IncompatibilityWarnings.Length > 1) {
                 ImGui.TextColoredWrapped(Colors.Grey2, "In order for this tweak to work properly, please make sure");
 
-                foreach (var entry in tweak.IncompatibilityWarnings.Where(entry => entry.IsLoaded))
-                {
+                foreach (var entry in tweak.IncompatibilityWarnings.Where(entry => entry.IsLoaded)) {
                     var pluginName = $"{entry.InternalName}";
 
-                    if (entry.ConfigNames.Length == 0)
-                    {
+                    if (entry.ConfigNames.Length == 0) {
                         ImGui.SetCursorPosX(cursorPosX);
                         ImGui.TextColoredWrapped(Colors.Grey2, $"{pluginName} is disabled");
                     }
-                    else if (entry.ConfigNames.Length == 1)
-                    {
+                    else if (entry.ConfigNames.Length == 1) {
                         ImGui.SetCursorPosX(cursorPosX);
                         var configName = $"HaselTweaks.Config.IncompatibilityWarning.Plugin.{entry.InternalName}.Config.{entry.ConfigNames[0]}";
                         ImGui.TextColoredWrapped(Colors.Grey2, $"{configName} is disabled in {pluginName}");
                     }
-                    else if (entry.ConfigNames.Length > 1)
-                    {
+                    else if (entry.ConfigNames.Length > 1) {
                         ImGui.SetCursorPosX(cursorPosX);
                         var configNames = entry.ConfigNames.Select((configName) => $"{configName}");
                         ImGui.TextColoredWrapped(Colors.Grey2, ("{pluginName} is disabled", pluginName) + $"\n    - {string.Join("\n    - ", configNames)}");
@@ -231,28 +206,23 @@ public partial class HaselWindow : Window
         tweak.DrawConfig();
     }
 
-    private static (string, EzColor) GetTweakStatus(Tweak tweak)
-    {
+    private static (string, EzColor) GetTweakStatus(Tweak tweak) {
         var status = "???";
         var color = Colors.Grey3;
 
-        if (tweak.Outdated)
-        {
+        if (tweak.Outdated) {
             status = "Outdated";
             color = EzColor.RedBright;
         }
-        else if (!tweak.Ready)
-        {
+        else if (!tweak.Ready) {
             status = "Initialization Failed";
             color = EzColor.RedBright;
         }
-        else if (tweak.Enabled)
-        {
+        else if (tweak.Enabled) {
             status = "Enabled";
             color = EzColor.GreenBright;
         }
-        else if (!tweak.Enabled)
-        {
+        else if (!tweak.Enabled) {
             status = "Disabled";
         }
 
@@ -276,8 +246,7 @@ public partial class HaselWindow : Window
         "Interrobang!",
     ];
 
-    private void DrawSplash()
-    {
+    private void DrawSplash() {
         _splashText ??= SplashTexts[Random.Shared.Next(SplashTexts.Length)];
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetColumnWidth() * 0.5f - ImGui.CalcTextSize(_splashText).X * 0.5f);
         ImGui.FlashText(_splashText, Colors.Gold, ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg], 2);
@@ -285,8 +254,7 @@ public partial class HaselWindow : Window
         AsciiSplash.Draw(80);
     }
 
-    private void DrawBottomBar()
-    {
+    private void DrawBottomBar() {
         ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetTextLineHeight()));
         ImGui.DrawLink("GitHub", "GitHub", "https://github.com/Jaksuhn/ffxiv-bundleoftweaks");
         ImGui.SameLine();
@@ -294,8 +262,7 @@ public partial class HaselWindow : Window
         ImGui.SameLine();
         ImGui.DrawLink("Ko-fi", "Ko-fi", "https://ko-fi.com/croizat");
 
-        if (P.Version.ToString(2).Length > 1)
-        {
+        if (P.Version.ToString(2).Length > 1) {
             ImGui.SetCursorPos(ImGui.GetCursorPos() + ImGui.GetContentRegionAvail() - ImGui.CalcTextSize($"v{P.Version.ToString(2)}"));
             ImGui.TextUnformatted($"v{P.Version.ToString(2)}");
         }

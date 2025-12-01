@@ -9,17 +9,14 @@ using Lumina.Excel.Sheets;
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
-public unsafe partial class InstantLogout : Tweak
-{
+public unsafe partial class InstantLogout : Tweak {
     public override string Name => "Instant Logout";
     public override string Description => "Skips the 20 second countdown when logging out outside of a sanctuary";
 
     [AddressHook<ShellCommandModule>(nameof(ShellCommandModule.MemberFunctionPointers.ExecuteCommandInner))]
-    private unsafe void ExecuteCommandInner(ShellCommandModule* commandModule, Utf8String* rawMessage, UIModule* uiModule)
-    {
+    private unsafe void ExecuteCommandInner(ShellCommandModule* commandModule, Utf8String* rawMessage, UIModule* uiModule) {
         var msg = (*rawMessage).ToString();
-        if (msg is null or { Length: 0 } || !msg.StartsWith('/'))
-        {
+        if (msg is null or { Length: 0 } || !msg.StartsWith('/')) {
             ExecuteCommandInnerHook.Original(commandModule, rawMessage, uiModule);
             return;
         }
@@ -34,10 +31,8 @@ public unsafe partial class InstantLogout : Tweak
     }
 
     [VTableHook<UIModule>(203)]
-    private unsafe void ExecuteMainCommand(UIModule* self, uint command)
-    {
-        switch (command)
-        {
+    private unsafe void ExecuteMainCommand(UIModule* self, uint command) {
+        switch (command) {
             case 23 when ShouldInstantLogout():
                 AgentLobby.Instance()->HandleLogout(false, 60);
                 break;

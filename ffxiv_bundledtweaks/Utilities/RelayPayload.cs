@@ -5,8 +5,7 @@ using System.IO;
 
 namespace ComplexTweaks.Utilities;
 
-public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? instance, uint relayType, uint originChannel) : DalamudLinkPayload
-{
+public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? instance, uint relayType, uint originChannel) : DalamudLinkPayload {
     private const byte EmbeddedInfoTypeByte = (byte)(EmbeddedInfoType.DalamudLink + 4);
 
     public MapLinkPayload MapLink => mapLink;
@@ -19,8 +18,7 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
 
     private RelayPayload() : this(new MapLinkPayload(0, 0, 0, 0), 0, 0, 0, 0) { }
 
-    protected override byte[] EncodeImpl()
-    {
+    protected override byte[] EncodeImpl() {
         var data = new List<byte>();
         data.AddRange(mapLink.Encode());
         data.AddRange(MakeInteger(worldId));
@@ -39,8 +37,7 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
         ];
     }
 
-    protected override void DecodeImpl(BinaryReader reader, long _)
-    {
+    protected override void DecodeImpl(BinaryReader reader, long _) {
         mapLink = (MapLinkPayload)Decode(reader);
         worldId = GetInteger(reader);
         instance = GetInteger(reader);
@@ -50,8 +47,7 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
 
     public override string ToString() => $"{nameof(RelayPayload)}[{mapLink}, {worldId}, {instance}, {relayType}, {originChannel}]";
 
-    public static bool operator ==(RelayPayload? left, RelayPayload? right)
-    {
+    public static bool operator ==(RelayPayload? left, RelayPayload? right) {
         if (left is null) return right is null;
         return left.World.RowId == right?.World.RowId && left.Instance == right.Instance && left.RelayType == right.RelayType && left.MapLink.TerritoryType.RowId == right.MapLink.TerritoryType.RowId
             && Vector2.Distance(new(left.MapLink.RawX, left.MapLink.RawY), new(right.MapLink.RawX, right.MapLink.RawY)) < 3;
@@ -61,24 +57,20 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
 
     public RawPayload ToRawPayload() => new(EncodeImpl());
 
-    public static RelayPayload? Parse(RawPayload payload)
-    {
+    public static RelayPayload? Parse(RawPayload payload) {
         using var stream = new MemoryStream(payload.Data);
         using var reader = new BinaryReader(stream);
 
-        if (reader.ReadByte() != START_BYTE)
-        {
+        if (reader.ReadByte() != START_BYTE) {
             return default;
         }
 
-        if (reader.ReadByte() != (byte)SeStringChunkType.Interactable)
-        {
+        if (reader.ReadByte() != (byte)SeStringChunkType.Interactable) {
             return default;
         }
 
         var length = reader.ReadByte();
-        if (reader.ReadByte() != EmbeddedInfoTypeByte)
-        {
+        if (reader.ReadByte() != EmbeddedInfoTypeByte) {
             return default;
         }
 
@@ -87,8 +79,7 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
         return result;
     }
 
-    public override bool Equals(object? obj)
-    {
+    public override bool Equals(object? obj) {
         if (obj is null) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != GetType()) return false;

@@ -13,12 +13,9 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.UI;
 
-public static class AsciiSplash
-{
-    public static void Reset()
-    {
-        lock (_lock)
-        {
+public static class AsciiSplash {
+    public static void Reset() {
+        lock (_lock) {
             _cachedColored = null;
             _cachedLines = null;
             _buildTask = null;
@@ -42,8 +39,7 @@ public static class AsciiSplash
     private static ref readonly Guid GUID_ContainerFormatPng // straight from terrafx
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
+        get {
             ReadOnlySpan<byte> data = [
                 0xF4, 0xFA, 0x7C, 0x1B,
                 0x3F, 0x71,
@@ -62,10 +58,8 @@ public static class AsciiSplash
         }
     }
 
-    public static void Draw(int maxWidthChars = 80)
-    {
-        if (!_sizedOnce)
-        {
+    public static void Draw(int maxWidthChars = 80) {
+        if (!_sizedOnce) {
             ImGui.SetWindowFontScale(_fontScale);
 
             var cellW = ImGui.CalcTextSize("M").X; // measure after scale
@@ -89,8 +83,7 @@ public static class AsciiSplash
         }
 
         var colored = _cachedColored;
-        if (colored is null)
-        {
+        if (colored is null) {
             EnsureStarted();
             ImGuiEx.PushCursorY(10);
             if (_buildTask is { IsCompleted: true } && _cachedLines is { Length: > 0 })
@@ -114,8 +107,7 @@ public static class AsciiSplash
 
         var maxRowsToDraw = Math.Min(colored.Length, _rows > 0 ? _rows : colored.Length);
 
-        for (var rowIndex = 0; rowIndex < maxRowsToDraw; rowIndex++)
-        {
+        for (var rowIndex = 0; rowIndex < maxRowsToDraw; rowIndex++) {
             var (chars, rgb) = colored[rowIndex];
 
             // fixed-width cells to avoid variable char widths
@@ -124,8 +116,7 @@ public static class AsciiSplash
             var y = baseScreenPos.Y + rowIndex * lineHeight;
 
             var limit = _cols > 0 ? Math.Min(_cols, chars.Length) : chars.Length;
-            for (var i = 0; i < limit; i++)
-            {
+            for (var i = 0; i < limit; i++) {
                 var r = rgb[i * 3 + 0] / 255f;
                 var g = rgb[i * 3 + 1] / 255f;
                 var b = rgb[i * 3 + 2] / 255f;
@@ -140,10 +131,8 @@ public static class AsciiSplash
         ImGui.SetCursorPos(new Vector2(baseCursorPos.X, baseCursorPos.Y + maxRowsToDraw * lineHeight));
     }
 
-    private static void EnsureStarted()
-    {
-        lock (_lock)
-        {
+    private static void EnsureStarted() {
+        lock (_lock) {
             if (_buildTask is { IsCompleted: false })
                 return;
 
@@ -151,15 +140,11 @@ public static class AsciiSplash
         }
     }
 
-    private static async Task<string[]?> BuildAsync()
-    {
-        try
-        {
+    private static async Task<string[]?> BuildAsync() {
+        try {
             var rnd = Random.Shared;
-            for (var attempt = 0; attempt < 30; attempt++)
-            {
-                if (_iconId == 0)
-                {
+            for (var attempt = 0; attempt < 30; attempt++) {
+                if (_iconId == 0) {
                     var candidate = rnd.Next(0, 100_000); // everything above 100k is way too complex
                     if (!Svc.Texture.TryGetIconPath(new GameIconLookup((uint)candidate), out _))
                         continue;
@@ -168,8 +153,7 @@ public static class AsciiSplash
 
                 var shared = Svc.Texture.GetFromGameIcon(new GameIconLookup(_iconId));
 
-                try
-                {
+                try {
                     using var rented = await shared.RentAsync().ConfigureAwait(false);
                     using var image = await WrapToImageAsync(rented).ConfigureAwait(false);
                     BuildColoredAscii(image, Math.Clamp(_cachedWidth, 32, 200), out var colored, out var lines);
@@ -178,8 +162,7 @@ public static class AsciiSplash
                     Svc.Log.Debug($"[{nameof(AsciiSplash)}] Chosen icon: #{_iconId}");
                     return lines;
                 }
-                catch
-                {
+                catch {
                     // every few attempts, pick a new candidate
                     if (attempt % 5 == 4)
                         _iconId = 0;
@@ -193,17 +176,14 @@ public static class AsciiSplash
         return _cachedLines;
     }
 
-    private static async Task<Image<Rgba32>> WrapToImageAsync(IDalamudTextureWrap wrap)
-    {
-        try
-        {
+    private static async Task<Image<Rgba32>> WrapToImageAsync(IDalamudTextureWrap wrap) {
+        try {
             using var ms = new MemoryStream();
             await Svc.TextureReadback.SaveToStreamAsync(wrap, GUID_ContainerFormatPng, ms, props: null, leaveWrapOpen: true, leaveStreamOpen: true).ConfigureAwait(false);
             ms.Position = 0;
             return Image.Load<Rgba32>(ms);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Svc.Log.Warning($"AsciiSplash PNG save failed; falling back to raw. {ex.Message}");
         }
 
@@ -217,14 +197,11 @@ public static class AsciiSplash
         var dxgi = specs.DxgiFormat;
 
         var image = new Image<Rgba32>(width, height);
-        image.ProcessPixelRows(accessor =>
-        {
-            for (var y = 0; y < height; y++)
-            {
+        image.ProcessPixelRows(accessor => {
+            for (var y = 0; y < height; y++) {
                 var dst = accessor.GetRowSpan(y);
                 var srcOffset = y * pitch;
-                for (var x = 0; x < width; x++)
-                {
+                for (var x = 0; x < width; x++) {
                     var i = srcOffset + (x * 4);
                     if (i + 3 >= bytes.Length)
                         break;
@@ -241,13 +218,11 @@ public static class AsciiSplash
         return image;
     }
 
-    private static void BuildColoredAscii(Image<Rgba32> image, int maxWidth, out (char[] chars, byte[] rgb)[] colored, out string[] plain)
-    {
+    private static void BuildColoredAscii(Image<Rgba32> image, int maxWidth, out (char[] chars, byte[] rgb)[] colored, out string[] plain) {
         var cols = _cols > 0 ? _cols : Math.Max(1, maxWidth);
         var rows = _rows > 0 ? _rows : cols;
 
-        using var resized = image.Clone(ctx => ctx.Resize(new ResizeOptions
-        {
+        using var resized = image.Clone(ctx => ctx.Resize(new ResizeOptions {
             Size = new Size(cols, rows),
             Mode = ResizeMode.Stretch,
             Sampler = KnownResamplers.NearestNeighbor
@@ -256,16 +231,13 @@ public static class AsciiSplash
         var lines = new List<string>(rows);
         var outColored = new List<(char[] chars, byte[] rgb)>(rows);
 
-        resized.ProcessPixelRows(accessor =>
-        {
-            for (var y = 0; y < accessor.Height; y++)
-            {
+        resized.ProcessPixelRows(accessor => {
+            for (var y = 0; y < accessor.Height; y++) {
                 var row = accessor.GetRowSpan(y);
                 var widthCount = _cols > 0 ? _cols : row.Length;
                 var lineChars = new char[widthCount];
                 var colors = new byte[widthCount * 3];
-                for (var x = 0; x < widthCount; x++)
-                {
+                for (var x = 0; x < widthCount; x++) {
                     var p = row[x];
                     var r = p.R; var g = p.G; var b = p.B;
                     var brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;

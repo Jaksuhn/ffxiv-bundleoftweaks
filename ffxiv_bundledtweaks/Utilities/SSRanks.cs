@@ -2,8 +2,7 @@
 
 namespace ComplexTweaks.Utilities;
 
-public static class SSRanks
-{
+public static class SSRanks {
     public static Vector2 Lakeland => new(23.3f, 22.1f);
     public static Vector2 AmhAraeng => new(27.5f, 35.2f);
     public static Vector2 IlMheg => new(13.5f, 23.0f);
@@ -25,8 +24,7 @@ public static class SSRanks
     public static Vector2 HeritageFound => new(17.46f, 21.22f);
     public static Vector2 LivingMemory => new(34.4f, 26.3f);
 
-    public static Vector2 TerritoryToSSRank(this uint territory, MapLinkPayload maplink) => territory switch
-    {
+    public static Vector2 TerritoryToSSRank(this uint territory, MapLinkPayload maplink) => territory switch {
         831 => Lakeland,
         814 => Kholusia,
         815 => AmhAraeng,

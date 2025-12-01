@@ -6,15 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace ComplexTweaks.Utilities.Extensions;
 
-public static partial class StringExtensions
-{
-    public static bool TryParseVector3(this string input, out Vector3 output)
-    {
+public static partial class StringExtensions {
+    public static bool TryParseVector3(this string input, out Vector3 output) {
         output = Vector3.Zero;
         var pattern = @"(-?\d+(\.\d+)?),(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)";
         var match = Regex.Match(input, pattern);
-        if (match.Success)
-        {
+        if (match.Success) {
             var x = float.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
             var y = float.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
             var z = float.Parse(match.Groups[5].Value, CultureInfo.InvariantCulture);
@@ -24,8 +21,7 @@ public static partial class StringExtensions
         return false;
     }
 
-    public static string ToBase64(this string s)
-    {
+    public static string ToBase64(this string s) {
         var jsonBytes = Encoding.UTF8.GetBytes(s);
         using var output = new MemoryStream();
         using (var brotli = new BrotliStream(output, CompressionLevel.Optimal))
@@ -33,8 +29,7 @@ public static partial class StringExtensions
         return Convert.ToBase64String(output.ToArray());
     }
 
-    public static string FromBase64(this string s)
-    {
+    public static string FromBase64(this string s) {
         var compressedBytes = Convert.FromBase64String(s);
         using var input = new MemoryStream(compressedBytes);
         using var brotli = new BrotliStream(input, CompressionMode.Decompress);

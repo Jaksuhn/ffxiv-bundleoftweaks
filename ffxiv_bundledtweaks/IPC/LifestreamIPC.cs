@@ -4,8 +4,7 @@ namespace ComplexTweaks.IPC;
 
 #nullable disable
 [Ipc(Ipc.Lifestream)]
-public class LifestreamIPC : BaseIPC
-{
+public class LifestreamIPC : BaseIPC {
     public override string Name => "Lifestream";
     public override string Repo => Nightmare;
     public LifestreamIPC() => EzIPC.Init(this, Name);

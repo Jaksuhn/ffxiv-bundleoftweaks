@@ -7,16 +7,14 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class KillFlag(string world) : CommonTasks
-{
+public sealed class KillFlag(string world) : CommonTasks {
     private const float HUNT_DETECTION_RADIUS = 15.0f;
     private const float LOS_SEARCH_RADIUS = 5.0f;
     private const int LOS_SEARCH_POSITIONS = 8;
     private const float TARGET_APPROACH_DISTANCE = 3.0f;
     private readonly Vector3 losOffset = new(0, 2, 0);
 
-    protected override async Task Execute()
-    {
+    protected override async Task Execute() {
         if (!world.IsNullOrEmpty())
             await HandleWorldTravel();
 
@@ -25,8 +23,7 @@ public sealed class KillFlag(string world) : CommonTasks
             Player.MapFlag.ToVector3(),
             MovementConfig.Default.WithOptions(MovementOptions.Mount | (Player.MapFlag.TerritoryId != 180 ? MovementOptions.Fly : MovementOptions.None)),
             stopCondition: () => FindHuntTarget() is not null,
-            onStopReached: async () =>
-            {
+            onStopReached: async () => {
                 if (FindHuntTarget() is DGameObject target)
                     await MoveTo(target.Position, MovementConfig.Default);
             }
@@ -35,10 +32,8 @@ public sealed class KillFlag(string world) : CommonTasks
         await Kill();
     }
 
-    private async Task HandleWorldTravel()
-    {
-        if (C.EnabledTweaks.Contains(nameof(InstantReturn)) && Player.Territory != Player.HomeAetheryteTerritory)
-        {
+    private async Task HandleWorldTravel() {
+        if (C.EnabledTweaks.Contains(nameof(InstantReturn)) && Player.Territory != Player.HomeAetheryteTerritory) {
             Chat.SendMessage("/return");
             await WaitUntilTerritory(Player.HomeAetheryteTerritory);
         }
@@ -47,11 +42,9 @@ public sealed class KillFlag(string world) : CommonTasks
         await WaitUntil(() => !Player.IsBusy, "WaitForAvailable");
     }
 
-    private async Task Kill()
-    {
+    private async Task Kill() {
         using var scope = BeginScope("Kill");
-        if (FindHuntTarget() is { } target)
-        {
+        if (FindHuntTarget() is { } target) {
             await Dismount();
             await MoveIfNoLoS(target);
             Svc.Targets.Target = target;
@@ -72,28 +65,22 @@ public sealed class KillFlag(string world) : CommonTasks
         .Select(x => x.Object)
         .FirstOrDefault();
 
-    private async Task MoveIfNoLoS(DGameObject target)
-    {
-        if (!IsInLineOfSight(Player.Position, target.Position))
-        {
+    private async Task MoveIfNoLoS(DGameObject target) {
+        if (!IsInLineOfSight(Player.Position, target.Position)) {
             Log($"No line of sight to {target.Name}, moving...");
             var validPosition = Service.Navmesh.PointOnFloor(target.Position, false, 5);
-            if (validPosition.HasValue)
-            {
-                try
-                {
+            if (validPosition.HasValue) {
+                try {
                     await MoveTo(validPosition.Value, MovementConfig.Default);
                     return;
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Log($"Failed to move to navmesh point: {ex.Message}");
                 }
             }
 
             // try spots in a circle around target if above fails
-            for (var i = 0; i < LOS_SEARCH_POSITIONS; i++)
-            {
+            for (var i = 0; i < LOS_SEARCH_POSITIONS; i++) {
                 var angle = (float)(i * 2 * Math.PI / LOS_SEARCH_POSITIONS);
                 var searchPos = new Vector3(
                     target.Position.X + LOS_SEARCH_RADIUS * (float)Math.Cos(angle),
@@ -101,15 +88,12 @@ public sealed class KillFlag(string world) : CommonTasks
                     target.Position.Z + LOS_SEARCH_RADIUS * (float)Math.Sin(angle)
                 );
 
-                if (Service.Navmesh.PointOnFloor(searchPos, false, 1) is { } point && IsInLineOfSight(point, target.Position))
-                {
-                    try
-                    {
+                if (Service.Navmesh.PointOnFloor(searchPos, false, 1) is { } point && IsInLineOfSight(point, target.Position)) {
+                    try {
                         await MoveTo(point, MovementConfig.Default);
                         return;
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         Log($"Failed to move to search position {i}: {ex.Message}");
                     }
                 }
@@ -129,8 +113,7 @@ public sealed class KillFlag(string world) : CommonTasks
             Vector3.Distance(source + losOffset, target + losOffset)
         );
 
-    private async Task TargetDead(DGameObject target)
-    {
+    private async Task TargetDead(DGameObject target) {
         using var scope = BeginScope("TargetDead");
         while (target != null && !target.IsDead)
             await NextFrame(30);

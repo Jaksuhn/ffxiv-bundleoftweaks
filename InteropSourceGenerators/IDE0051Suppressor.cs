@@ -7,8 +7,7 @@ using System.Collections.Immutable;
 namespace InteropSourceGenerators;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-internal sealed class IDE0051Suppressor : DiagnosticSuppressor
-{
+internal sealed class IDE0051Suppressor : DiagnosticSuppressor {
     private const string SuppressedDiagnosticId = "IDE0051"; // Remove unused private members
 
     private static readonly string[] ReflectionBasedAttributeNames =
@@ -26,10 +25,8 @@ internal sealed class IDE0051Suppressor : DiagnosticSuppressor
             )
         );
 
-    public override void ReportSuppressions(SuppressionAnalysisContext context)
-    {
-        foreach (var diagnostic in context.ReportedDiagnostics)
-        {
+    public override void ReportSuppressions(SuppressionAnalysisContext context) {
+        foreach (var diagnostic in context.ReportedDiagnostics) {
             if (diagnostic.Id != SuppressedDiagnosticId)
                 continue;
 
@@ -48,8 +45,7 @@ internal sealed class IDE0051Suppressor : DiagnosticSuppressor
                 continue;
 
             var hasReflectionBasedAttribute = methodSymbol.GetAttributes()
-                .Any(attr =>
-                {
+                .Any(attr => {
                     if (attr.AttributeClass == null)
                         return false;
 

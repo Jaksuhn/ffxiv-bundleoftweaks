@@ -4,10 +4,8 @@ using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.UI.Debug.Tabs;
 
-internal unsafe class FlagTab : DebugTab
-{
-    public override void Draw()
-    {
+internal unsafe class FlagTab : DebugTab {
+    public override void Draw() {
         ImGui.TextUnformatted($"IsFlagMarkerSet: {AgentMap.Instance()->FlagMarkerCount > 0}");
         if (!(AgentMap.Instance()->FlagMarkerCount > 0)) return;
 
@@ -25,8 +23,7 @@ internal unsafe class FlagTab : DebugTab
         var closest = Coords.FindClosestAetheryte(territory, pos);
         var aetherytes = FindRows<Aetheryte>(x => x.Territory.RowId == territory).OrderBy(a => (pos - Coords.AetherytePosition(a)).LengthSquared());
 
-        foreach (var aetheryte in aetherytes)
-        {
+        foreach (var aetheryte in aetherytes) {
             ImGui.TextUnformatted($"[{aetheryte.RowId}]");
             ImGui.Indent();
             ImGui.TextUnformatted($"PlaceName: {aetheryte.PlaceName.Value.Name}");

@@ -6,8 +6,7 @@ namespace ComplexTweaks.IPC;
 
 #nullable disable
 [Ipc(Ipc.Gearsetter)]
-public class GearsetterIPC : BaseIPC
-{
+public class GearsetterIPC : BaseIPC {
     public override string Name => "Gearsetter";
     public override string Repo => Vera;
     public GearsetterIPC() => EzIPC.Init(this, Name);

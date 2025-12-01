@@ -9,20 +9,16 @@ using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
-{
+public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks {
     private static readonly uint GettingTooAttachedVII = 1905;
     private static unsafe bool AgentActive => AgentMateriaAttach.Instance()->IsAgentActive();
     private static unsafe bool AgentLoading => AgentMateriaAttach.Instance()->UpdateState != 0;
 
-    protected override async Task Execute()
-    {
+    protected override async Task Execute() {
         Status = $"Getting Achievement Progress";
         var (_, current, max) = await GetAchievementProgress(GettingTooAttachedVII);
-        try
-        {
-            while (current < max)
-            {
+        try {
+            while (current < max) {
                 Status = $"Melding [{current}/{max}]";
                 await Meld();
 
@@ -31,14 +27,12 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
                 current++;
             }
         }
-        finally
-        {
+        finally {
             unsafe { AgentMateriaAttach.Instance()->Hide(); }
         }
     }
 
-    private async Task<(uint id, uint current, uint max)> GetAchievementProgress(uint achievementId)
-    {
+    private async Task<(uint id, uint current, uint max)> GetAchievementProgress(uint achievementId) {
         using var scope = BeginScope($"WaitingOn#{achievementId}");
         unsafe { Achievement.Instance()->RequestAchievementProgress(achievementId); }
         return await WaitForReceiveAchievementProgress(id: achievementId);
@@ -48,15 +42,13 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
     private unsafe void ReceiveAchievementProgress(Achievement* achievement, uint id, uint current, uint max)
         => ReceiveAchievementProgressHook.Original(achievement, id, current, max);
 
-    private async Task Meld()
-    {
+    private async Task Meld() {
         using var scope = BeginScope(nameof(Meld));
         await Open();
         await SelectItem();
         await WaitWhile(() => AgentLoading, "WaitAgentLoad");
 
-        if (GetUsableMateria() is not { } materia)
-        {
+        if (GetUsableMateria() is not { } materia) {
             Error($"No materia that can be guaranteed melded to {item.GameData.Value.Name}");
             return;
         }
@@ -64,15 +56,13 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
         await HandleMateriaAttachDialog();
     }
 
-    private async Task Retrieve()
-    {
+    private async Task Retrieve() {
         using var scope = BeginScope(nameof(Retrieve));
         unsafe { EventFramework.Instance()->MaterializeItem((InventoryItem*)item.Address, MaterializeEntryId.Retrieve); }
         await WaitUntilThenFalse(() => Svc.Condition[ConditionFlag.Occupied39], "Retrieving");
     }
 
-    private async Task Open()
-    {
+    private async Task Open() {
         using var scope = BeginScope(nameof(Open));
         if (AgentActive) return;
         bool res;
@@ -81,28 +71,23 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
         await WaitUntil(() => AgentActive, $"WaitForAgent");
     }
 
-    private async Task SelectItem()
-    {
+    private async Task SelectItem() {
         using var scope = BeginScope(nameof(SelectItem));
         var category = GetCategory(item);
         ErrorIf(category is AgentMateriaAttach.FilterCategory.None, $"{item.GameData.Value.Name} has no inventory category");
 
-        unsafe
-        {
+        unsafe {
             if (AgentMateriaAttach.Instance()->Category != category)
                 ReceiveEvent(0, [0, (int)category]);
         }
 
         await WaitWhile(() => AgentLoading, "WaitAgentLoad");
 
-        unsafe
-        {
+        unsafe {
             var agent = AgentMateriaAttach.Instance();
             var it = item.ToPtr();
-            for (var i = 0; i < agent->ItemCount; i++)
-            {
-                if (it == agent->Data->ItemsSorted[i].Value->Item)
-                {
+            for (var i = 0; i < agent->ItemCount; i++) {
+                if (it == agent->Data->ItemsSorted[i].Value->Item) {
                     Log($"Selecting item at index #{i}");
                     ReceiveEvent(0, [1, i, 1, 0]);
                     return;
@@ -113,18 +98,14 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
         }
     }
 
-    private async Task SelectMateria(uint id)
-    {
+    private async Task SelectMateria(uint id) {
         using var scope = BeginScope(nameof(SelectMateria));
         await WaitWhile(() => AgentLoading, "WaitAgentLoad");
-        unsafe
-        {
+        unsafe {
             var agent = AgentMateriaAttach.Instance();
-            for (var i = 0; i < agent->MateriaCount; i++)
-            {
+            for (var i = 0; i < agent->MateriaCount; i++) {
                 var invItem = agent->Data->MateriaSorted[i].Value->Item;
-                if (invItem->ItemId == id)
-                {
+                if (invItem->ItemId == id) {
                     Log($"Selecting materia at index {i}");
                     ReceiveEvent(0, [2, i, 1, 0]);
                     return;
@@ -135,8 +116,7 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
         }
     }
 
-    private async Task HandleMateriaAttachDialog()
-    {
+    private async Task HandleMateriaAttachDialog() {
         using var scope = BeginScope(nameof(HandleMateriaAttachDialog));
         await WaitUntil(() => Svc.Condition[ConditionFlag.MeldingMateria], "WaitForMeldState");
         await WaitUntil(() => Game.AddonActive("MateriaAttachDialog"), "WaitForDialog");
@@ -144,24 +124,19 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
         await WaitWhile(() => Svc.Condition[ConditionFlag.MeldingMateria], "WaitForMeldFinish");
     }
 
-    private unsafe void ReceiveEvent(ulong eventKind, int[] values)
-    {
+    private unsafe void ReceiveEvent(ulong eventKind, int[] values) {
         var ret = new AtkValue();
         var atkvalues = stackalloc AtkValue[values.Length];
-        for (var i = 0; i < values.Length; i++)
-        {
+        for (var i = 0; i < values.Length; i++) {
             atkvalues[i].Type = ValueType.Int;
             atkvalues[i].Int = values[i];
         }
         AgentMateriaAttach.Instance()->ReceiveEvent(&ret, atkvalues, (uint)values.Length, eventKind);
     }
 
-    private AgentMateriaAttach.FilterCategory GetCategory(GameInventoryItem item)
-    {
-        unsafe
-        {
-            return (InventoryType)item.ContainerType switch
-            {
+    private AgentMateriaAttach.FilterCategory GetCategory(GameInventoryItem item) {
+        unsafe {
+            return (InventoryType)item.ContainerType switch {
                 InventoryType.Inventory1 or InventoryType.Inventory2 or InventoryType.Inventory3 or InventoryType.Inventory4 => AgentMateriaAttach.FilterCategory.Inventory,
                 InventoryType.ArmoryMainHand or InventoryType.ArmoryOffHand => AgentMateriaAttach.FilterCategory.ArmouryWeapon,
                 InventoryType.ArmoryHead or InventoryType.ArmoryBody or InventoryType.ArmoryHands => AgentMateriaAttach.FilterCategory.ArmouryHeadBodyHands,
@@ -174,8 +149,7 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks
         }
     }
 
-    private unsafe uint? GetUsableMateria()
-    {
+    private unsafe uint? GetUsableMateria() {
         var agent = AgentMateriaAttach.Instance();
         if (agent is null) throw new Exception($"Agent is null somehow");
         foreach (var materia in agent->Data->MateriaSorted)

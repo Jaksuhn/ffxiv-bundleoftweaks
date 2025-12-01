@@ -5,8 +5,7 @@ using System.Text;
 
 namespace ComplexTweaks.Utilities;
 
-public class Img2Ascii
-{
+public class Img2Ascii {
     // A lot of this is based on https://github.com/TheZoraiz/ascii-image-converter/
     private static readonly char[] AsciiChars = [ '@', '%', '#', '&', '*', '+', '=', '-', ':', '.', ' ',
         '$', '?', '!', '^', '~', '_', ',', ';', '<', '>', '/', '\\', '|', '(', ')', '[', ']', '{', '}' ];
@@ -16,8 +15,7 @@ public class Img2Ascii
     public static int GetAsciiTableLength() => AsciiChars.Length;
     public static char GetAsciiChar(int index) => AsciiChars[index];
 
-    public static char MapBrightnessToAscii(double brightness01, bool detailed)
-    {
+    public static char MapBrightnessToAscii(double brightness01, bool detailed) {
         var table = detailed ? AsciiTableDetailed : AsciiTableSimple;
         if (brightness01 <= 0) return table[0];
         if (brightness01 >= 1) return table[^1];
@@ -32,8 +30,7 @@ public class Img2Ascii
     /// <param name="imagePath">Path to the image file</param>
     /// <param name="maxWidth">Maximum width in characters (default: 100). Height will be calculated to maintain aspect ratio.</param>
     /// <returns>A string containing the colored ASCII art</returns>
-    public static string ConvertToAscii(string imagePath, int maxWidth = 100)
-    {
+    public static string ConvertToAscii(string imagePath, int maxWidth = 100) {
         if (string.IsNullOrEmpty(imagePath))
             throw new ArgumentException("Image path cannot be null or empty.", nameof(imagePath));
 
@@ -52,16 +49,14 @@ public class Img2Ascii
     /// <param name="maxWidth">Maximum width in characters (default: 100)</param>
     /// <param name="useAnsiColor">Whether to output ANSI color codes</param>
     /// <returns>A string containing the ASCII art</returns>
-    public static string ConvertToAscii(Image<Rgba32> image, int maxWidth = 100, bool useAnsiColor = true)
-    {
+    public static string ConvertToAscii(Image<Rgba32> image, int maxWidth = 100, bool useAnsiColor = true) {
         ArgumentNullException.ThrowIfNull(image);
 
         var aspectRatio = (double)image.Height / image.Width;
         var width = maxWidth;
         var height = (int)(maxWidth * aspectRatio * 0.5);
 
-        using var resized = image.Clone(ctx => ctx.Resize(new ResizeOptions
-        {
+        using var resized = image.Clone(ctx => ctx.Resize(new ResizeOptions {
             Size = new Size(width, height),
             Mode = ResizeMode.Max,
             Sampler = KnownResamplers.Lanczos3
@@ -70,13 +65,10 @@ public class Img2Ascii
         var result = new StringBuilder();
         var resetCode = "\x1b[0m";
 
-        resized.ProcessPixelRows(accessor =>
-        {
-            for (var y = 0; y < accessor.Height; y++)
-            {
+        resized.ProcessPixelRows(accessor => {
+            for (var y = 0; y < accessor.Height; y++) {
                 var row = accessor.GetRowSpan(y);
-                for (var x = 0; x < row.Length; x++)
-                {
+                for (var x = 0; x < row.Length; x++) {
                     var pixel = row[x];
                     var r = pixel.R;
                     var g = pixel.G;
@@ -90,8 +82,7 @@ public class Img2Ascii
                     charIndex = Math.Clamp(charIndex, 0, AsciiChars.Length - 1);
                     var asciiChar = AsciiChars[charIndex];
 
-                    if (useAnsiColor)
-                    {
+                    if (useAnsiColor) {
                         var colorCode = $"\x1b[38;2;{r};{g};{b}m";
                         result.Append(colorCode);
                         result.Append(asciiChar);

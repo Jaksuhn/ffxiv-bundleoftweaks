@@ -17,10 +17,8 @@ using PlayerController = ComplexTweaks.Utilities.Structs.PlayerController;
 
 namespace ComplexTweaks.Utilities;
 
-public static unsafe class PlayerEx
-{
-    extension(Player)
-    {
+public static unsafe class PlayerEx {
+    extension(Player) {
         public static unsafe Camera* Camera => CameraManager.Instance()->GetActiveCamera();
         public static PlayerController* Controller => (PlayerController*)Svc.SigScanner.GetStaticAddressFromSig(Memory.Signatures.PlayerController);
 
@@ -45,14 +43,12 @@ public static unsafe class PlayerEx
         public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarkers[0];
     }
 
-    extension(GenericHelpers)
-    {
+    extension(GenericHelpers) {
         public static RowRef<T> CreateRowRef<T>(uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
             => new(Svc.Data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());
     }
 
-    public enum Role
-    {
+    public enum Role {
         Other = 0,
         Tank = 1,
         Dps = 2,
@@ -63,13 +59,11 @@ public static unsafe class PlayerEx
     public static List<MapMarkerData> QuestLocations => [.. FFXIVClientStructs.FFXIV.Client.Game.UI.Map.Instance()->QuestMarkers.ToArray().SelectMany(i => i.MarkerData.ToList())];
 
     private static int EquipAttemptLoops = 0;
-    public static void Equip(uint itemID, InventoryType? container = null, int? slot = null)
-    {
+    public static void Equip(uint itemID, InventoryType? container = null, int? slot = null) {
         if (Inventory.HasItemEquipped(itemID)) return;
 
         var pos = Inventory.GetItemLocationInInventory(itemID, Inventory.Equippable);
-        if (pos == null)
-        {
+        if (pos == null) {
             DuoLog.Error($"Failed to find item {GetRow<Item>(itemID)?.Name} (ID: {itemID}) in inventory");
             return;
         }
@@ -83,13 +77,10 @@ public static unsafe class PlayerEx
         ctx->OpenForItemSlot(container.Value, slot.Value, 0, addonId);
 
         var contextMenu = Svc.GameGui.GetAddonByName("ContextMenu").ToPtr();
-        if (contextMenu != null)
-        {
-            for (var i = 0; i < contextMenu->AtkValuesCount; i++)
-            {
+        if (contextMenu != null) {
+            for (var i = 0; i < contextMenu->AtkValuesCount; i++) {
                 var firstEntryIsEquip = ctx->EventIds[i] == 25; // i'th entry will fire eventid 7+i; eventid 25 is 'equip'
-                if (firstEntryIsEquip)
-                {
+                if (firstEntryIsEquip) {
                     Svc.Log.Info($"Equipping item #{itemID} from {container.Value} @ {slot.Value}, index {i}");
                     Callback.Fire(contextMenu, true, 0, i - 7, 0, 0, 0); // p2=-1 is close, p2=0 is exec first command
                 }
@@ -97,16 +88,14 @@ public static unsafe class PlayerEx
             Callback.Fire(contextMenu, true, 0, -1, 0, 0, 0);
             EquipAttemptLoops++;
 
-            if (EquipAttemptLoops >= 5)
-            {
+            if (EquipAttemptLoops >= 5) {
                 DuoLog.Error($"Equip option not found after 5 attempts. Aborting.");
                 return;
             }
         }
     }
 
-    public static void ResetTimers()
-    {
+    public static void ResetTimers() {
         var module = UIModule.Instance()->GetInputTimerModule();
         module->AfkTimer = 0;
         module->ContentInputTimer = 0;
@@ -116,8 +105,7 @@ public static unsafe class PlayerEx
             InfoProxyDetail.Instance()->RefreshOnlineStatus();
     }
 
-    public static bool InteractWith(ulong instanceId)
-    {
+    public static bool InteractWith(ulong instanceId) {
         var obj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(instanceId);
         if (obj == null)
             return false;

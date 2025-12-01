@@ -6,8 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace ComplexTweaks.Tweaks;
 
-public class AchievementTrackerConfiguration
-{
+public class AchievementTrackerConfiguration {
     public List<AchievementTracker.Achv> Achievements = [];
     [ColorConfig] public Vector4 BarColour = Vector4.One;
     [IntConfig(DefaultValue = 60, SameLine = true)] public int UpdateFrequency = 60;
@@ -15,13 +14,11 @@ public class AchievementTrackerConfiguration
 }
 
 [Tweak]
-public unsafe partial class AchievementTracker : Tweak<AchievementTrackerConfiguration, AchievementTrackerWindow>
-{
+public unsafe partial class AchievementTracker : Tweak<AchievementTrackerConfiguration, AchievementTrackerWindow> {
     public override string Name => "Achievement Tracker";
     public override string Description => $"Adds an achievement tracker";
 
-    public class Achv
-    {
+    public class Achv {
         public uint ID;
         public required string Name;
         public uint CurrentProgress;
@@ -35,29 +32,23 @@ public unsafe partial class AchievementTracker : Tweak<AchievementTrackerConfigu
     private void OnCommand(string command, string arguments) => Window<Window>()?.Toggle();
 
     [AddressHook<Achievement>(nameof(Achievement.MemberFunctionPointers.ReceiveAchievementProgress))]
-    private void ReceiveAchievementProgress(Achievement* achievement, uint id, uint current, uint max)
-    {
-        try
-        {
-            foreach (var achv in Config.Achievements)
-            {
-                if (achv.ID == id)
-                {
+    private void ReceiveAchievementProgress(Achievement* achievement, uint id, uint current, uint max) {
+        try {
+            foreach (var achv in Config.Achievements) {
+                if (achv.ID == id) {
                     achv.CurrentProgress = current;
                     achv.MaxProgress = max;
                 }
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Error(e, $"Error receiving achievement progress");
         }
 
         ReceiveAchievementProgressHook.Original(achievement, id, current, max);
     }
 
-    public void RequestUpdate(uint id = 0)
-    {
+    public void RequestUpdate(uint id = 0) {
         if (id == 0)
             Config.Achievements.Where(a => !a.Completed).ToList().ForEach(achv => Achievement.Instance()->RequestAchievementProgress(achv.ID));
         else
@@ -65,30 +56,25 @@ public unsafe partial class AchievementTracker : Tweak<AchievementTrackerConfigu
     }
 }
 
-public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window($"Achievement Tracker##{nameof(AchievementTrackerWindow)}")
-{
+public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window($"Achievement Tracker##{nameof(AchievementTrackerWindow)}") {
     private Sheets.Achievement? selectedAchievement;
     internal static string Search = string.Empty;
     private DateTime lastCallTime;
 
     public override bool DrawConditions() => Player.Available;
 
-    public override void Draw()
-    {
-        TryExecute(() =>
-        {
+    public override void Draw() {
+        TryExecute(() => {
             DrawSearch();
             ImGui.SpacedSeparator();
             DrawAchievements();
         });
     }
 
-    private void DrawSearch()
-    {
+    private void DrawSearch() {
         var timeSinceLastCall = DateTime.Now - lastCallTime;
 
-        if (timeSinceLastCall.TotalSeconds >= tweak.Config.UpdateFrequency)
-        {
+        if (timeSinceLastCall.TotalSeconds >= tweak.Config.UpdateFrequency) {
             tweak.RequestUpdate();
             lastCallTime = DateTime.Now;
         }
@@ -105,17 +91,13 @@ public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window(
         if (ImGui.Selectable("(None)", selectedAchievement == null))
             selectedAchievement = null;
 
-        foreach (var achv in GetSheet<Sheets.Achievement>().Where(x => !x.Name.ToString().IsNullOrEmpty() && x.Name.ToString().Contains(Search, StringComparison.CurrentCultureIgnoreCase)))
-        {
+        foreach (var achv in GetSheet<Sheets.Achievement>().Where(x => !x.Name.ToString().IsNullOrEmpty() && x.Name.ToString().Contains(Search, StringComparison.CurrentCultureIgnoreCase))) {
             using var _ = ImRaii.PushId($"###achievement{achv.RowId}");
             var selected = ImGui.Selectable($"{achv.Name}", achv.RowId == selectedAchievement?.RowId);
 
-            if (selected)
-            {
-                if (!tweak.Config.Achievements.Any(a => a.ID == achv.RowId))
-                {
-                    tweak.Config.Achievements.Add(new AchievementTracker.Achv
-                    {
+            if (selected) {
+                if (!tweak.Config.Achievements.Any(a => a.ID == achv.RowId)) {
+                    tweak.Config.Achievements.Add(new AchievementTracker.Achv {
                         ID = achv.RowId,
                         Name = achv.Name.ToString(),
                         Description = GetRow<Sheets.Achievement>(achv.RowId)!.Value.Description.ToString(),
@@ -129,22 +111,18 @@ public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window(
         }
     }
 
-    private void DrawAchievements()
-    {
-        try
-        {
+    private void DrawAchievements() {
+        try {
             if (tweak.Config.Achievements.Count == 0)
                 return;
 
             var achievements = tweak.Config.Achievements.ToList();
             var style = ImGui.GetStyle();
 
-            for (var i = 0; i < achievements.Count; i++)
-            {
+            for (var i = 0; i < achievements.Count; i++) {
                 var achv = achievements[i];
 
-                if (tweak.Config.AutoRemoveCompleted && achv.Completed)
-                {
+                if (tweak.Config.AutoRemoveCompleted && achv.Completed) {
                     tweak.Config.Achievements.Remove(achv);
                     continue;
                 }
@@ -158,16 +136,14 @@ public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window(
                 using (var buttonStyle = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, 0.5f)))
                 using (var color = ImRaii.PushColor(ImGuiCol.Button, 0)
                     .Push(ImGuiCol.ButtonHovered, ImGui.GetColorU32(ImGuiCol.ButtonHovered))
-                    .Push(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.ButtonActive)))
-                {
+                    .Push(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.ButtonActive))) {
                     ImGui.Button($"[{achv.ID}] {achv.Name}", new Vector2(nameWidth, 0)); // prevent window drag
 
                     if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                         tweak.Config.Achievements.Remove(achv);
 
                     ImGui.DragDropSource(i, "ACHIEVEMENT_ITEM"u8, $"[{achv.ID}] {achv.Name}");
-                    ImGui.DragDropTarget(i, "ACHIEVEMENT_ITEM"u8, tweak.Config.Achievements.Count, (sourceIndex, insertIndex) =>
-                    {
+                    ImGui.DragDropTarget(i, "ACHIEVEMENT_ITEM"u8, tweak.Config.Achievements.Count, (sourceIndex, insertIndex) => {
                         var dragged = tweak.Config.Achievements[sourceIndex];
                         tweak.Config.Achievements.RemoveAt(sourceIndex);
                         if (sourceIndex < insertIndex) // shift left if removed before the insert point
@@ -198,8 +174,7 @@ public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window(
                 ImGui.SetCursorPos(new Vector2(cursorPos.X + textX, cursorPos.Y + (ImGui.GetFrameHeight() - labelSize.Y) * 0.5f));
                 ImGui.TextColored(textColor, progressLabel);
 
-                if (i < achievements.Count - 1)
-                {
+                if (i < achievements.Count - 1) {
                     ImGui.Spacing();
                     ImGui.Separator();
                 }

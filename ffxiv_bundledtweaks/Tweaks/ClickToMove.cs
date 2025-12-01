@@ -4,14 +4,12 @@ using Dalamud.Bindings.ImGui;
 
 namespace ComplexTweaks.Tweaks;
 
-public class ClickToMoveConfiguration
-{
+public class ClickToMoveConfiguration {
     [EnumConfig] public MovementType MovementType;
 }
 
 [Tweak]
-public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration>
-{
+public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration> {
     public override string Name => "Click to Move";
     public override string Description => "Like those other games.";
 
@@ -22,30 +20,23 @@ public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration>
 
     private bool isPressed = false;
     private Vector3 destination = Vector3.Zero;
-    private void MoveTo(IFramework framework)
-    {
+    private void MoveTo(IFramework framework) {
         if (!Player.Available || Player.IsBusy) return;
         if (Player.DistanceTo(destination) < 0.0025f) movement.Enabled = false;
 
-        if (IsKeyPressed(ECommons.Interop.LimitedKeys.LeftMouseButton) && Utils.IsClickingInGameWorld())
-        {
+        if (IsKeyPressed(ECommons.Interop.LimitedKeys.LeftMouseButton) && Utils.IsClickingInGameWorld()) {
             if (!isPressed)
                 isPressed = true;
         }
-        else
-        {
-            if (isPressed)
-            {
+        else {
+            if (isPressed) {
                 isPressed = false;
-                if (!Framework.Instance()->WindowInactive)
-                {
+                if (!Framework.Instance()->WindowInactive) {
                     Svc.GameGui.ScreenToWorld(ImGui.GetIO().MousePos, out var pos, 100000f);
-                    if (Config.MovementType == MovementType.Pathfind)
-                    {
+                    if (Config.MovementType == MovementType.Pathfind) {
                         if (!Service.Navmesh.IsRunning())
                             Service.Navmesh.PathfindAndMoveTo(pos, false);
-                        else
-                        {
+                        else {
                             Service.Navmesh.Stop();
                             Service.Navmesh.PathfindAndMoveTo(pos, false);
                         }

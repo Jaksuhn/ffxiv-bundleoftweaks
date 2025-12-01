@@ -4,18 +4,15 @@ using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 
 namespace Automaton.Events;
 
-public class FateEventArgs : EventArgs
-{
+public class FateEventArgs : EventArgs {
     public ushort FateId { get; set; }
     public IFate? Fate { get; set; }
 }
 
-public class FateEventTracker : ITweakEvent
-{
+public class FateEventTracker : ITweakEvent {
     public TweakEvent[] Events => [TweakEvent.FateJoined, TweakEvent.FateLeft];
 
-    public void RegisterHandlers(TweakEventManager manager)
-    {
+    public void RegisterHandlers(TweakEventManager manager) {
         manager.RegisterFrameworkUpdateHandler(TweakEvent.FateJoined, OnFateFrameworkUpdate);
         manager.RegisterFrameworkUpdateHandler(TweakEvent.FateLeft, OnFateFrameworkUpdate);
     }
@@ -23,8 +20,7 @@ public class FateEventTracker : ITweakEvent
     private ushort? _currentFateId;
     private unsafe bool IsGrounded => Player.Character->MovementState is MovementStateOptions.Normal && !Player.Mounted;
 
-    private unsafe void OnFateFrameworkUpdate(IFramework framework)
-    {
+    private unsafe void OnFateFrameworkUpdate(IFramework framework) {
         if (!Player.Available) return;
 
         var fateManager = FateManager.Instance();
@@ -38,10 +34,8 @@ public class FateEventTracker : ITweakEvent
         {
             _currentFateId = currentFateId;
             var fate = Svc.Fates.CreateFateReference((nint)currentFate);
-            if (fate != null)
-            {
-                Service.TweakEventManager.Invoke(TweakEvent.FateJoined, typeof(FateEventTracker), new FateEventArgs
-                {
+            if (fate != null) {
+                Service.TweakEventManager.Invoke(TweakEvent.FateJoined, typeof(FateEventTracker), new FateEventArgs {
                     FateId = currentFateId,
                     Fate = fate
                 });
@@ -52,8 +46,7 @@ public class FateEventTracker : ITweakEvent
         {
             var previousFateId = _currentFateId.Value;
             _currentFateId = null;
-            Service.TweakEventManager.Invoke(TweakEvent.FateLeft, typeof(FateEventTracker), new FateEventArgs
-            {
+            Service.TweakEventManager.Invoke(TweakEvent.FateLeft, typeof(FateEventTracker), new FateEventArgs {
                 FateId = previousFateId,
                 Fate = null
             });

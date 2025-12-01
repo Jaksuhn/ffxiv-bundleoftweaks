@@ -1,0 +1,217 @@
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Interface.Windowing;
+using ECommons.ImGuiMethods;
+
+namespace ComplexTweaks.Tweaks;
+
+public class FateToolKitWindow : Window {
+    private readonly FateToolKit _tweak;
+    public FateToolKitWindow(FateToolKit tweak) : base($"Fate Tracker##{nameof(FateToolKitWindow)}") {
+        _tweak = tweak;
+        TitleBarButtons.Add(new() {
+            Icon = FontAwesomeIcon.Cog,
+            Click = _ => _showSettings = !_showSettings,
+        });
+    }
+
+    private bool _showSettings = false;
+
+    public override bool DrawConditions() => Player.Available;
+
+    public override void Draw() {
+        ImGui.TextUnformatted($"Status: {(_tweak.Running ? "Running" : "Stopped")}");
+        ImGui.SameLine();
+        if (ImGuiComponents.IconButton(!_tweak.Running ? FontAwesomeIcon.Play : FontAwesomeIcon.Stop)) {
+            _tweak.ToggleRunning();
+            Service.Navmesh.Stop();
+        }
+
+        ImGui.SpacedSeparator();
+
+        if (_showSettings)
+            DrawSettings();
+
+        if (_tweak.GetOrderedFates().ToList() is not { Count: > 0 } fates) {
+            ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), "No fates match the current filters.");
+            return;
+        }
+
+        foreach (var (fate, isAvailable) in fates) {
+            using var id = ImRaii.PushId($"fate_{fate.Id}");
+
+            var availableWidth = ImGui.GetContentRegionAvail().X;
+            var displayName = FormatDisplayName(fate);
+            var textSize = ImGui.CalcTextSize(displayName);
+            var maxNameWidth = Math.Min(400f.Scale(), availableWidth * 0.6f);
+            var nameWidth = Math.Min(textSize.X + ImGui.GetStyle().FramePadding.X * 2, maxNameWidth);
+            var progressWidth = availableWidth - nameWidth - ImGui.GetStyle().ItemSpacing.X * 3 - ImGui.IconUnitWidth() * 2;
+
+            if (fate.HasBonus) {
+                ImGui.Image(Svc.Texture.GetFromGameIcon(new Dalamud.Interface.Textures.GameIconLookup(65001)).GetWrapOrEmpty().Handle, new Vector2(ImGui.IconUnitHeight()));
+                ImGui.SameLine();
+            }
+
+            using (var buttonStyle = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, 0.5f)))
+            using (var color = ImRaii.PushColor(ImGuiCol.Button, 0).Push(ImGuiCol.ButtonHovered, ImGui.GetColorU32(ImGuiCol.ButtonHovered)).Push(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.ButtonActive))) {
+                var isBlacklisted = _tweak.IsBlacklisted(fate);
+
+                using (var nameCol = ImRaii.PushColor(ImGuiCol.Text, isAvailable && !isBlacklisted ? (uint)EzColor.White : Colors.Grey3)) {
+                    if (ImGui.Button(displayName, new Vector2(nameWidth, 0))) {
+                        if (Svc.Navmesh.IsRunning())
+                            Svc.Navmesh.Stop();
+                        else
+                            Svc.Navmesh.PathfindAndMoveTo(fate.Position.RandomPoint(fate.Radius * 0.5f).OnMesh(), Svc.Condition[ConditionFlag.InFlight]);
+                    }
+                }
+
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    _tweak.ToggleBlacklist(fate);
+
+                var tooltip = $"Name: {displayName}\n" +
+                             $"ID: {fate.Id}\n" +
+                             $"Type: {fate.FateType}\n" +
+                             $"Level: {fate.Level}\n" +
+                             $"Progress: {fate.Progress}%\n" +
+                             $"Time Remaining: {(fate.TimeRemaining >= 0 ? TimeSpan.FromSeconds(fate.TimeRemaining).ToString(@"mm\:ss") : "∞")}\n" +
+                             $"Distance: {Player.DistanceTo(fate.Position):F1}\n" +
+                             $"Position: {fate.Position}\n" +
+                             $"{(fate.HasBonus ? "Has Bonus\n" : "")}" +
+                             $"Right-click to {(isBlacklisted ? "remove from" : "add to")} blacklist";
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip(tooltip);
+            }
+
+            ImGui.SameLine();
+
+            var percentage = fate.Progress / 100f;
+            var progressLabel = $"{fate.Progress}%";
+
+            var cursorPos = ImGui.GetCursorPos();
+            var labelSize = ImGui.CalcTextSize(progressLabel);
+            var textX = progressWidth - labelSize.X - 4f;
+
+            var textColor = ImGui.GetProgressBarTextColor(_tweak.Config.BarColour, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg], percentage, textX, labelSize.X, progressWidth);
+
+            using (var color = ImRaii.PushColor(ImGuiCol.PlotHistogram, _tweak.Config.BarColour))
+                ImGui.ProgressBar(percentage, new Vector2(progressWidth, ImGui.GetFrameHeight()), "");
+
+            ImGui.SetCursorPos(new Vector2(cursorPos.X + textX, cursorPos.Y + (ImGui.GetFrameHeight() - labelSize.Y) * 0.5f));
+            ImGui.TextColored(textColor, progressLabel);
+
+            ImGui.SpacedSeparator();
+        }
+    }
+
+    private void DrawSettings() {
+        ImGui.TextColored(new Vector4(0.8f, 0.8f, 1f, 1f), "Priority Order Configuration");
+        ImGui.Spacing();
+        ImGui.TextWrapped("Configure the order in which fates are prioritized. The order shown here is the order used by AvailableFates when selecting which fate to complete next.");
+        ImGui.Spacing();
+
+        ImGui.TextColored(new Vector4(0.8f, 0.8f, 1f, 1f), "Display Name");
+        ImGui.Spacing();
+        ImGuiEx.TextV("Format:");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(400f);
+        ImGui.InputText("###DisplayNameFormat", ref _tweak.Config.DisplayNameFormat, 256);
+        ImGuiComponents.HelpMarker("Available tokens: {Level}, {Name}, {Id}, {Progress}, {TimeRemaining}, {Distance}, {State}");
+        ImGui.Spacing();
+
+        var sortOrder = _tweak.Config.SortOrder.ToList();
+        for (var i = 0; i < sortOrder.Count; i++) {
+            using var id = ImRaii.PushId($"sort_{i}");
+            var item = sortOrder[i];
+            var criteria = item.Criteria;
+
+            var handleSize = new Vector2(ImGui.GetFrameHeight());
+            ImGui.Button($"##Drag{i}", handleSize);
+
+            ImGui.DragDropSource(i, "FATE_SORT_ITEM"u8, criteria.ToString().Replace("_", " "));
+            ImGui.DragDropTarget(i, "FATE_SORT_ITEM"u8, sortOrder.Count, (sourceIndex, insertIndex) => {
+                var dragged = sortOrder[sourceIndex];
+                sortOrder.RemoveAt(sourceIndex);
+                if (sourceIndex < insertIndex)
+                    insertIndex--;
+                sortOrder.Insert(insertIndex, dragged);
+                _tweak.Config.SortOrder = sortOrder;
+            });
+
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Drag to change priority order");
+
+            ImGui.SameLine();
+
+            ImGui.SetNextItemWidth(200);
+            using (var critCombo = ImRaii.Combo($"###Criteria{i}", criteria.ToString().Replace("_", " "))) {
+                if (critCombo) {
+                    foreach (var crit in Enum.GetValues<FateSortCriteria>()) {
+                        if (ImGui.Selectable(crit.ToString().Replace("_", " "), crit == criteria)) {
+                            item.Criteria = crit;
+                            _tweak.Config.SortOrder[i] = item;
+                        }
+                    }
+                }
+            }
+
+            ImGui.SameLine();
+            var arrowIcon = item.Descending ? FontAwesomeIcon.ArrowDown : FontAwesomeIcon.ArrowUp;
+            if (ImGuiComponents.IconButton($"###Dir{i}", arrowIcon)) {
+                item.Descending = !item.Descending;
+                _tweak.Config.SortOrder[i] = item;
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip(item.Descending ? "Descending (highest first)" : "Ascending (lowest first)");
+
+            ImGui.SameLine();
+            if (ImGuiComponents.IconButton($"###Remove{i}", FontAwesomeIcon.Trash)) {
+                sortOrder.RemoveAt(i);
+                _tweak.Config.SortOrder = sortOrder;
+                i--;
+                continue;
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Remove this sort criteria");
+        }
+
+        ImGui.Spacing();
+        if (ImGui.Button("Add Sort Criteria"))
+            ImGui.OpenPopup("###AddSortCriteria");
+
+        using (var popup = ImRaii.Popup("###AddSortCriteria")) {
+            if (popup) {
+                foreach (var crit in Enum.GetValues<FateSortCriteria>()) {
+                    if (ImGui.Selectable(crit.ToString().Replace("_", " "))) {
+                        sortOrder.Add(new FateSortOrder { Criteria = crit, Descending = true });
+                        _tweak.Config.SortOrder = sortOrder;
+                    }
+                }
+            }
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Reset to Default")) {
+            _tweak.Config.SortOrder =
+            [
+                new() { Criteria = FateSortCriteria.HasBonusWithTwist, Descending = true },
+                    new() { Criteria = FateSortCriteria.Progress, Descending = true },
+                    new() { Criteria = FateSortCriteria.HasBonus, Descending = true },
+                    new() { Criteria = FateSortCriteria.TimeRemainingUrgent, Descending = false },
+                    new() { Criteria = FateSortCriteria.Distance, Descending = false },
+            ];
+        }
+
+        ImGui.SpacedSeparator();
+    }
+
+    public string FormatDisplayName(PublicEvent fate) => _tweak.Config.DisplayNameFormat
+        .Replace("{Level}", fate.Level.ToString())
+        .Replace("{Name}", fate.Name)
+        .Replace("{Id}", fate.Id.ToString())
+        .Replace("{Progress}", fate.Progress.ToString())
+        .Replace("{TimeRemaining}", fate.TimeRemaining >= 0 ? TimeSpan.FromSeconds(fate.TimeRemaining).ToString(@"mm\:ss") : "∞")
+        .Replace("{Distance}", Player.Available ? Player.DistanceTo(fate.Position).ToString("F1") : "?")
+        .Replace("{State}", fate.State.ToString());
+}

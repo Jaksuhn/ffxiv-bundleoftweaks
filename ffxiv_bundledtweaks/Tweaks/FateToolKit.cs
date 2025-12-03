@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System.Threading.Tasks;
+using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -292,7 +293,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
         }
 
         private uint GetRandomSameExpacZone() {
-            var rows = FindRows<TerritoryType>(x => x.Unknown10 && x.ExVersion.RowId == GetRow<TerritoryType>(Player.Territory)!.Value.ExVersion.RowId); // Unknown10 is probably InUse
+            var rows = FindRows<TerritoryType>(x => x.Unknown10 && (TerritoryIntendedUse)x.TerritoryIntendedUse.RowId is TerritoryIntendedUse.Overworld && x.ExVersion.RowId == GetRow<TerritoryType>(Player.Territory)!.Value.ExVersion.RowId); // Unknown10 is probably InUse
             return rows[new Random().Next(rows.Length)].RowId;
         }
     }

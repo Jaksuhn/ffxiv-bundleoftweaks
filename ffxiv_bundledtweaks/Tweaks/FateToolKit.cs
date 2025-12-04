@@ -271,6 +271,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             if (tweak.Config.SwapZones) {
                 using var scope = BeginScope("SwapZones");
                 await TeleportTo(GetNextAchievementZone() ?? GetRandomSameExpacZone(), default);
+                Svc.Automation.Start(new FateGrind(tweak)); // TODO: hacky
             }
             else {
                 using var scope = BeginScope("WaitForFates");

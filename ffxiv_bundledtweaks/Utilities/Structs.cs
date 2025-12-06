@@ -1,4 +1,3 @@
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Utilities;
@@ -43,16 +42,5 @@ public static unsafe class Structs {
         [FieldOffset(0x94)] public float unk94; // speed?
         [FieldOffset(0x98)] public float unk98;
         [FieldOffset(0x9C)] public float AngularAscent;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct AgentWorldTravel {
-        [FieldOffset(0)]
-        public AgentInterface AgentInterface;
-
-        [FieldOffset(76)]
-        public uint WorldToTravel;
-
-        public static AgentWorldTravel* Instance() => (AgentWorldTravel*)AgentModule.Instance()->GetAgentByInternalId(AgentId.WorldTravel);
     }
 }

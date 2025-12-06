@@ -58,7 +58,7 @@
 	</Target>
 
     <ItemGroup>
-        <PackageReference Include="ECommons" Version="3.0.1.29" />
+        <PackageReference Include="ECommons" Version="3.0.1.32" />
         <PackageReference Include="NetStone" Version="1.4.1" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
         <PackageReference Include="TimeZoneNames" Version="7.0.0" />

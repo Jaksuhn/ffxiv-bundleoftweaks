@@ -8,7 +8,7 @@ namespace Automaton.Tweaks;
 [Tweak]
 public unsafe partial class AutoBusy : Tweak {
     public override string Name => "Auto Busy";
-    public override string Description => "Turn on busy when you teleport.";
+    public override string Description => "Toggles busy while you're teleporting.";
 
     [AddressHook<ActionManager>(nameof(ActionManager.MemberFunctionPointers.UseAction))]
     private bool UseAction(ActionManager* self, ActionType actionType, uint actionId, ulong targetId, uint extraParam, ActionManager.UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted) {

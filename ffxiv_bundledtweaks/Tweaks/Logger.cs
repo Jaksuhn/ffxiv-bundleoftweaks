@@ -17,4 +17,9 @@ public unsafe partial class DebugLogging : Tweak {
             MethodBase.GetCurrentMethod()?.Log([(nint)thisPtr, permissionId, excludedCondition1, excludedCondition2], ret);
         return ret;
     }
+
+    //[AddressHook<GameMain>(nameof(GameMain.MemberFunctionPointers.ExecuteCommand))]
+    //internal unsafe bool ExecuteCommand(int command, int param1 = 0, int param2 = 0, int param3 = 0, int param4 = 0) {
+    //    return ExecuteCommandHook.Original(command, param1, param2, param3, param4);
+    //}
 }

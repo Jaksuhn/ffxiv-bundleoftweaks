@@ -140,22 +140,22 @@ public partial class Commands : Tweak<CommandsConfiguration> {
     #endregion
 
     #region World Travel
-    [CommandHandler("/travel", "Invoke world travel. Still have to be in a starting city.", nameof(Config.EnableTravel))]
-    private unsafe void OnTravelCommand(string command, string arguments) {
-        if (Player.Territory is not (129 or 130 or 132)) return; // is there really no sheet column that indicates this
+    //[CommandHandler("/travel", "Invoke world travel. Still have to be in a starting city.", nameof(Config.EnableTravel))]
+    //private unsafe void OnTravelCommand(string command, string arguments) {
+    //    if (Player.Territory is not (129 or 130 or 132)) return; // is there really no sheet column that indicates this
 
-        var worldId = ushort.TryParse(arguments, out var id) ? id
-            : FindRow<World>(r => r.Name.ToString().Contains(arguments, StringComparison.OrdinalIgnoreCase)) is { RowId: var rowId } ? (ushort)rowId
-            : (ushort)0; // god just give me an integer literal for shorts
+    //    var worldId = ushort.TryParse(arguments, out var id) ? id
+    //        : FindRow<World>(r => r.Name.ToString().Contains(arguments, StringComparison.OrdinalIgnoreCase)) is { RowId: var rowId } ? (ushort)rowId
+    //        : (ushort)0; // god just give me an integer literal for shorts
 
-        if (worldId is 0 || GetRow<World>(worldId)?.DataCenter.RowId != Svc.PlayerState.CurrentWorld.Value.DataCenter.RowId) return;
+    //    if (worldId is 0 || GetRow<World>(worldId)?.DataCenter.RowId != Svc.PlayerState.CurrentWorld.Value.DataCenter.RowId) return;
 
-        var agent = AgentWorldTravel.Instance();
-        agent->DestinationWorldId = worldId;
-        agent->SetupWorldTravelInfo((ushort)Svc.PlayerState.CurrentWorld.RowId, worldId);
-        var retval = new AtkValue();
-        Span<AtkValue> values = [new AtkValue { Type = ValueType.Int, Int = 0 }];
-        agent->ReceiveEvent(&retval, values.GetPointer(0), (uint)values.Length, 1);
-    }
+    //    var agent = AgentWorldTravel.Instance();
+    //    agent->DestinationWorldId = worldId;
+    //    agent->SetupWorldTravelInfo((ushort)Svc.PlayerState.CurrentWorld.RowId, worldId);
+    //    var retval = new AtkValue();
+    //    Span<AtkValue> values = [new AtkValue { Type = ValueType.Int, Int = 0 }];
+    //    agent->ReceiveEvent(&retval, values.GetPointer(0), (uint)values.Length, 1);
+    //}
     #endregion
 }

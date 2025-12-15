@@ -4,7 +4,7 @@
         <Version>0.0</Version>
         <LangVersion>preview</LangVersion>
 		<GenerateErrorForMissingTargetingPacks>false</GenerateErrorForMissingTargetingPacks>
-		<LocalCS>true</LocalCS>
+		<LocalCS>false</LocalCS>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">

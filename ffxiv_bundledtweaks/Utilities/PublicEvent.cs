@@ -40,7 +40,7 @@ public unsafe class PublicEvent {
 
     public static bool IsValid(PublicEvent publicEvent) {
         if (publicEvent is null) return false;
-        if (Svc.ClientState is null || Svc.ClientState.LocalContentId is 0) return false;
+        if (Svc.PlayerState.ContentId is 0) return false;
         return true;
     }
 

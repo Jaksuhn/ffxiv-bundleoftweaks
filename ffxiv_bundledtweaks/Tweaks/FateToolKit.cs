@@ -49,7 +49,7 @@ public class FateToolKitConfig {
 [Requires(Ipc.Navmesh | Ipc.BossMod)]
 public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
     public override string Name => "Fate Tool Kit (Date With Destiny)";
-    public override string Description => "Fate tracker with additional fate automations.";
+    public override string Description => "Fate tracker with additional fate automations. This is a WIP v3 of Date With Destiny.";
 
     private const string _presetName = "CBT - DwD";
     private const string _presetCompressed = "G9ofAORUXTtl2E+eebRnK1Vgg5x8KyZxwCk+KT7o7///qSAU4hzPCw6QiMVCHe8HqLWc0tgDpFjjFrDGa+JY19yagv2CAku33ZzO9NHs9/kEgAk1aOYBC4MSniA6R2zxbgTH+thrxzwoOycAC9A5jvXSPxKOSIoM2iU3rvLz52NKNe41MQ8+K+lQW6EwvhxV1TEPWOKXMR+66exXdVOZByy2atfrmlU1/ov6p2ZKTWwZFPP4/VldXaKM9k2XAalyF2WXkQiBpBUcm8bx7pIj4aDIVBebYGKke3VltoJwrJkHrDiYhhYQ0tingPyN8kPib2KBqaXdGrvXgAd4Kiaod7DwMAvSxMqtxISvg+dZZNQ+ROLrwcK4Np2PB39tejhTM2vDaVvZNAa2YTmOCNALkyMZ9PnwbMkMWjjKiDbiY2UdOQKwFD7Xu7Q03lZzB6y8bKXZYEXkoquCJRWBS7qzcFvHSiRX4d4i/eiD5TWb7mLFL8r4aAnkp/S+ZQ07yGC9fLGNIMjtRV/tqy+X95EwMda4Q4jDbqR4sMjII+IkkmlQN6g7lyjSz2R6Z/ThFFdbgaH9aedlWEyB46B6jic9aLtJbom0I2P9C0exTW8VHRpja4ls8wnA/3zyDw==";

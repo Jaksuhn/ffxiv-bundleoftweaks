@@ -6,8 +6,7 @@ using YamlDotNet.Serialization;
 
 namespace ComplexTweaks.Configuration;
 
-public class Config
-{
+public class Config {
     [JsonIgnore]
     public const int CURRENT_CONFIG_VERSION = 4;
 
@@ -17,8 +16,7 @@ public class Config
     public bool ShowDebug;
 }
 
-public class TweakConfigs
-{
+public class TweakConfigs {
     public AchievementTrackerConfiguration AchievementTrackerConfiguration { get; init; } = new();
     public AddresBookDebugConfiguration AddresBookDebug { get; init; } = new();
     public AutoFollowConfiguration AutoFollow { get; init; } = new();
@@ -29,6 +27,7 @@ public class TweakConfigs
     public DebugToolsConfiguration DebugTools { get; init; } = new();
     public EnhancedDutyStartEndConfiguration EnhancedDutyStartEnd { get; init; } = new();
     public EnhancedLoginLogoutConfig EnhancedLoginLogout { get; init; } = new();
+    public FateToolKitConfig FateToolKit { get; init; } = new();
     public GlamourSetsTrackerConfiguration GlamourSets { get; init; } = new();
     public GMAlertConfiguration GMAlert { get; init; } = new();
     public HuntRelayHelperConfiguration HuntRelayHelper { get; init; } = new();
@@ -36,24 +35,20 @@ public class TweakConfigs
     public ARQuestingConfiguration ARQuestingConfiguration { get; init; } = new();
 }
 
-public class YamlFactory : DefaultSerializationFactory, ISerializationFactory
-{
+public class YamlFactory : DefaultSerializationFactory, ISerializationFactory {
     public new string DefaultConfigFileName => $"ezAutomaton.yaml";
     public new T Deserialize<T>(string inputData) => new DeserializerBuilder().IgnoreUnmatchedProperties().Build().Deserialize<T>(inputData);
     public new string Serialize(object s, bool prettyPrint) => new SerializerBuilder().Build().Serialize(s);
 }
 
-public interface IMigration
-{
+public interface IMigration {
     int Version { get; }
     void Migrate(ref Config config);
 }
 
-public class V3 : IMigration
-{
+public class V3 : IMigration {
     public int Version => 3;
-    public void Migrate(ref Config config)
-    {
+    public void Migrate(ref Config config) {
         var oldType = config.Tweaks.HuntRelayHelper.Types[0];
         if (oldType.TypeHeuristics == @"s rank, (?:^|\W)[sS](?:$|\W)")
             config.Tweaks.HuntRelayHelper.Types[0] = (oldType.RelayType, oldType.TypeFormat, @"s rank, rank s, /(?:^|\W)[sS](?:$|\W)/");
@@ -61,11 +56,9 @@ public class V3 : IMigration
     }
 }
 
-public class V4 : IMigration
-{
+public class V4 : IMigration {
     public int Version => 4;
-    public void Migrate(ref Config config)
-    {
+    public void Migrate(ref Config config) {
         var oldType = config.Tweaks.HuntRelayHelper.Types[0];
         if (oldType.TypeHeuristics == @"s rank, rank s, /(?:^|\W)[sS](?:$|\W)/")
             config.Tweaks.HuntRelayHelper.Types[0] = (oldType.RelayType, oldType.TypeFormat, @"s rank, rank s, /(?:^|\W)(?<!')[sS](?:$|\W)/");

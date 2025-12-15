@@ -168,7 +168,7 @@ public abstract class AutoTask {
 
     // abort a task unconditionally
     protected void Error(string message) {
-        Log($"Error: {message}");
+        PluginLog.Error($"Error: {message}");
         throw new Exception($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     }
 
@@ -199,6 +199,8 @@ public sealed class Automation : IDisposable {
     public bool Running => CurrentTask != null;
     public string Name => CurrentTask?.GetType().Name ?? "None";
     public string Status => CurrentTask?.Status ?? "Idle";
+    private AutoTask? _queuedTask;
+    private Action? _queuedOnCompleted;
     public void Dispose() => Stop();
 
     // stop executing any running task
@@ -206,15 +208,34 @@ public sealed class Automation : IDisposable {
     public void Stop() {
         CurrentTask?.Cancel();
         CurrentTask = null;
+        _queuedTask = null;
+        _queuedOnCompleted = null;
     }
 
-    // if any other task is running, it's cancelled
-    public void Start(AutoTask task, Action? OnCompleted = null) {
+    // if any other task is running, it's cancelled (unless queue is true, in which case it's queued)
+    public void Start(AutoTask task, Action? OnCompleted = null, bool queue = false) {
+        if (queue && CurrentTask != null) {
+            _queuedTask = task;
+            _queuedOnCompleted = OnCompleted;
+            return;
+        }
+
+        if (CurrentTask != null) {
+            PluginLog.Debug($"[Automation] Canceling current task: {CurrentTask.GetType().Name}");
+        }
         Stop();
         CurrentTask = task;
         task.Run(() => {
-            if (CurrentTask == task)
+            if (CurrentTask == task) {
                 CurrentTask = null;
+                if (_queuedTask != null) {
+                    var queuedTask = _queuedTask;
+                    var queuedOnCompleted = _queuedOnCompleted;
+                    _queuedTask = null;
+                    _queuedOnCompleted = null;
+                    Start(queuedTask, queuedOnCompleted, queue: false);
+                }
+            }
             // else: some other task is now executing
         }, OnCompleted);
     }

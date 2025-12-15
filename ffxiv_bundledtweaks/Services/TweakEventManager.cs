@@ -11,6 +11,7 @@ public enum TweakEvent {
     FateJoined,
     FateLeft,
     Died,
+    Revived,
 }
 
 public class TweakEventManager {

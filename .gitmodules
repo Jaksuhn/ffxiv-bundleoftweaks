@@ -1,3 +1,6 @@
 [submodule "AutoRetainerAPI"]
 	path = AutoRetainerAPI
 	url = https://github.com/PunishXIV/AutoRetainerAPI
+[submodule "clib"]
+	path = clib
+	url = https://github.com/Jaksuhn/clib.git

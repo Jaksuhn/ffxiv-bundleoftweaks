@@ -9,7 +9,7 @@ using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks {
+public sealed partial class LoopMelding(GameInventoryItem item) : TaskBase {
     private static readonly uint GettingTooAttachedVII = 1905;
     private static unsafe bool AgentActive => AgentMateriaAttach.Instance()->IsAgentActive();
     private static unsafe bool AgentLoading => AgentMateriaAttach.Instance()->UpdateState != 0;
@@ -119,7 +119,7 @@ public sealed partial class LoopMelding(GameInventoryItem item) : CommonTasks {
     private async Task HandleMateriaAttachDialog() {
         using var scope = BeginScope(nameof(HandleMateriaAttachDialog));
         await WaitUntil(() => Svc.Condition[ConditionFlag.MeldingMateria], "WaitForMeldState");
-        await WaitUntil(() => Game.AddonActive("MateriaAttachDialog"), "WaitForDialog");
+        await WaitUntil(() => AtkUnitBase.IsAddonReady("MateriaAttachDialog"), "WaitForDialog");
         Game.ProgressMateriaAttachDialog();
         await WaitWhile(() => Svc.Condition[ConditionFlag.MeldingMateria], "WaitForMeldFinish");
     }

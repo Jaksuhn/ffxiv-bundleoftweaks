@@ -94,7 +94,7 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
 
     private static uint _territoryID;
     private void OnDutyComplete(object? sender, ushort e) {
-        _territoryID = Player.Territory;
+        _territoryID = Player.Territory.RowId;
         if (!Config.EndMsg.IsNullOrEmpty()) {
             if (Config.EndMsg.StartsWith('/'))
                 ECommons.Automation.Chat.SendMessage(Config.EndMsg);

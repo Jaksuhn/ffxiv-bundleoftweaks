@@ -15,18 +15,8 @@ internal unsafe class TasksTab : DebugTab {
         if (ImGui.Button("transmute"))
             Service.Automation.Start(new MateriaTransmutation());
 
-        if (ImGui.Button($"dwd")) {
-            Service.Automation.Start(new FateGrind(C.Tweaks.DateWithDestiny));
-        }
-
         if (ImGui.Button("void all weeaboos"))
             Service.Automation.Start(new VoidMatches("weeaboo"));
-
-        if (Service.Automation.CurrentTask is FateGrind fg) {
-            foreach (var fate in fg.AvailableFates) {
-                fate.Print();
-            }
-        }
 
         var mt = UIState.Instance()->MateriaTrade;
         ImGui.TextUnformatted($"Materia 1: {mt.MateriaId1}-{mt.Quantity1}");

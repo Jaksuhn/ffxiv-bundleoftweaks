@@ -247,7 +247,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
                     if (Config.SwapZones && !zones.Contains((Z)Svc.ClientState.TerritoryType)) {
                         Debug("Have Yokai minion equipped but not in appropiate zone. Teleporting");
                         if (!Svc.Condition[ConditionFlag.Casting])
-                            Telepo.Instance()->Teleport((uint)Coords.GetPrimaryAetheryte((uint)zones.First())!, 0);
+                            Telepo.Instance()->Teleport((uint)GetPrimaryAetheryte((uint)zones.First())!, 0);
                         return;
                     }
                 }
@@ -258,7 +258,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
                 return;
             }
 
-            if ((Config.FullAuto || Config.AutoFly) && Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.InFlight] && Player.InFlightAllowedTerritory) {
+            if ((Config.FullAuto || Config.AutoFly) && Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.InFlight] && Player.Territory.Value.AllowsFlight) {
                 ExecuteJump();
                 return;
             }
@@ -273,6 +273,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
         }
     }
 
+    private uint? GetPrimaryAetheryte(uint zoneID) => FindRow<Aetheryte>(a => a.Territory.IsValid && a.Territory.Value.RowId == zoneID)?.RowId ?? null;
     private void TargetAndMoveToEnemy(IGameObject target) {
         if (Svc.Condition[ConditionFlag.Mounted]) ExecuteDismount();
         TargetPos = target.Position;

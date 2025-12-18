@@ -212,7 +212,7 @@ internal sealed class HookGenerator : IIncrementalGenerator {
             return false;
 
         const string AutoTaskBaseType = "ComplexTweaks.Services.AutoTask";
-        const string CommonTasksBaseType = "ComplexTweaks.Tasks.CommonTasks";
+        const string CommonTasksBaseType = "clib.TaskSystem.TaskBase";
 
         var current = typeSymbol;
         while (current != null) {

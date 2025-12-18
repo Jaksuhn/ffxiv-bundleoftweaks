@@ -1,9 +1,10 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.UI;
+﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class RunQuestionable(List<string> questIds, bool returnHome) : CommonTasks {
+public sealed class RunQuestionable(List<string> questIds, bool returnHome) : TaskBase {
     protected override async Task Execute() {
         foreach (var quest in questIds) {
             Status = $"Doing quest #{quest}";
@@ -20,7 +21,7 @@ public sealed class RunQuestionable(List<string> questIds, bool returnHome) : Co
     }
 
     private unsafe bool IsQuestComplete(string questId) {
-        if (uint.TryParse(questId, out var id) && Game.IsQuestComplete(id))
+        if (uint.TryParse(questId, out var id) && QuestManager.IsQuestComplete(id))
             return true;
         if (questId.StartsWith('U') && ushort.TryParse(questId.AsSpan(1), out var unlockLinkId) && UIState.Instance()->IsUnlockLinkUnlocked(unlockLinkId))
             return true;

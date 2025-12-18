@@ -1,8 +1,8 @@
 ﻿using Automaton.Events;
-using ComplexTweaks.Tasks;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.Exd;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System.Threading.Tasks;
@@ -86,11 +86,11 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
 
         return ordered ?? source.OrderBy(_ => 0);
     }
-    private int PullSize => Player.Role switch {
-        PlayerEx.Role.Tank => 0, // unlimited
-        PlayerEx.Role.Dps => 3,
-        PlayerEx.Role.Healer => 5,
-        _ => 1,
+    private int PullSize => ExdModule.GetRoleForClassJobId(Player.ClassJob.RowId) switch {
+        1 => 0, // tank - unlimited
+        2 => 3, // dps
+        3 => 5, // healer
+        _ => 1, // non-combat
     };
 
     public bool Running {
@@ -176,7 +176,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             yield return (f, false);
     }
 
-    private sealed class FateGrind(FateToolKit tweak) : CommonTasks {
+    private sealed class FateGrind(FateToolKit tweak) : TaskBase {
         protected override async Task Execute() {
             try {
                 await (State switch {
@@ -234,16 +234,16 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             await WaitUntil(() => Player.Revivable, "WaitForRevivable");
             (var lastZone, var lastPos) = (Player.Territory, Player.Position);
             if (Svc.Party.Length is 0) {
-                GameMain.ExecuteCommand((int)ExecuteCommandFlag.Revive, 8); // a1=8 for returns
+                GameMain.ExecuteCommand(CommandFlag.Revive.Value, AgentReviveOp.Return.Value);
             }
             else {
                 await WaitUntil(() => Player.ReviveState is 2, "WaitingForRaise"); // 1 = return, 2 = raise
-                GameMain.ExecuteCommand((int)ExecuteCommandFlag.Revive, 5); // a1=5 for raises
+                GameMain.ExecuteCommand(CommandFlag.Revive.Value, AgentReviveOp.AcceptRevive.Value); // a1=5 for raises
             }
             await WaitWhile(() => Svc.Condition[ConditionFlag.Unconscious], "WaitForAlive");
 
-            if (Player.Territory != lastZone) {
-                await TeleportTo(lastZone, lastPos);
+            if (Player.Territory.RowId != lastZone.RowId) {
+                await TeleportTo(lastZone.RowId, lastPos);
             }
         }
 
@@ -285,7 +285,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             if (agent == null) return null;
 
             // prioritise zones in the same expac as current area
-            var currentTabIndex = Array.FindIndex(agent->Tabs.ToArray(), tab => tab.Zones.ToArray().Any(zone => Player.Territory == zone.TerritoryTypeId));
+            var currentTabIndex = Array.FindIndex(agent->Tabs.ToArray(), tab => tab.Zones.ToArray().Any(zone => Player.Territory.RowId == zone.TerritoryTypeId));
             var zones = (currentTabIndex != -1 && currentTabIndex < agent->Tabs.Length - 1)
                 ? agent->Tabs[currentTabIndex].Zones.ToArray()
                 : agent->Tabs.ToArray().SelectMany(tab => tab.Zones.ToArray());
@@ -294,7 +294,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
         }
 
         private uint GetRandomSameExpacZone() {
-            var rows = FindRows<TerritoryType>(x => x.Unknown10 && (TerritoryIntendedUse)x.TerritoryIntendedUse.RowId is TerritoryIntendedUse.Overworld && x.ExVersion.RowId == GetRow<TerritoryType>(Player.Territory)!.Value.ExVersion.RowId); // Unknown10 is probably InUse
+            var rows = FindRows<TerritoryType>(x => x.IsInUse && (TerritoryIntendedUse)x.TerritoryIntendedUse.RowId is TerritoryIntendedUse.Overworld && x.ExVersion.RowId == Player.Territory.Value.ExVersion.RowId);
             return rows[new Random().Next(rows.Length)].RowId;
         }
     }
@@ -308,10 +308,10 @@ public partial class FateToolKit {
         public List<RowRef<TerritoryType>> Zones { get; init; }
 
         public YokaiEntry(uint minion, uint medal, uint weapon, uint[] zones) {
-            Minion = GenericHelpers.CreateRowRef<Companion>(minion);
-            Medal = GenericHelpers.CreateRowRef<Item>(medal);
-            Weapon = GenericHelpers.CreateRowRef<Item>(weapon);
-            Zones = [.. zones.Select(z => GenericHelpers.CreateRowRef<TerritoryType>(z))];
+            Minion = Companion.GetRef(minion);
+            Medal = Item.GetRef(medal);
+            Weapon = Item.GetRef(weapon);
+            Zones = [.. zones.Select(z => TerritoryType.GetRef(z))];
         }
     }
 

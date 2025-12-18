@@ -131,17 +131,17 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
             var cy = PlayerEx.Position.Z;
             var angle = MathF.PI - Player.Camera->DirH;
             if (_keys["JUMP"].IsHeldRaw())
-                PlayerEx.Position = (Player.Object.Position.X, Player.Object.Position.Y + Config.NoClipSpeed, Player.Object.Position.Z).ToVector3();
+                PlayerEx.Position = (Player.Position.X, Player.Position.Y + Config.NoClipSpeed, Player.Position.Z).ToVector3();
             if (Svc.KeyState.GetRawValue(VirtualKey.LSHIFT) != 0 || IsKeyPressed(LimitedKeys.LeftShiftKey))
-                PlayerEx.Position = (Player.Object.Position.X, Player.Object.Position.Y - Config.NoClipSpeed, Player.Object.Position.Z).ToVector3();
+                PlayerEx.Position = (Player.Position.X, Player.Position.Y - Config.NoClipSpeed, Player.Position.Z).ToVector3();
             if (_keys["MOVE_FORE"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.Add(new(0, 0, Config.NoClipSpeed)).RotatePoint(cx, cy, angle);
+                PlayerEx.Position = PlayerEx.Position.AddZ(Config.NoClipSpeed).RotatePoint(cx, cy, angle);
             if (_keys["MOVE_BACK"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.Add(new(0, 0, -Config.NoClipSpeed)).RotatePoint(cx, cy, angle);
+                PlayerEx.Position = PlayerEx.Position.AddZ(-Config.NoClipSpeed).RotatePoint(cx, cy, angle);
             if (_keys["MOVE_LEFT"].IsHeldRaw() || _keys["MOVE_STRIFE_L"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.Add(new(Config.NoClipSpeed, 0, 0)).RotatePoint(cx, cy, angle);
+                PlayerEx.Position = PlayerEx.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle);
             if (_keys["MOVE_RIGHT"].IsHeldRaw() || _keys["MOVE_STRIFE_R"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.Add(new(-Config.NoClipSpeed, 0, 0)).RotatePoint(cx, cy, angle);
+                PlayerEx.Position = PlayerEx.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle);
         }
     }
 

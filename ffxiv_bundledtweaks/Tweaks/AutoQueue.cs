@@ -14,10 +14,10 @@ internal class AutoQueue : Tweak {
     public override void Disable() => Svc.ClientState.TerritoryChanged -= OnTerritoryChanged;
 
     private unsafe void OnTerritoryChanged(ushort obj) {
-        if (Player.IsInDuty || Player.HasPenalty) return;
-        TaskManager.Enqueue(() => Player.ReadyAndLoaded);
+        if (Player.IsInDuty || Player.IsPenalised) return;
+        TaskManager.Enqueue(() => !Player.IsBusy);
         TaskManager.Enqueue(() => Svc.Party.All(p => p.Territory.Value.TerritoryIntendedUse.NotDuty()), "WaitAllPartyInOverworld");
-        TaskManager.Enqueue(() => Svc.Party.Any(p => p.Territory.Value.RowId != Player.Territory) || Svc.Party.AllTargetable(), "WaitAllPartyNotWithPlayerOrTargetable");
+        TaskManager.Enqueue(() => Svc.Party.Any(p => p.Territory.RowId != Player.Territory.RowId) || Svc.Party.AllTargetable(), "WaitAllPartyNotWithPlayerOrTargetable");
         TaskManager.Enqueue(QueueSelectedDuty);
     }
 

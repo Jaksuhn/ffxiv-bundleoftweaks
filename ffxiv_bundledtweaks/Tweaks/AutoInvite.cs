@@ -4,7 +4,6 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Game.Group;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel.Sheets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -57,7 +56,7 @@ public partial class AutoInvite : Tweak<AutoInviteConfiguration> {
             return;
         }
 
-        if (GroupManager.Instance()->GetGroup()->MemberCount > 0 && !GroupManager.Instance()->MainGroup.IsEntityIdPartyLeader(Player.Object.EntityId)) {
+        if (GroupManager.Instance()->GetGroup()->MemberCount > 0 && !GroupManager.Instance()->MainGroup.IsEntityIdPartyLeader(Player.Object!.EntityId)) {
             Log("Skipping invite: not party leader.");
             return;
         }
@@ -140,7 +139,7 @@ public partial class AutoInvite : Tweak<AutoInviteConfiguration> {
     }
 
     private bool InInvitableInstance()
-        => Svc.Condition[ConditionFlag.BoundByDuty56] && GetRow<TerritoryType>(Player.Territory)?.TerritoryIntendedUse.RowId is 41 or 47 or 48 or 52 or 53 or 61;
+        => Svc.Condition[ConditionFlag.BoundByDuty56] && Player.Territory.Value.TerritoryIntendedUse.RowId is 41 or 47 or 48 or 52 or 53 or 61;
 
     private byte[] ToTerminatedBytes(string s) {
         var utf8 = Encoding.UTF8;

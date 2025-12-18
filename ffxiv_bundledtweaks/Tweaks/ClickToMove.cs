@@ -1,4 +1,3 @@
-using ComplexTweaks.Utilities.Movement;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Dalamud.Bindings.ImGui;
 
@@ -13,10 +12,17 @@ public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration> {
     public override string Name => "Click to Move";
     public override string Description => "Like those other games.";
 
-    private readonly OverrideMovement movement = new();
+    private OverrideMovement movement = null!;
 
-    public override void Enable() => Svc.Framework.Update += MoveTo;
-    public override void Disable() => Svc.Framework.Update -= MoveTo;
+    public override void Enable() {
+        Svc.Framework.Update += MoveTo;
+        movement = new();
+    }
+
+    public override void Disable() {
+        Svc.Framework.Update -= MoveTo;
+        movement.Dispose();
+    }
 
     private bool isPressed = false;
     private Vector3 destination = Vector3.Zero;

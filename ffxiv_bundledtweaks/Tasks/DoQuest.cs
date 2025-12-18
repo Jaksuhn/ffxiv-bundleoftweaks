@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class DoQuest(Quest row) : CommonTasks {
+public sealed class DoQuest(Quest row) : TaskBase {
     protected override async Task Execute() {
         await MoveToLevelRow(row.IssuerLocation);
         //foreach (var objective in row.QuestParams.Where(p => !p.ScriptInstruction.IsEmpty))
@@ -14,7 +14,7 @@ public sealed class DoQuest(Quest row) : CommonTasks {
     private async Task MoveToLevelRow(RowRef<Level> row) {
         using var scope = BeginScope("MoveToLevelLocation");
         var destination = row.Value.ToVector3();
-        if (Player.Territory != row.Value.Territory.RowId)
+        if (Player.Territory.RowId != row.Value.Territory.RowId)
             await TeleportTo(row.Value.Territory.RowId, destination);
 
         await MoveTo(destination, MovementConfig.InteractRange);

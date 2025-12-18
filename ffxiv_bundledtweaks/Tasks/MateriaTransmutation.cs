@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class MateriaTransmutation : CommonTasks {
+public sealed class MateriaTransmutation : TaskBase {
     protected override Task Execute() {
         if (GetMateria() is { Count: > 0 } materia)
             SetMateria([.. materia.Where(m => m.Type == MateriaWrapper.MateriaType.Combat)]);

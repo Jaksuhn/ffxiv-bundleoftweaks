@@ -1,20 +1,21 @@
 ﻿using ECommons.ExcelServices;
 using ECommons.UIHelpers.AddonMasterImplementations;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
-using Lumina.Excel.Sheets;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class BuyCeruleumTanks : CommonTasks {
+public sealed class BuyCeruleumTanks : TaskBase {
     private const uint CeruleumTankId = 10155;
     private const uint MammetVoyagerENpcId = 1011274;
     private readonly Memory.FreeCompanyDialogIPCReceive ipc = new();
 
     protected override async Task Execute() {
         await GoToWorkshop();
-        await WaitUntil(Game.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
-        var npc = Game.GetNPCInfo(MammetVoyagerENpcId, Player.Territory, CeruleumTankId);
+        await WaitUntil(() => GameMain.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
+        var npc = Game.GetNPCInfo(MammetVoyagerENpcId, Player.Territory.RowId, CeruleumTankId);
         ErrorIf(npc == null, $"Failed to find NPC {MammetVoyagerENpcId} in {Player.Territory}");
         ErrorIf(npc!.ShopId == 0, $"Failed to find shop for NPC {MammetVoyagerENpcId} in {Player.Territory}");
 
@@ -25,10 +26,10 @@ public sealed class BuyCeruleumTanks : CommonTasks {
 
     private async Task GoToWorkshop() {
         using var scope = BeginScope("GoToWorkshop");
-        static bool PlayerInWorkshop() => GetRow<TerritoryType>(Player.Territory) is { } t && t.BGM.RowId == 328;
+        static bool PlayerInWorkshop() => Player.Territory is { Value.BGM.RowId: 328 };
         if (PlayerInWorkshop()) return; // already there
 
-        if (Player.TerritoryIntendedUse == TerritoryIntendedUseEnum.Housing_Instances) {
+        if (Player.TerritoryIntendedUseEnum == TerritoryIntendedUseEnum.Housing_Instances) {
             await EnterWorkshop();
             return;
         }
@@ -38,8 +39,8 @@ public sealed class BuyCeruleumTanks : CommonTasks {
         await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), $"LifestreamWaitForFinish");
         if (EstateHallDoor is { } door) {
             await MoveTo(door.Position, MovementConfig.InteractRange);
-            await InteractWith(door, () => Player.TerritoryIntendedUse == TerritoryIntendedUseEnum.Housing_Instances, null, UiSkipOptions.YesNo);
-            await WaitWhile(() => !Game.IsTerritoryLoaded(), "WaitingForTerritoryToLoad");
+            await InteractWith(door, () => Player.TerritoryIntendedUseEnum == TerritoryIntendedUseEnum.Housing_Instances, null, UiSkipOptions.YesNo);
+            await WaitWhile(() => !GameMain.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
             await EnterWorkshop();
         }
         else
@@ -48,11 +49,11 @@ public sealed class BuyCeruleumTanks : CommonTasks {
 
     private async Task EnterWorkshop() {
         using var scope = BeginScope("EnterWorkshop");
-        ErrorIf(Player.TerritoryIntendedUse != TerritoryIntendedUseEnum.Housing_Instances, "Not in a house");
+        ErrorIf(Player.TerritoryIntendedUseEnum != TerritoryIntendedUseEnum.Housing_Instances, "Not in a house");
         if (WorkshopDoor is { } door) {
             await MoveTo(door.Position, MovementConfig.InteractRange);
-            await InteractWith(door, () => GetRow<TerritoryType>(Player.Territory) is { BGM.RowId: 328 }, 0);
-            await WaitUntil(Game.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
+            await InteractWith(door, () => Player.Territory is { Value.BGM.RowId: 328 }, 0);
+            await WaitUntil(() => GameMain.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
         }
         else
             Error("Failed to find workshop door");
@@ -61,10 +62,10 @@ public sealed class BuyCeruleumTanks : CommonTasks {
     private async Task BuyFromFccShop(ulong vendorInstanceId, uint shopId, uint itemId, int count) {
         using var scope = BeginScope("Buy");
         Status = "Opening shop";
-        if (!Game.AddonActive("FreeCompanyCreditShop")) {
+        if (!AtkUnitBase.IsAddonReady("FreeCompanyCreditShop")) {
             Log("Opening shop...");
             ErrorIf(!Game.OpenShop(vendorInstanceId, shopId), $"Failed to open shop {vendorInstanceId:X}.{shopId:X}");
-            await WaitWhile(() => !Game.AddonActive("FreeCompanyCreditShop"), "WaitForFCCShop");
+            await WaitWhile(() => !AtkUnitBase.IsAddonReady("FreeCompanyCreditShop"), "WaitForFCCShop");
             await WaitWhile(() => !Svc.Condition[ConditionFlag.OccupiedInEvent], "WaitForCondition");
         }
 
@@ -87,7 +88,7 @@ public sealed class BuyCeruleumTanks : CommonTasks {
         Log("Closing shop...");
         unsafe bool Close() => am.Base->Close(true);
         ErrorIf(!Close(), $"Failed to close shop {vendorInstanceId:X}.{shopId:X}");
-        await WaitWhile(() => Game.AddonActive("FreeCompanyCreditShop"), "WaitForClose");
+        await WaitWhile(() => AtkUnitBase.IsAddonReady("FreeCompanyCreditShop"), "WaitForClose");
         await WaitWhile(() => Svc.Condition[ConditionFlag.OccupiedInEvent], "WaitForCondition");
         await NextFrame();
     }

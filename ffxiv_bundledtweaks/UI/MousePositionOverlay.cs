@@ -1,8 +1,7 @@
 ﻿using ComplexTweaks.Tweaks;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
 using ECommons.ImGuiMethods;
-using ECommons.SimpleGui;
-using Dalamud.Bindings.ImGui;
 
 namespace ComplexTweaks.UI;
 
@@ -12,7 +11,6 @@ public class MousePositionOverlay : Window {
         PositionCondition = ImGuiCond.Always;
         Size = ImGuiHelpers.MainViewport.Size;
         SizeCondition = ImGuiCond.Always;
-        EzConfigGui.WindowSystem.AddWindow(this);
         IsOpen = true;
         RespectCloseHotkey = false;
     }

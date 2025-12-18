@@ -1,4 +1,5 @@
 global using AutoRetainerAPI;
+global using clib.Extensions;
 global using ComplexTweaks.Attributes;
 global using ComplexTweaks.Attributes.Config;
 global using ComplexTweaks.IPC;
@@ -26,3 +27,7 @@ global using Callback = ECommons.Automation.Callback;
 global using CSGameObject = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 global using DGameObject = Dalamud.Game.ClientState.Objects.Types.IGameObject;
 global using Sheets = Lumina.Excel.Sheets;
+global using clib.TaskSystem;
+global using clib.Services;
+global using clib.Enums;
+global using clib.Utils;

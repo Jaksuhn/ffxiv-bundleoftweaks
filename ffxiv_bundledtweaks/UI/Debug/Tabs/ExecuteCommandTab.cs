@@ -6,8 +6,8 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 namespace ComplexTweaks.UI.Debug.Tabs;
 
 internal unsafe class ExecuteCommandTab : DebugTab {
-    private ExecuteCommandFlag _flag;
-    private ExecuteLocationCommandFlag _flag2;
+    private CommandFlag _flag;
+    private LocationCommandFlag _flag2;
 
     private int _ecId;
     private bool _useEcId;

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-public sealed class KillFlag(string world) : CommonTasks {
+public sealed class KillFlag(string world) : TaskBase {
     private const float HUNT_DETECTION_RADIUS = 15.0f;
     private const float LOS_SEARCH_RADIUS = 5.0f;
     private const int LOS_SEARCH_POSITIONS = 8;
@@ -33,9 +33,9 @@ public sealed class KillFlag(string world) : CommonTasks {
     }
 
     private async Task HandleWorldTravel() {
-        if (C.EnabledTweaks.Contains(nameof(InstantReturn)) && Player.Territory != Player.HomeAetheryteTerritory) {
+        if (C.EnabledTweaks.Contains(nameof(InstantReturn)) && Player.Territory.RowId != Player.HomeAetheryteTerritory.RowId) {
             Chat.SendMessage("/return");
-            await WaitUntilTerritory(Player.HomeAetheryteTerritory);
+            await WaitUntilTerritory(Player.HomeAetheryteTerritory.RowId);
         }
         Service.Lifestream.ExecuteCommand(world);
         await WaitUntilThenFalse(() => Service.Lifestream.IsBusy(), "LifestreamWaitForFinish");

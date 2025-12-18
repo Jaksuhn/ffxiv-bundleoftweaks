@@ -21,35 +21,5 @@ public static class NumberExtensions {
     public static Vector2 ToVec2(this Point p) => new(p.X, p.Y);
     public static Point ToPoint(this Vector2 v) => new((int)Math.Round(v.X), (int)Math.Round(v.Y));
     public static Vector3 ToVector3(this (float X, float Y, float Z) t) => new(t.X, t.Y, t.Z);
-
-    public static Vector3 RandomPoint(this Vector3 center, float radius) {
-        var random = new Random();
-        var angle = random.NextFloat(0, 1) * 2f * MathF.PI;
-        var distance = random.NextFloat(0, radius);
-        return center + new Vector3(MathF.Cos(angle), 0f, MathF.Sin(angle)) * distance;
-    }
-
-    public static Vector3 OnMesh(this Vector3 position) => Service.Navmesh.NearestPoint(position, 5, 5) ?? position;
-
-    public static Vector3 RotatePoint(this Vector3 p, float cx, float cy, float angle) {
-        if (angle == 0f) return p;
-        var s = (float)Math.Sin(angle);
-        var c = (float)Math.Cos(angle);
-
-        // translate point back to origin:
-        p.X -= cx;
-        p.Z -= cy;
-
-        // rotate point
-        var xnew = p.X * c - p.Z * s;
-        var ynew = p.X * s + p.Z * c;
-
-        // translate point back:
-        p.X = xnew + cx;
-        p.Z = ynew + cy;
-        return p;
-    }
-
-    public static Vector3 Add(this Vector3 x, Vector3 y) => x + y;
     #endregion
 }

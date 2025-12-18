@@ -30,15 +30,6 @@ public static class LuminaExtensions {
     public static string Print(this Item item) => $"[{item.RowId}] {item.Name}";
     public static string Print(this EventItem item) => $"[{item.RowId}] {item.Name}";
 
-    public static bool TryGetInputId(this ConfigKey key, out InputId inputId) {
-        inputId = Enum.GetValues<InputId>().FirstOrDefault(i => Enum.GetName(i) == key.Label.ToString(), InputId.NotFound);
-        return inputId != InputId.NotFound;
-    }
-
-    public static unsafe bool IsDown(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdDown(inputId);
-    public static unsafe bool IsHeld(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdHeld(inputId);
-    public static unsafe bool IsPressed(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdPressed(inputId);
-    public static unsafe bool IsReleased(this ConfigKey key) => key.TryGetInputId(out var inputId) && UIInputData.Instance()->IsInputIdReleased(inputId);
     public static unsafe bool IsHeldRaw(this ConfigKey key) {
         if (!key.TryGetInputId(out var inputId)) return false;
         var keybind = UIInputData.Instance()->GetKeybind(inputId);
@@ -64,9 +55,5 @@ public static class LuminaExtensions {
         }
     }
 
-    public static Vector3 ToVector3(this Level row) => new(row.X, row.Y, row.Z);
-
     public static bool NotDuty(this RowRef<TerritoryIntendedUse> row) => ((FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse)row.RowId).NotDuty();
-
-    public static bool AllowsFlight(this RowRef<TerritoryType> row) => row.Value.AetherCurrentCompFlgSet.RowId != 0;
 }

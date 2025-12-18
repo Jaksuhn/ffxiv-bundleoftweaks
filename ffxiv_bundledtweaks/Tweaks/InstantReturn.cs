@@ -25,7 +25,7 @@ public unsafe partial class InstantReturn : Tweak {
                 Chat.SendMessage("/leave");
         }
 
-        GameMain.ExecuteCommand((int)ExecuteCommandFlag.InstantReturn);
+        GameMain.ExecuteCommand(CommandFlag.InstantReturn.Value);
         return 1;
     }
 

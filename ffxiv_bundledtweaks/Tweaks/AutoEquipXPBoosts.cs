@@ -1,7 +1,5 @@
-﻿using ComplexTweaks.Tasks;
-using ECommons;
+﻿using ECommons;
 using ECommons.ExcelServices;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Component.Excel;
 using Lumina.Excel;
@@ -44,27 +42,21 @@ internal class AutoEquipXPBoosts : Tweak {
         public int MaxLevel { get; init; } = MaxLevel;
         public int Percent { get; init; } = Percent;
         public readonly ExcelRow* Row = Framework.Instance()->ExcelModuleInterface->ExdModule->GetRowBySheetIndexAndRowIndex(10, ItemId);
-
-        public bool CanEquip(out RowRef<LogMessage> errorMsg) {
-            var logMessageId = InventoryManager.CanEquip(GameData.RowId, (byte)Svc.PlayerState.Race.RowId, (byte)Svc.PlayerState.Sex, (ushort)Player.Level, (byte)Player.JobId, (byte)Player.GrandCompany, Player.PvPRank, Row);
-            errorMsg = LogMessage.GetRef((uint)logMessageId);
-            return logMessageId is 0;
-        }
     }
 
-    private sealed class EquipItems(List<ExpItem> expItems) : CommonTasks {
+    private sealed class EquipItems(List<ExpItem> expItems) : TaskBase {
         protected override async Task Execute() {
             using var scope = BeginScope("EquipItems");
-            await WaitUntil(() => Player.ReadyAndLoaded, "WaitForLoad");
-            if (Player.TerritoryIntendedUse is not (TerritoryIntendedUseEnum.Dungeon or TerritoryIntendedUseEnum.Raid or TerritoryIntendedUseEnum.Raid_2 or TerritoryIntendedUseEnum.Alliance_Raid)) return;
-            if (GetRow<ContentFinderCondition>(Player.CurrentCfc) is { ContentType.RowId: 28 }) return; // skip ults
+            await WaitWhile(() => Player.IsBusy, "WaitForLoad");
+            if (Player.TerritoryIntendedUseEnum is not (TerritoryIntendedUseEnum.Dungeon or TerritoryIntendedUseEnum.Raid or TerritoryIntendedUseEnum.Raid_2 or TerritoryIntendedUseEnum.Alliance_Raid)) return;
+            if (Player.ContentFinderCondition is { Value.ContentType.RowId: 28 }) return; // skip ults
 
             foreach (var expItem in expItems) {
-                if (!expItem.CanEquip(out var errorMsg)) {
+                if (!((ItemWrapper)expItem.GameData).CanEquip(out var errorMsg)) {
                     Log($"Can't equip [#{expItem.GameData.RowId}] {expItem.GameData.Value.Name}: {errorMsg.Value.Text}");
                     continue;
                 }
-                await WaitUntil(() => Player.ReadyAndLoaded, "WaitForNotBusy");
+                await WaitWhile(() => Player.IsBusy, "WaitForNotBusy");
                 await WaitUntil(() => Game.HasPermission([109, 134]), "WaitForPermission");
                 Log($"Equipping [#{expItem.GameData.RowId}] {expItem.GameData.Value.Name}");
                 PlayerEx.Equip(expItem.GameData.RowId);

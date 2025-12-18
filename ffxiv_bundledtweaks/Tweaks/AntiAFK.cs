@@ -1,4 +1,6 @@
-﻿namespace ComplexTweaks.Tweaks;
+﻿using FFXIVClientStructs.FFXIV.Client.UI;
+
+namespace ComplexTweaks.Tweaks;
 
 [Tweak]
 internal class AntiAFK : Tweak {
@@ -8,5 +10,5 @@ internal class AntiAFK : Tweak {
     public override void Enable() => Svc.Framework.Update += OnUpdate;
     public override void Disable() => Svc.Framework.Update -= OnUpdate;
 
-    private void OnUpdate(IFramework framework) => PlayerEx.ResetTimers();
+    private unsafe void OnUpdate(IFramework framework) => UIModule.Instance()->GetInputTimerModule()->ResetAfkTimer();
 }

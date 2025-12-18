@@ -9,7 +9,7 @@ namespace InteropSourceGenerators;
 [Generator]
 internal sealed class TaskHookGenerator : IIncrementalGenerator {
     private static readonly string AutoTaskBaseType = "ComplexTweaks.Services.AutoTask";
-    private static readonly string CommonTasksBaseType = "ComplexTweaks.Tasks.CommonTasks";
+    private static readonly string CommonTasksBaseType = "clib.TaskSystem.TaskBase";
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var addressHookInfos = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -156,7 +156,7 @@ internal sealed class TaskHookGenerator : IIncrementalGenerator {
         for (var i = classInfo.Hierarchy.Length - 1; i >= 0; i--) {
             if (i == 0) {
                 var unsafeKeyword = hasPointerTypes ? "unsafe " : "";
-                classBlocks.Add(writer.Block($"public {unsafeKeyword}partial class {classInfo.Hierarchy[i]} : ComplexTweaks.Services.IAutoTaskHooks"));
+                classBlocks.Add(writer.Block($"public {unsafeKeyword}partial class {classInfo.Hierarchy[i]} : clib.Services.IAutoTaskHooks"));
             }
             else {
                 var unsafeKeyword = hasPointerTypes ? "unsafe " : "";

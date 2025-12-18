@@ -17,6 +17,10 @@ public static unsafe class DalamudExtensions {
         public RowRef<Item> GameData => Item.GetRef(item.BaseItemId);
     }
 
+    extension(AddonArgs args) {
+        public unsafe AtkEventListener* EventListener => &((AtkUnitBase*)args.Addon.Address)->AtkEventListener;
+    }
+
     public static AtkUnitBase* ToPtr(this AddonArgs args) => (AtkUnitBase*)args.Addon.Address;
     public static AtkUnitBase* ToPtr(this AtkUnitBasePtr wrapper) => (AtkUnitBase*)wrapper.Address;
     public static InventoryItem* ToPtr(this GameInventoryItem item) => (InventoryItem*)item.Address;

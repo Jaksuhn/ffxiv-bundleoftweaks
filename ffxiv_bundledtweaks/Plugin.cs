@@ -24,6 +24,7 @@ public class Plugin : IDalamudPlugin {
         P = this;
         Version = P.GetType().Assembly.GetName().Version ?? new(0, 0);
         ECommonsMain.Init(pluginInterface, P, ECommons.Module.DalamudReflector, ECommons.Module.ObjectFunctions);
+        clib.CLibMain.Init(pluginInterface, P);
 
 #if LOCAL_CS
         FFXIVClientStructs.Interop.Generated.Addresses.Register();

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tasks;
 
-internal class VoidMatches(string name) : CommonTasks {
+internal class VoidMatches(string name) : TaskBase {
     protected override async Task Execute() {
         foreach (var obj in Svc.Objects.OfType<IBattleChara>().Where(o => o.Name.TextValue.Contains(name, StringComparison.InvariantCultureIgnoreCase))) {
             Svc.Targets.Target = obj;

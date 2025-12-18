@@ -1,15 +1,8 @@
-﻿using Dalamud.Game;
-using Dalamud.Utility;
-using ECommons;
+﻿using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Client.UI.Info;
-using FFXIVClientStructs.FFXIV.Component.Exd;
-using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using PlayerController = ComplexTweaks.Utilities.Structs.PlayerController;
 #nullable disable
@@ -21,35 +14,10 @@ public static unsafe class PlayerEx {
         public static unsafe Camera* Camera => CameraManager.Instance()->GetActiveCamera();
         public static PlayerController* Controller => (PlayerController*)Svc.SigScanner.GetStaticAddressFromSig(Memory.Signatures.PlayerController);
 
-        public static byte PvPRank => PvPProfile.Instance()->GetPvPRank();
-        public static Role Role => (Role)ExdModule.GetRoleForClassJobId(Player.JobId);
-
-        public static bool ReadyAndLoaded => !Player.IsBusy && Game.IsTerritoryLoaded();
         public static float Speed { get => Player.Controller->MoveControllerWalk.BaseMovementSpeed; set => Memory.SetSpeed(6 * value); }
-        public static bool HasPenalty => FFXIVClientStructs.FFXIV.Client.Game.UI.InstanceContent.Instance()->GetPenaltyRemainingInMinutes(0) > 0;
-        public static bool InFlightAllowedTerritory => CreateRowRef<TerritoryType>(Player.Territory).AllowsFlight();
-        public static bool AllowedToFly => PlayerState.Instance()->IsAetherCurrentZoneComplete(Svc.ClientState.TerritoryType);
-        public static ushort CurrentCfc => GameMain.Instance()->CurrentContentFinderConditionId;
-        public static FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse StructsIntendedUse => (FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse)(GetRow<TerritoryType>(Player.Territory)?.TerritoryIntendedUse.RowId);
         public static byte ReviveState => Player.IsDead ? AgentRevive.Instance()->ReviveState : (byte)0;
 
-        public static HaterInfo[] Haters => UIState.Instance()->Hater.Haters.ToArray();
-        public static int HatersWithFullAggro => Player.Haters.Count(h => h.Enmity == 100);
-
-        public static DGameObject Target { get => Svc.Targets.Target; set => Svc.Targets.Target = value; }
         public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarkers[0];
-    }
-
-    extension(GenericHelpers) {
-        public static RowRef<T> CreateRowRef<T>(uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
-            => new(Svc.Data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());
-    }
-
-    public enum Role {
-        Other = 0,
-        Tank = 1,
-        Dps = 2,
-        Healer = 3,
     }
 
     public static Vector3 Position { get => Svc.Objects.LocalPlayer.Position; set => Player.GameObject->SetPosition(value.X, value.Y, value.Z); }
@@ -58,7 +26,6 @@ public static unsafe class PlayerEx {
     private static int EquipAttemptLoops = 0;
     public static void Equip(uint itemID, InventoryType? container = null, int? slot = null) {
         if (Inventory.HasItemEquipped(itemID)) return;
-
         var pos = Inventory.GetItemLocationInInventory(itemID, Inventory.Equippable);
         if (pos == null) {
             DuoLog.Error($"Failed to find item {GetRow<Item>(itemID)?.Name} (ID: {itemID}) in inventory");
@@ -91,24 +58,4 @@ public static unsafe class PlayerEx {
             }
         }
     }
-
-    public static void ResetTimers() {
-        var module = UIModule.Instance()->GetInputTimerModule();
-        module->AfkTimer = 0;
-        module->ContentInputTimer = 0;
-        module->InputTimer = 0;
-        module->Unk1C = 0;
-        if (Player.OnlineStatus == 17) // away from keyboard
-            InfoProxyDetail.Instance()->RefreshOnlineStatus();
-    }
-
-    public static bool InteractWith(ulong instanceId) {
-        var obj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(instanceId);
-        if (obj == null)
-            return false;
-        TargetSystem.Instance()->InteractWithObject(obj, false);
-        return true;
-    }
-
-    public static bool Mount() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 24);
 }

@@ -20,14 +20,15 @@ public unsafe partial class DebugLogging : Tweak {
 
     [AddressHook<GameMain>(nameof(GameMain.MemberFunctionPointers.ExecuteCommand))]
     internal unsafe bool ExecuteCommand(int command, int param1 = 0, int param2 = 0, int param3 = 0, int param4 = 0) {
-        return ExecuteCommandHook.Original(command, param1, param2, param3, param4);
+        var ret = ExecuteCommandHook.Original(command, param1, param2, param3, param4);
+        MethodBase.GetCurrentMethod()?.Log([(CommandFlag)command, param1, param2, param3, param4], additionalValues: ret);
+        return ret;
     }
 
     [AddressHook<GameMain>(nameof(GameMain.MemberFunctionPointers.ExecuteLocationCommand))]
     internal bool ExecuteLocationCommand(int command, Vector3* location, int param1 = 0, int param2 = 0, int param3 = 0, int param4 = 0) {
         var ret = ExecuteLocationCommandHook.Original(command, location, param1, param2, param3, param4);
-        var vec = new Vector3(location->X, location->Y, location->Z);
-        MethodBase.GetCurrentMethod()?.Log([command, vec, param1, param2, param3, param4], ret);
+        MethodBase.GetCurrentMethod()?.Log([(LocationCommandFlag)command, *location, param1, param2, param3, param4], ret);
         return ret;
     }
 }

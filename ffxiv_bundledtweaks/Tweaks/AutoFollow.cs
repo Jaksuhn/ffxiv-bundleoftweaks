@@ -1,4 +1,3 @@
-using ComplexTweaks.Utilities.Movement;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -27,7 +26,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration> {
         "If multiboxing, you can send \"autofollow\" to chat and anyone in the party with this feature enabled will follow.\n" +
         "You can also add a number argument to specify the distance to keep, or add the off argument to clear the current master.";
 
-    private readonly OverrideMovement movement = new();
+    private OverrideMovement movement = null!;
     private uint? _masterId;
     private string? _masterName;
 
@@ -54,11 +53,13 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration> {
     public override void Enable() {
         Svc.Framework.Update += Follow;
         Svc.Chat.ChatMessage += OnChatMessage;
+        movement = new();
     }
 
     public override void Disable() {
         Svc.Framework.Update -= Follow;
         Svc.Chat.ChatMessage -= OnChatMessage;
+        movement.Dispose();
     }
 
     private void SetMaster() {

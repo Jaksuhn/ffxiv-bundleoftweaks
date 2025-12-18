@@ -1,5 +1,4 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+﻿using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.STD;
 using System.Runtime.InteropServices;
@@ -19,16 +18,6 @@ public static unsafe class ClientStructsExtensions {
         ValueType.ManagedVector => "[Managed Vector]",
         _ => $"Unknown Type: {v.Type}"
     };
-
-    public static void ResetFlags(this ContentsFinder cf) {
-        cf.IsExplorerMode = false;
-        cf.IsLevelSync = false;
-        cf.IsLimitedLevelingRoulette = false;
-        cf.IsMinimalIL = false;
-        cf.IsSilenceEcho = false;
-        cf.IsUnrestrictedParty = false;
-        cf.LootRules = ContentsFinder.LootRule.Normal;
-    }
 
     public static unsafe uint* ToPtr(this StdVector<ContentsId> contentsIds) {
         var ids = contentsIds.Select(x => x.Id).ToList();
@@ -51,6 +40,4 @@ public static unsafe class ClientStructsExtensions {
 
         return list;
     }
-
-    public static unsafe Vector3 ToVector3(this FlagMapMarker flag) => AgentMap.Instance()->FlagMarkerCount > 0 ? Service.Navmesh.PointOnFloor(new(flag.XFloat, 1024, flag.YFloat), false, 5) ?? Vector3.NaN : Vector3.NaN;
 }

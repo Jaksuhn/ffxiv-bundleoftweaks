@@ -4,7 +4,6 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
-using Lumina.Excel.Sheets;
 using System.Threading.Tasks;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
@@ -61,19 +60,18 @@ public partial class Commands : Tweak<CommandsConfiguration> {
     [CommandHandler("/desynth", "Desynth an item by ID", nameof(Config.EnableDesynth))]
     internal unsafe void OnCommmandDesynth(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId)) return;
-        var item_loc = Inventory.GetItemLocationInInventory(itemId, Inventory.Equippable);
-        if (item_loc == null) {
-            DuoLog.Error($"Failed to find item {GetRow<Item>(itemId)?.Name} (ID: {itemId}) in inventory");
+        var item = new ItemHandle(itemId);
+        if (!item.TrySetItemLocation()) {
+            DuoLog.Error($"Failed to find item {item} in inventory");
             return;
         }
 
-        var item = InventoryManager.Instance()->GetInventoryContainer(item_loc.Value.inv)->GetInventorySlot(item_loc.Value.slot);
-        if (GetRow<Item>(item->ItemId)!.Value.Desynth == 0) {
-            DuoLog.Error($"Item {GetRow<Item>(item->ItemId)?.Name} (ID: {item->ItemId}) is not desynthable");
+        if (item.GameData.Value.Desynth == 0) {
+            DuoLog.Error($"Item {item} is not desynthable");
             return;
         }
 
-        AgentSalvage.Instance()->SalvageItem(item);
+        AgentSalvage.Instance()->SalvageItem(item.ItemLocation.GetInventoryItem());
         var retval = new AtkValue();
         Span<AtkValue> param = [
             new AtkValue { Type = ValueType.Int, Int = 0 },
@@ -92,21 +90,29 @@ public partial class Commands : Tweak<CommandsConfiguration> {
                 Warning("AgentInventoryContext is null, cannot lower quality on items");
                 return;
             }
-            foreach (var i in Inventory.GetHQItems(Inventory.PlayerInventory)) {
+            foreach (var i in InventoryManager.GetHqItems(InventoryType.Bags)) {
                 // TODO: this still sometimes can just cause a crash, idk why
-                Log($"Lowering quality on item [{i.Value->ItemId}] {GetRow<Item>(i.Value->ItemId)?.Name} in {i.Value->Container} slot {i.Value->Slot}");
+                Log($"Lowering quality on item [{i}] in {i.ItemLocation}");
                 TaskManager.EnqueueDelay(250);
                 TaskManager.Enqueue(() => AgentInventoryContext.Instance() != null, "Checking if AgentInventoryContext is null");
                 TaskManager.Enqueue(() => !RaptureAtkModule.Instance()->AgentUpdateFlag.HasFlag(RaptureAtkModule.AgentUpdateFlags.InventoryUpdate), "checking for no inventory update");
-                TaskManager.Enqueue(() => Conditions.Instance()->HasPermission(135), "checking perm #135");
-                TaskManager.Enqueue(() => AgentInventoryContext.Instance()->LowerItemQuality(i.Value, i.Value->Container, i.Value->Slot, 0), $"lowering quality on [{i.Value->ItemId}] {GetRow<Item>(i.Value->ItemId)?.Name} in {i.Value->Container} slot {i.Value->Slot}");
+                TaskManager.Enqueue(Svc.Condition.CanLowerItemQuality, "checking perm #135");
+                TaskManager.Enqueue(() => AgentInventoryContext.Instance()->LowerItemQuality(i.ItemLocation!.GetInventoryItem(), i.ItemLocation.Container, i.ItemLocation.Slot, 0), $"Lowering quality on item [{i}] in {i.ItemLocation}");
             }
         }
         else {
-            var item = Inventory.GetItemInInventory(itemId, Inventory.PlayerInventory, true);
-            if (item != null) {
-                Log($"Lowering quality on item [{item->ItemId}] {GetRow<Item>(item->ItemId)?.Name} in {item->Container} slot {item->Slot}");
-                AgentInventoryContext.Instance()->LowerItemQuality(item, item->Container, item->Slot, 0);
+            if (new ItemHandle(itemId) is ItemHandle item && item.TrySetItemLocation()) {
+                Log($"Lowering quality on item [{item}] in {item.ItemLocation}");
+                AgentInventoryContext.Instance()->LowerItemQuality(item.ItemLocation.GetInventoryItem(), item.ItemLocation.Container, item.ItemLocation.Slot, 0);
+            }
+        }
+    }
+
+    private class LowerQualityAll : TaskBase {
+        protected override async Task Execute() {
+            foreach (var i in InventoryManager.GetHqItems(InventoryType.Bags)) {
+                while (!i.LowerItemQuality())
+                    await NextFrame();
             }
         }
     }

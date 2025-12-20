@@ -103,7 +103,7 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
         }
 
         if (Config.AutoLeaveOnEnd) {
-            TaskManager.EnqueueDelay(Config.TimeToWait.Ms());
+            TaskManager.EnqueueDelay(Config.TimeToWait * 1000);
             TaskManager.Enqueue(() => EventFramework.LeaveCurrentContent(true));
         }
     }

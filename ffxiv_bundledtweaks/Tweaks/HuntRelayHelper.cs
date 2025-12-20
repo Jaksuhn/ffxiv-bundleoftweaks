@@ -231,7 +231,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
             if (channelName.StartsWith("Linkshell") && Player.CurrentWorld.RowId != Player.HomeWorld.RowId) continue; // don't send to linkshells when off homeworld
             if (Config.OnlySendLocalHuntsToLocalChannels && islocal && !channelName.StartsWith("Novice") && Player.HomeWorld.RowId != payload.World.RowId) continue; // don't send to non-novice local channels when off homeworld
             if (channelName.StartsWith("Novice") && Player.CurrentWorld.RowId != payload.World.RowId) continue; // don't send offworld relays to NN
-            if (channelName.StartsWith("Novice") && InfoProxyNoviceNetwork.Instance()->Flags != 1) continue; // 1 = joined
+            if (channelName.StartsWith("Novice") && InfoProxyNoviceNetwork.IsInNoviceNetwork()) continue;
 
             if (Config.DryRun) {
                 Svc.Chat.Print(new() { Type = channel, MessageBytes = [.. Encoding.UTF8.GetBytes($"[DRYRUN] "), .. channelName.StartsWith("Novice") ? nnRelay.ToArray() : relay.ToArray()] });

@@ -25,7 +25,7 @@ public abstract partial class Tweak : ITweak {
         Disabled = tweakAttr?.Disabled ?? false;
         DisabledReason = tweakAttr?.DisabledReason;
         IsDebug = tweakAttr?.Debug ?? false;
-        Requirements = Service.IPC.GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct()]);
+        Requirements = Service.IPC.GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Distinct()]);
 
         try {
             EzSignatureHelper.Initialize(this);
@@ -339,7 +339,7 @@ public abstract partial class Tweak // Internal
                         ?? throw new InvalidOperationException($"Configuration field {attr.ConfigFieldName} in {CachedConfigType.Name} not found.");
             }
 
-            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs) {
+            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Distinct().ToArray() is { Length: > 0 } reqs) {
                 if (!Service.IPC.AreAllLoaded(reqs)) {
                     var missing = Service.IPC.GetMissing(reqs);
                     Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {string.Join(", ", missing.Select(ipc => ipc.Name))}");
@@ -377,7 +377,7 @@ public abstract partial class Tweak // Internal
                         ?? throw new InvalidOperationException($"Configuration field {attr.ConfigFieldName} in {CachedConfigType.Name} not found.");
             }
 
-            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs) {
+            if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Distinct().ToArray() is { Length: > 0 } reqs) {
                 if (!Service.IPC.AreAllLoaded(reqs)) {
                     var missing = Service.IPC.GetMissing(reqs);
                     var missingNames = missing.Length > 0 ? string.Join(", ", missing.Select(ipc => ipc.Name)) : "one or more required IPCs are not registered";
@@ -493,7 +493,7 @@ public abstract partial class Tweak // Internal
     private void EnableCommand(string command, string helpMessage, MethodInfo methodInfo, CommandHandlerAttribute attr) {
         var originalHandler = methodInfo.CreateDelegate<IReadOnlyCommandInfo.HandlerDelegate>(this);
         void handler(string cmd, string args) {
-            if (methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray() is { Length: > 0 } reqs) {
+            if (methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Distinct().ToArray() is { Length: > 0 } reqs) {
                 if (!Service.IPC.AreAllLoaded(reqs)) {
                     var missing = Service.IPC.GetMissing(reqs);
                     ModuleMessage($"Command {cmd} requires: {string.Join(", ", missing.Select(ipc => ipc.Name))}");

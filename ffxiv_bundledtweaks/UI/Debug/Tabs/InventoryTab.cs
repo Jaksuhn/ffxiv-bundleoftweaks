@@ -12,7 +12,7 @@ internal unsafe class InventoryTab : DebugTab {
     private unsafe List<Pointer<InventoryItem>> InventoryItems {
         get {
             List<Pointer<InventoryItem>> items = [];
-            foreach (var inv in Inventory.Equippable) {
+            foreach (var inv in InventoryType.FullInventory) {
                 var cont = InventoryManager.Instance()->GetInventoryContainer(inv);
                 for (var i = 0; i < cont->Size; ++i)
                     if (cont->GetInventorySlot(i)->ItemId != 0)
@@ -38,7 +38,7 @@ internal unsafe class InventoryTab : DebugTab {
                 ImGui.DrawTableColumn("Page");
                 ImGui.DrawTableColumn("Index");
 
-                foreach (var container in Inventory.Equippable) {
+                foreach (var container in InventoryType.FullInventory) {
                     if (container == InventoryType.KeyItems) continue;
                     var cont = InventoryManager.Instance()->GetInventoryContainer(container);
                     for (var i = 0; i < cont->Size; i++) {

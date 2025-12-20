@@ -31,7 +31,7 @@ internal class WondrousTailsClickToOpen : Tweak {
     }
 
     private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args) {
-        var addonWeeklyBingo = (AddonWeeklyBingo*)args.ToPtr();
+        var addonWeeklyBingo = args.GetAddon<AddonWeeklyBingo>();
         ResetEventHandles();
         foreach (var index in Enumerable.Range(0, 16)) {
             var dutySlot = addonWeeklyBingo->DutySlotList[index];

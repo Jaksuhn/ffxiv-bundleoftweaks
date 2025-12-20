@@ -17,9 +17,9 @@ internal unsafe class ToolsTab : DebugTab {
                 const uint nuts = 26533;
                 var nutsAmt = InventoryManager.Instance()->GetInventoryItemCount(nuts);
                 var nutsCost = 25;
-                var freeslots = InventoryManager.Instance()->GetEmptySlotsInBag() + Inventory.GetEmptySlots([InventoryType.ArmoryRings]);
+                var freeslots = InventoryManager.Instance()->GetEmptySlotsInBag() + InventoryManager.GetEmptySlots(InventoryType.ArmoryRings!);
                 var tobuy = (uint)Math.Min(nutsAmt / nutsCost, freeslots);
-                Svc.Log.Info($"{InventoryManager.Instance()->GetEmptySlotsInBag()} {Inventory.GetEmptySlots([InventoryType.ArmoryRings])} {nutsAmt} {nutsAmt / nutsCost} {tobuy}");
+                Svc.Log.Info($"{InventoryManager.Instance()->GetEmptySlotsInBag()} {InventoryManager.GetEmptySlots(InventoryType.ArmoryRings!)} {nutsAmt} {nutsAmt / nutsCost} {tobuy}");
                 Callback.Fire(addon, true, 0, 49, tobuy);
             }
             else
@@ -29,7 +29,7 @@ internal unsafe class ToolsTab : DebugTab {
         cantSpend.ForEach(x => ImGuiEx.Text(EzColor.RedBright, x));
 
         if (ImGui.Button("Use all items")) {
-            foreach (var c in Inventory.PlayerInventory) {
+            foreach (var c in InventoryType.Bags) {
                 var cont = InventoryManager.Instance()->GetInventoryContainer(c);
                 for (var i = 0; i < cont->Size; ++i) {
                     var slot = cont->GetInventorySlot(i);
@@ -45,7 +45,7 @@ internal unsafe class ToolsTab : DebugTab {
 
         if (ImGui.Button("hg")) {
             var player = (FFXIVClientStructs.FFXIV.Client.Game.Character.Character*)GameObjectManager.Instance()->Objects.IndexSorted[0].Value;
-            player->GetStatusManager()->SetStatus(20, 149, 5.0f, 0, (ulong)0xE0000000, true);
+            player->GetStatusManager()->SetStatus(20, 149, 5.0f, 0, 0xE0000000, true);
         }
 
         if (ImGui.Button("leave content"))

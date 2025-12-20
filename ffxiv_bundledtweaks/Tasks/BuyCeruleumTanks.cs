@@ -2,6 +2,7 @@
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Threading.Tasks;
 
@@ -15,19 +16,18 @@ public sealed class BuyCeruleumTanks : TaskBase {
     protected override async Task Execute() {
         await GoToWorkshop();
         await WaitUntil(() => GameMain.IsTerritoryLoaded, "WaitingForTerritoryToLoad");
-        var npc = Game.GetNPCInfo(MammetVoyagerENpcId, Player.Territory.RowId, CeruleumTankId);
+        var npc = Svc.Data.GetNPCInfo(MammetVoyagerENpcId, Player.Territory.RowId, CeruleumTankId);
         ErrorIf(npc == null, $"Failed to find NPC {MammetVoyagerENpcId} in {Player.Territory}");
         ErrorIf(npc!.ShopId == 0, $"Failed to find shop for NPC {MammetVoyagerENpcId} in {Player.Territory}");
 
         Status = $"Moving to {npc.Location}";
         await MoveToDirectly(npc.Location, 0.5f);
-        await BuyFromFccShop(MammetVoyagerENpcId, npc!.ShopId, CeruleumTankId, 999 - Inventory.GetItemCount(CeruleumTankId, false));
+        await BuyFromFccShop(MammetVoyagerENpcId, npc!.ShopId, CeruleumTankId, 999 - new ItemHandle(CeruleumTankId).GetCount(false));
     }
 
     private async Task GoToWorkshop() {
         using var scope = BeginScope("GoToWorkshop");
-        static bool PlayerInWorkshop() => Player.Territory is { Value.BGM.RowId: 328 };
-        if (PlayerInWorkshop()) return; // already there
+        if (Player.Territory.Value.IsWorkshop) return; // already there
 
         if (Player.TerritoryIntendedUseEnum == TerritoryIntendedUseEnum.Housing_Instances) {
             await EnterWorkshop();
@@ -64,7 +64,7 @@ public sealed class BuyCeruleumTanks : TaskBase {
         Status = "Opening shop";
         if (!AtkUnitBase.IsAddonReady("FreeCompanyCreditShop")) {
             Log("Opening shop...");
-            ErrorIf(!Game.OpenShop(vendorInstanceId, shopId), $"Failed to open shop {vendorInstanceId:X}.{shopId:X}");
+            ErrorIf(!AgentShop.OpenShop(vendorInstanceId, shopId), $"Failed to open shop {vendorInstanceId:X}.{shopId:X}");
             await WaitWhile(() => !AtkUnitBase.IsAddonReady("FreeCompanyCreditShop"), "WaitForFCCShop");
             await WaitWhile(() => !Svc.Condition[ConditionFlag.OccupiedInEvent], "WaitForCondition");
         }
@@ -76,7 +76,7 @@ public sealed class BuyCeruleumTanks : TaskBase {
                 Status = $"Buying x{count} ceruleum tanks";
                 tanks.Buy(Math.Min(count, tanks.MaxPurchaseSize));
                 count -= tanks.MaxPurchaseSize;
-                await WaitUntilSkipping(() => GetAddonTankCount() != Inventory.GetItemCount(tanks.ItemId, false), "WaitingForPurchase", UiSkipOptions.YesNo);
+                await WaitUntilSkipping(() => GetAddonTankCount() != new ItemHandle(tanks.ItemId).GetCount(false), "WaitingForPurchase", UiSkipOptions.YesNo);
                 Status = "Waiting for purchase to go through";
                 // I could just wait until the atkvalue equals the real inventory count again but this was a fun experiment.
                 using var stop = new OnDispose(ipc.FreeCompanyDialogPacketReceiveHook.Disable);

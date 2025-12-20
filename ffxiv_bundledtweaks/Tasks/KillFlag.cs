@@ -1,7 +1,6 @@
 ﻿using ComplexTweaks.Tweaks;
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.Automation;
-using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;
 using Lumina.Excel.Sheets;
 using System.Threading.Tasks;
 
@@ -12,7 +11,6 @@ public sealed class KillFlag(string world) : TaskBase {
     private const float LOS_SEARCH_RADIUS = 5.0f;
     private const int LOS_SEARCH_POSITIONS = 8;
     private const float TARGET_APPROACH_DISTANCE = 3.0f;
-    private readonly Vector3 losOffset = new(0, 2, 0);
 
     protected override async Task Execute() {
         if (!world.IsNullOrEmpty())
@@ -66,7 +64,7 @@ public sealed class KillFlag(string world) : TaskBase {
         .FirstOrDefault();
 
     private async Task MoveIfNoLoS(DGameObject target) {
-        if (!IsInLineOfSight(Player.Position, target.Position)) {
+        if (!Player.Object.IsInLineOfSight(target.Position)) {
             Log($"No line of sight to {target.Name}, moving...");
             var validPosition = Service.Navmesh.PointOnFloor(target.Position, false, 5);
             if (validPosition.HasValue) {
@@ -88,7 +86,7 @@ public sealed class KillFlag(string world) : TaskBase {
                     target.Position.Z + LOS_SEARCH_RADIUS * (float)Math.Sin(angle)
                 );
 
-                if (Service.Navmesh.PointOnFloor(searchPos, false, 1) is { } point && IsInLineOfSight(point, target.Position)) {
+                if (Service.Navmesh.PointOnFloor(searchPos, false, 1) is { } point && target.IsInLineOfSight(point)) {
                     try {
                         await MoveTo(point, MovementConfig.Default);
                         return;
@@ -104,14 +102,6 @@ public sealed class KillFlag(string world) : TaskBase {
             await MoveToDirectly(target.Position, TARGET_APPROACH_DISTANCE);
         }
     }
-
-    private bool IsInLineOfSight(Vector3 source, Vector3 target)
-        => !BGCollisionModule.RaycastMaterialFilter(
-            source + losOffset,
-            Vector3.Normalize((target + losOffset) - (source + losOffset)),
-            out _,
-            Vector3.Distance(source + losOffset, target + losOffset)
-        );
 
     private async Task TargetDead(DGameObject target) {
         using var scope = BeginScope("TargetDead");

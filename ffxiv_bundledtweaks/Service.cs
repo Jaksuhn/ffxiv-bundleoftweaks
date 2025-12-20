@@ -13,7 +13,6 @@ public class Service {
     public static NavmeshIPC Navmesh { get; private set; } = null!;
     public static QuestionableIPC Questionable { get; private set; } = null!;
 
-    public static AddonObserver AddonObserver { get; private set; } = null!;
     public static Automation Automation { get; private set; } = null!;
     public static IPCRegistry IPC { get; private set; } = null!;
     public static Memory Memory { get; private set; } = null!;
@@ -66,7 +65,7 @@ public class IPCRegistry {
     }
 
     public BaseIPC[] GetMissing(MethodInfo? method)
-        => method == null ? [] : GetMissing([.. method.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.ToArray()).Distinct().ToArray()]);
+        => method == null ? [] : GetMissing([.. method.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Distinct().ToArray()]);
 
     public BaseIPC[] GetMissing(params Ipc[] ids) {
         if (_byId == null || ids.Length == 0)

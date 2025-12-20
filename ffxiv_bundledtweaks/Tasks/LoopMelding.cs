@@ -85,7 +85,7 @@ public sealed partial class LoopMelding(GameInventoryItem item) : TaskBase {
 
         unsafe {
             var agent = AgentMateriaAttach.Instance();
-            var it = item.ToPtr();
+            var it = item.Struct();
             for (var i = 0; i < agent->ItemCount; i++) {
                 if (it == agent->Data->ItemsSorted[i].Value->Item) {
                     Log($"Selecting item at index #{i}");
@@ -120,7 +120,7 @@ public sealed partial class LoopMelding(GameInventoryItem item) : TaskBase {
         using var scope = BeginScope(nameof(HandleMateriaAttachDialog));
         await WaitUntil(() => Svc.Condition[ConditionFlag.MeldingMateria], "WaitForMeldState");
         await WaitUntil(() => AtkUnitBase.IsAddonReady("MateriaAttachDialog"), "WaitForDialog");
-        Game.ProgressMateriaAttachDialog();
+        AddonMateriaAttachDialog.Meld();
         await WaitWhile(() => Svc.Condition[ConditionFlag.MeldingMateria], "WaitForMeldFinish");
     }
 

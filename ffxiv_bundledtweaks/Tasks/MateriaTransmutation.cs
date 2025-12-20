@@ -40,7 +40,7 @@ public sealed class MateriaTransmutation : TaskBase {
         foreach (var mat in sortedDistinctCombatMateria) {
             if (typesInAgentSlots.Count < 5) {
                 typesInAgentSlots.Add(mat);
-                quantityPerTypeInAgent[mat.ItemId] = 1;
+                quantityPerTypeInAgent[mat.Item] = 1;
                 currentTotalQuantitySet++;
             }
             else {
@@ -62,8 +62,8 @@ public sealed class MateriaTransmutation : TaskBase {
             }
 
             var matToTryIncrement = typesInAgentSlots[distributorIndex % typesInAgentSlots.Count];
-            if (quantityPerTypeInAgent[matToTryIncrement.ItemId] < matToTryIncrement.Quantity) {
-                quantityPerTypeInAgent[matToTryIncrement.ItemId]++;
+            if (quantityPerTypeInAgent[matToTryIncrement.Item] < matToTryIncrement.Quantity) {
+                quantityPerTypeInAgent[matToTryIncrement.Item]++;
                 quantityStillToDistribute--;
                 attemptsSinceLastSuccess = 0;
             }
@@ -82,15 +82,15 @@ public sealed class MateriaTransmutation : TaskBase {
 
         for (var i = 0; i < typesInAgentSlots.Count; i++) {
             var mat = typesInAgentSlots[i];
-            *agentMateriaIdFields[i] = (ushort)mat.ItemId;
-            *agentQuantityFields[i] = quantityPerTypeInAgent[mat.ItemId];
+            *agentMateriaIdFields[i] = (ushort)mat.Item;
+            *agentQuantityFields[i] = quantityPerTypeInAgent[mat.Item];
         }
     }
 
     private class MateriaWrapper(uint itemId) {
-        public uint ItemId { get; } = itemId;
-        public int Quantity => Inventory.GetItemCount(ItemId, false);
-        public MateriaType Type => GetRow<Materia>(ItemId)!.Value.BaseParam.RowId switch {
+        public ItemHandle Item { get; } = itemId;
+        public int Quantity => Item.GetCount(false);
+        public MateriaType Type => GetRow<Materia>(Item)!.Value.BaseParam.RowId switch {
             70 or 71 or 11 => MateriaType.Crafting, // craftsmanship, control, cp
             72 or 73 or 10 => MateriaType.Gathering, // gathering, perception, gp
             _ => MateriaType.Combat,

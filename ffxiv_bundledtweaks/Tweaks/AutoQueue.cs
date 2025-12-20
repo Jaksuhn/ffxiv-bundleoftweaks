@@ -1,6 +1,7 @@
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.STD;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -16,7 +17,7 @@ internal class AutoQueue : Tweak {
     private unsafe void OnTerritoryChanged(ushort obj) {
         if (Player.IsInDuty || Player.IsPenalised) return;
         TaskManager.Enqueue(() => !Player.IsBusy);
-        TaskManager.Enqueue(() => Svc.Party.All(p => p.Territory.Value.TerritoryIntendedUse.NotDuty()), "WaitAllPartyInOverworld");
+        TaskManager.Enqueue(() => Svc.Party.All(p => Svc.Condition.CanQueue()), "WaitAllPartyInOverworld");
         TaskManager.Enqueue(() => Svc.Party.Any(p => p.Territory.RowId != Player.Territory.RowId) || Svc.Party.AllTargetable(), "WaitAllPartyNotWithPlayerOrTargetable");
         TaskManager.Enqueue(QueueSelectedDuty);
     }
@@ -28,8 +29,16 @@ internal class AutoQueue : Tweak {
             return true;
         }
         else {
-            ContentsFinder.Instance()->QueueInfo.QueueDuties(content.ToPtr(), content.Count);
+            ContentsFinder.Instance()->QueueInfo.QueueDuties(ToPtr(content), content.Count);
             return true;
         }
+    }
+
+    public static unsafe uint* ToPtr(StdVector<ContentsId> contentsIds) {
+        var ids = contentsIds.Select(x => x.Id).ToList();
+        var array = stackalloc uint[ids.Count];
+        for (var i = 0; i < ids.Count; i++)
+            array[i] = ids[i];
+        return array;
     }
 }

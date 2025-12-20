@@ -10,15 +10,12 @@ namespace ComplexTweaks.UI.Debug.Tabs;
 
 internal unsafe class TestTab : DebugTab {
     public override void Draw() {
-        var x = *((byte*)InfoProxyNoviceNetwork.Instance() + 0x18);
-        ImGuiEx.Text($"nn: {x} {x:B8}");
         ImGuiEx.Text($"{Svc.PluginInterface.InternalName}: {Svc.PluginInterface.GetPluginConfigDirectory()}");
 
         if (ImGui.Button($"compress"))
             ImGui.SetClipboardText(ImGui.GetClipboardText().ToBase64());
         if (ImGui.Button($"decompress"))
             ImGui.SetClipboardText(ImGui.GetClipboardText().FromBase64());
-
         if (ImGui.Button("logout"))
             AgentLobby.Instance()->HandleLogout(false, 60);
 
@@ -28,15 +25,10 @@ internal unsafe class TestTab : DebugTab {
         if (ImGui.Button("meld"))
             ActionManager.Instance()->UseAction(ActionType.GeneralAction, 12);
 
-        if (ImGui.Button("dismount")) {
-            unsafe {
-                var pos = Player.Position;
-                GameMain.ExecuteLocationCommand((int)LocationCommandFlag.Dismount, &pos, (int)Svc.Objects.LocalPlayer.PackedRotation);
-            }
-        }
+        ImGui.Text($"{InfoProxyNoviceNetwork.IsInNoviceNetwork()}");
 
-        if (ImGui.Button("dismount 2"))
-            GameMain.ExecuteCommand(CommandFlag.Dismount.Value, 1);
+        if (Svc.Targets.Target != null)
+            ImGui.Text($"In Interact Range: {Svc.Targets.Target.IsInInteractRange()}");
 
         ImGui.Text($"{ExdModule.GetRoleForClassJobId(Player.ClassJob.RowId)}");
     }

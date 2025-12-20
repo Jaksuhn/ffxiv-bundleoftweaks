@@ -50,7 +50,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
 
     private unsafe void OnSetup(AddonEvent type, AddonArgs args) {
         if (!Config.AutoVoidIslandRest) return;
-        if (AgentMJICraftSchedule.Instance()->Data->RestCycles.ToHex() != 8321u) {
+        if (AgentMJICraftSchedule.Instance()->Data->RestCycles.Hex() != 8321u) {
             Svc.Log.Debug($"Setting rest: {8321u:X}");
             AgentMJICraftSchedule.Instance()->Data->NewRestCycles = 8321u;
             var eventData = stackalloc int[] { 0, 0, 0 };

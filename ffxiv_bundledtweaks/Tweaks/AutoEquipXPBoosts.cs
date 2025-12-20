@@ -29,8 +29,8 @@ internal class AutoEquipXPBoosts : Tweak {
 
     private unsafe void CheckForLevelSync(uint classJobId, uint level) {
         var expItems = _expItems.GroupBy(x => x.GameData.Value.EquipSlotCategory.RowId)
-            .Where(group => group.Any(x => level <= x.MaxLevel && Inventory.HasItem(x.GameData.RowId)))
-            .Select(group => group.Where(x => level <= x.MaxLevel && Inventory.HasItem(x.GameData.RowId))
+            .Where(group => group.Any(x => level <= x.MaxLevel && x.GameData.Value.Handle.HasItem))
+            .Select(group => group.Where(x => level <= x.MaxLevel && x.GameData.Value.Handle.HasItem)
             .OrderByDescending(x => x.GameData.Value.LevelItem.RowId)
             .ThenByDescending(x => x.Percent)
             .First()).ToList();
@@ -52,12 +52,12 @@ internal class AutoEquipXPBoosts : Tweak {
             if (Player.ContentFinderCondition is { Value.ContentType.RowId: 28 }) return; // skip ults
 
             foreach (var expItem in expItems) {
-                if (!((ItemWrapper)expItem.GameData).CanEquip(out var errorMsg)) {
+                if (!((ItemHandle)expItem.GameData).CanEquip(out var errorMsg)) {
                     Log($"Can't equip [#{expItem.GameData.RowId}] {expItem.GameData.Value.Name}: {errorMsg.Value.Text}");
                     continue;
                 }
                 await WaitWhile(() => Player.IsBusy, "WaitForNotBusy");
-                await WaitUntil(() => Game.HasPermission([109, 134]), "WaitForPermission");
+                await WaitUntil(() => Svc.Condition.HasPermission([109, 134]), "WaitForPermission");
                 Log($"Equipping [#{expItem.GameData.RowId}] {expItem.GameData.Value.Name}");
                 PlayerEx.Equip(expItem.GameData.RowId);
             }

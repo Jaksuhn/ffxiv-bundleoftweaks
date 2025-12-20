@@ -1,35 +1,11 @@
 ﻿using Dalamud.Game.ClientState.Keys;
 using FFXIVClientStructs.FFXIV.Client.System.Input;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using Lumina.Excel;
 using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Utilities.Extensions;
 
 public static class LuminaExtensions {
-    public record IngredientExtension() {
-        public required Item Item { get; init; }
-        public required int Amount { get; init; }
-    }
-
-    public static IEnumerable<IngredientExtension> Ingredients(this Recipe recipe) {
-        var output = new List<IngredientExtension>();
-        for (var i = 0; i < recipe.Ingredient.Count; i++) {
-            try {
-                var item = recipe.Ingredient[i].Value;
-                var amount = recipe.AmountIngredient[i];
-
-                output.Add(new IngredientExtension() { Item = item, Amount = amount });
-            }
-            catch { }
-        }
-
-        return output;
-    }
-
-    public static string Print(this Item item) => $"[{item.RowId}] {item.Name}";
-    public static string Print(this EventItem item) => $"[{item.RowId}] {item.Name}";
-
     public static unsafe bool IsHeldRaw(this ConfigKey key) {
         if (!key.TryGetInputId(out var inputId)) return false;
         var keybind = UIInputData.Instance()->GetKeybind(inputId);
@@ -54,6 +30,4 @@ public static class LuminaExtensions {
             }
         }
     }
-
-    public static bool NotDuty(this RowRef<TerritoryIntendedUse> row) => ((FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse)row.RowId).NotDuty();
 }

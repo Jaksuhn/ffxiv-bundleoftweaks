@@ -42,6 +42,8 @@ internal class AutoEquipXPBoosts : Tweak {
         public int MaxLevel { get; init; } = MaxLevel;
         public int Percent { get; init; } = Percent;
         public readonly ExcelRow* Row = Framework.Instance()->ExcelModuleInterface->ExdModule->GetRowBySheetIndexAndRowIndex(10, ItemId);
+
+        public ItemHandle Handle => (ItemHandle)GameData;
     }
 
     private sealed class EquipItems(List<ExpItem> expItems) : TaskBase {
@@ -52,14 +54,13 @@ internal class AutoEquipXPBoosts : Tweak {
             if (Player.ContentFinderCondition is { Value.ContentType.RowId: 28 }) return; // skip ults
 
             foreach (var expItem in expItems) {
-                if (!((ItemHandle)expItem.GameData).CanEquip(out var errorMsg)) {
+                if (!expItem.Handle.CanEquip(out var errorMsg)) {
                     Log($"Can't equip [#{expItem.GameData.RowId}] {expItem.GameData.Value.Name}: {errorMsg.Value.Text}");
                     continue;
                 }
                 await WaitWhile(() => Player.IsBusy, "WaitForNotBusy");
                 await WaitUntil(() => Svc.Condition.HasPermission([109, 134]), "WaitForPermission");
-                Log($"Equipping [#{expItem.GameData.RowId}] {expItem.GameData.Value.Name}");
-                PlayerEx.Equip(expItem.GameData.RowId);
+                expItem.Handle.Equip();
             }
         }
     }

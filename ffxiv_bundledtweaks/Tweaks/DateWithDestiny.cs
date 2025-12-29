@@ -231,7 +231,7 @@ public class DateWithDestiny : Tweak<DateWithDestinyConfiguration, DateWithDesti
             if (Config.YokaiMode) {
                 if (YokaiMinions.Contains(CurrentCompanion)) {
                     if (Config.EquipWatch && HaveYokaiMinionsMissing() && !HasWatchEquipped() && GetItemCount(YokaiWatch) > 0)
-                        PlayerEx.Equip(15222);
+                        new ItemHandle(15222).Equip();
 
                     var medal = Yokai.FirstOrDefault(x => x.Minion == CurrentCompanion).Medal;
                     if (GetItemCount(medal) >= 10) {

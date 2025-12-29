@@ -65,7 +65,7 @@ public class IPCRegistry {
     }
 
     public BaseIPC[] GetMissing(MethodInfo? method)
-        => method == null ? [] : GetMissing([.. method.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Distinct().ToArray()]);
+        => method == null ? [] : GetMissing([.. method.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Where(id => id != Ipc.None).Distinct().ToArray()]);
 
     public BaseIPC[] GetMissing(params Ipc[] ids) {
         if (_byId == null || ids.Length == 0)

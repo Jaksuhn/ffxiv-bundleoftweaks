@@ -52,7 +52,13 @@ public partial class Commands : Tweak<CommandsConfiguration> {
     [CommandHandler("/equip", "Equip an item by ID", nameof(Config.EnableEquip))]
     internal unsafe void OnCommmandEquip(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId)) return;
-        PlayerEx.Equip(itemId);
+        var item = new ItemHandle(itemId);
+        if (!item.TrySetItemLocation()) {
+            DuoLog.Error($"Failed to find item {itemId} in inventory");
+            return;
+        }
+        if (item.CanEquip(out var _))
+            item.Equip();
     }
     #endregion
 

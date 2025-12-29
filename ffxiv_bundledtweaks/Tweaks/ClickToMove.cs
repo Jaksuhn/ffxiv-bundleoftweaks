@@ -1,5 +1,11 @@
+﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Utility;
+using ECommons;
+using ECommons.MathHelpers;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
-using Dalamud.Bindings.ImGui;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -17,11 +23,22 @@ public unsafe class ClickToMove : Tweak<ClickToMoveConfiguration> {
     public override void Enable() {
         Svc.Framework.Update += MoveTo;
         movement = new();
+        //Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "AreaMap", Logger);
+    }
+
+    private void Logger(AddonEvent type, AddonArgs args) {
+        if (args is AddonReceiveEventArgs { AtkEventType: (byte)AtkEventType.MouseDown } receiveArgs) {
+            if (receiveArgs.AtkEventData.As<AtkEventData.AtkMouseData>()->ButtonId != 0) return; // left click only
+            if (AgentMap.Instance()->CurrentMapId != AgentMap.Instance()->SelectedMapId) return;
+            if (args.GetAddon<AddonAreaMap>()->GetMouseWorldCoords() is { } coords)
+                Svc.Navmesh.PathfindAndMoveTo(coords.OnMesh(), Player.CanFly);
+        }
     }
 
     public override void Disable() {
         Svc.Framework.Update -= MoveTo;
         movement.Dispose();
+        //Svc.AddonLifecycle.UnregisterListener(Logger);
     }
 
     private bool isPressed = false;

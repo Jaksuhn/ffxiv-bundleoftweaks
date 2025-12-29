@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace ComplexTweaks.Tweaks;
 
+#if DEBUG
 [Tweak]
 public class FasterRepairAll : Tweak {
     public override string Name => "Faster Repair All";
@@ -43,3 +44,4 @@ public class FasterRepairAll : Tweak {
 
     private void RepairAll() => RepairCategory.Values.ToList().ForEach(inv => GameMain.ExecuteCommand(CommandFlag.RepairAllItemsNPC.Value, inv.Value));
 }
+#endif

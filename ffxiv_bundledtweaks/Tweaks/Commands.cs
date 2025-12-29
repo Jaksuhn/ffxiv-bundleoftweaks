@@ -57,8 +57,9 @@ public partial class Commands : Tweak<CommandsConfiguration> {
             DuoLog.Error($"Failed to find item {itemId} in inventory");
             return;
         }
-        if (item.CanEquip(out var _))
+        if (item.CanEquip(out var logMessage))
             item.Equip();
+        else Svc.Log.Warning($"Unable to equip item {item}: {logMessage.Value.Text}");
     }
     #endregion
 

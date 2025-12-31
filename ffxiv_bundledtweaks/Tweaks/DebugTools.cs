@@ -117,7 +117,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
                 if (Svc.GameGui.ScreenToWorld(pos, out var res)) {
                     if (IsKeyPressed(LimitedKeys.LeftMouseButton)) {
                         if (!IsLButtonPressed)
-                            PlayerEx.Position = res;
+                            Player.SetPosition(res);
                         IsLButtonPressed = true;
                     }
                     else
@@ -127,21 +127,21 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
         }
 
         if (Config.EnableNoClip && ncActive && !Framework.Instance()->WindowInactive) {
-            var cx = PlayerEx.Position.X;
-            var cy = PlayerEx.Position.Z;
+            var cx = Player.Position.X;
+            var cy = Player.Position.Z;
             var angle = MathF.PI - Player.Camera->DirH;
             if (_keys["JUMP"].IsHeldRaw())
-                PlayerEx.Position = (Player.Position.X, Player.Position.Y + Config.NoClipSpeed, Player.Position.Z).ToVector3();
+                Player.SetPosition((Player.Position.X, Player.Position.Y + Config.NoClipSpeed, Player.Position.Z).ToVector3());
             if (Svc.KeyState.GetRawValue(VirtualKey.LSHIFT) != 0 || IsKeyPressed(LimitedKeys.LeftShiftKey))
-                PlayerEx.Position = (Player.Position.X, Player.Position.Y - Config.NoClipSpeed, Player.Position.Z).ToVector3();
+                Player.SetPosition((Player.Position.X, Player.Position.Y - Config.NoClipSpeed, Player.Position.Z).ToVector3());
             if (_keys["MOVE_FORE"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.AddZ(Config.NoClipSpeed).RotatePoint(cx, cy, angle);
+                Player.SetPosition(Player.Position.AddZ(Config.NoClipSpeed).RotatePoint(cx, cy, angle));
             if (_keys["MOVE_BACK"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.AddZ(-Config.NoClipSpeed).RotatePoint(cx, cy, angle);
+                Player.SetPosition(Player.Position.AddZ(-Config.NoClipSpeed).RotatePoint(cx, cy, angle));
             if (_keys["MOVE_LEFT"].IsHeldRaw() || _keys["MOVE_STRIFE_L"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle);
+                Player.SetPosition(Player.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle));
             if (_keys["MOVE_RIGHT"].IsHeldRaw() || _keys["MOVE_STRIFE_R"].IsHeldRaw())
-                PlayerEx.Position = PlayerEx.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle);
+                Player.SetPosition(Player.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle));
         }
     }
 
@@ -173,9 +173,9 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
         if (Player.IsInPvP) return;
         if (int.TryParse(arguments, out var i)) {
             var m = MarkingController.Instance()->FieldMarkers[i];
-            Vector3? pos = m.Active ? new(m.X / 1000.0f, m.Y / 1000.0f, m.Z / 1000.0f) : null;
-            if (pos != null)
-                PlayerEx.Position = (Vector3)pos;
+            Vector3? markerPos = m.Active ? new(m.X / 1000.0f, m.Y / 1000.0f, m.Z / 1000.0f) : null;
+            if (markerPos is { } pos)
+                Player.SetPosition(pos);
         }
     }
 
@@ -183,13 +183,13 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
     private unsafe void OnTeleportOffset(string command, string arguments) {
         if (Player.IsInPvP) return;
         if (arguments.TryParseVector3(out var v))
-            PlayerEx.Position += v;
+            Player.SetPosition(Player.Position + v);
     }
 
     [CommandHandler("/tpabs", "Teleport to a given absolute position", nameof(Config.EnableTPAbsolute))]
     private unsafe void OnTeleportAbsolute(string command, string arguments) {
         if (Player.IsInPvP) return;
         if (arguments.TryParseVector3(out var v))
-            PlayerEx.Position = v;
+            Player.SetPosition(v);
     }
 }

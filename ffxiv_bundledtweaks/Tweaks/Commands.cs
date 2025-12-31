@@ -153,7 +153,7 @@ public partial class Commands : Tweak<CommandsConfiguration> {
     #endregion
 
     #region World Travel
-    //[CommandHandler("/travel", "Invoke world travel. Still have to be in a starting city.", nameof(Config.EnableTravel))]
-    //private unsafe void OnTravelCommand(string command, string arguments) => AgentWorldTravel.Instance()->Travel(arguments);
+    [CommandHandler("/travel", "Invoke world travel. Still have to be in a starting city.", nameof(Config.EnableTravel))]
+    private unsafe void OnTravelCommand(string command, string arguments) => AgentWorldTravel.Instance()->Travel(arguments);
     #endregion
 }

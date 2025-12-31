@@ -19,7 +19,7 @@ internal unsafe class PlayerExTab : DebugTab {
         //    }
         //}
 
-        var playerExType = typeof(PlayerEx);
+        var playerExType = typeof(PlayerExtensions);
         var properties = playerExType.GetProperties();
 
         for (var i = 0; i < properties.Length; i++) {

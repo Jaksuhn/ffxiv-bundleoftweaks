@@ -14,6 +14,7 @@ public interface IDrawableTab {
     bool IsPinnable { get; }
     bool CanPopOut { get; }
     void Draw();
+    bool DrawConditions();
 }
 
 public abstract partial class DebugTab : IDebugTab {
@@ -32,6 +33,8 @@ public abstract partial class DebugTab : IDebugTab {
     private static partial Regex NameRegex();
 
     public virtual void Draw() { }
+
+    public virtual bool DrawConditions() => true;
 
     public void DrawIcon(object value, Type? type = null, bool isHq = false, bool sameLine = true, Vector2? drawInfo = default, bool canCopy = true, bool noTooltip = false) {
         if (value == null) {

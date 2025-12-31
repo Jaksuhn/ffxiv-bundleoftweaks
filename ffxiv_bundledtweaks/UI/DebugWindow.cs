@@ -20,7 +20,7 @@ internal class DebugWindow : Window {
     private readonly IDebugTab[] Tabs;
     private IDrawableTab? SelectedTab;
 
-    public override bool DrawConditions() => C.ShowDebug;
+    //public override bool DrawConditions() => C.ShowDebug;
 
     public override void Draw() {
         DrawSidebar();
@@ -57,6 +57,7 @@ internal class DebugWindow : Window {
             ? ImRaii.Child($"###{SelectedTab.InternalName}_Child", new Vector2(-1), true)
             : null;
 
-        TryExecute(SelectedTab.Draw);
+        if (SelectedTab.DrawConditions())
+            TryExecute(SelectedTab.Draw);
     }
 }

@@ -11,16 +11,22 @@ https://puni.sh/api/repository/croizat
 ## Features (non inclusive)
 
 - Achievement Tracker
-- Address Book
+- Anti-Afk
+- Auto Busy (teleporting)
+- Auto equip xp items
+- Auto inviter
 - Auto Merge
 - Auto Pillion
 - Auto Queue
+- AutoRetainer tweaks
 - Better Auto Follow
 - Click to Move
-- Enhanced duty start/end features
+- Commands/messages on duty start/end
 - FATE grinder
 - Getting Too Attached achievement helper
+- Glamour outfit tracker
 - Hunt Relay Helper
 - Lalachievements quick lookup
+- Retrieve All Materia button
+- Translate system message timezones
 - Various commands
-- XP earring auto equipper

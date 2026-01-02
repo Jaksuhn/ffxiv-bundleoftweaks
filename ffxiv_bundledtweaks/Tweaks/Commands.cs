@@ -1,6 +1,5 @@
 ﻿using ComplexTweaks.Tasks;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
@@ -93,24 +92,12 @@ public partial class Commands : Tweak<CommandsConfiguration> {
     internal unsafe void OnCommmandLowerQuality(string command, string arguments) {
         if (!uint.TryParse(arguments, out var itemId) && arguments != "all") return;
         if (arguments == "all") {
-            if (AgentInventoryContext.Instance() == null) {
-                Warning("AgentInventoryContext is null, cannot lower quality on items");
-                return;
-            }
-            foreach (var i in InventoryManager.GetHqItems(InventoryType.Bags)) {
-                // TODO: this still sometimes can just cause a crash, idk why
-                Log($"Lowering quality on item [{i}] in {i.ItemLocation}");
-                TaskManager.EnqueueDelay(250);
-                TaskManager.Enqueue(() => AgentInventoryContext.Instance() != null, "Checking if AgentInventoryContext is null");
-                TaskManager.Enqueue(() => !RaptureAtkModule.Instance()->AgentUpdateFlag.HasFlag(RaptureAtkModule.AgentUpdateFlags.InventoryUpdate), "checking for no inventory update");
-                TaskManager.Enqueue(Svc.Condition.CanLowerItemQuality, "checking perm #135");
-                TaskManager.Enqueue(() => AgentInventoryContext.Instance()->LowerItemQuality(i.ItemLocation!.GetInventoryItem(), i.ItemLocation.Container, i.ItemLocation.Slot, 0), $"Lowering quality on item [{i}] in {i.ItemLocation}");
-            }
+            Svc.Automation.Start(new LowerQualityAll());
         }
         else {
-            if (new ItemHandle(itemId) is ItemHandle item && item.TrySetItemLocation()) {
+            if (new ItemHandle(itemId) is ItemHandle item && item.TrySetItemLocation(InventoryItem.ItemFlags.HighQuality)) {
                 Log($"Lowering quality on item [{item}] in {item.ItemLocation}");
-                AgentInventoryContext.Instance()->LowerItemQuality(item.ItemLocation.GetInventoryItem(), item.ItemLocation.Container, item.ItemLocation.Slot, 0);
+                item.LowerItemQuality();
             }
         }
     }

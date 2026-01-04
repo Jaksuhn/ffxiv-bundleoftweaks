@@ -32,8 +32,6 @@ public unsafe partial class AutoBusy : Tweak {
             //    InfoProxyDetail.Instance()->RefreshOnlineStatus();
             //}
         }
-        if (actorID == Player.Object?.EntityId)
-            Log($"{actorID} {category} {p1} {p2}");
         ProcessPacketActorControlHook.Original(actorID, category, p1, p2, p3, p4, p5, p6, p7, p8, targetID, replaying);
     }
 

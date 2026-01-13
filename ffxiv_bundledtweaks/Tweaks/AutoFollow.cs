@@ -93,6 +93,8 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration> {
             || (!string.IsNullOrEmpty(_masterName) && x.Name.TextValue.Equals(_masterName, StringComparison.InvariantCultureIgnoreCase)));
 
         if (master == null) { movement.Enabled = false; return; }
+        if (Svc.Condition[ConditionFlag.RidingPillion]) return;
+
         if (Config.DisableIfFurtherThan > 0 && Player.DistanceTo(master) >= Config.DisableIfFurtherThan) { movement.Enabled = false; return; }
         if (Config.OnlyInDuty && !Player.IsInDuty) { movement.Enabled = false; return; }
         if (Config.ExcludeCombat && Svc.Condition[ConditionFlag.InCombat]) { movement.Enabled = false; return; }
@@ -100,30 +102,24 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration> {
 
         if (master.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Player) {
             // prioritise riding pillion
-            //if (Svc.Party.Any(p => p.ObjectId == master.GameObjectId) && GetRow<Mount>(master.Character()->Mount.MountId)?.ExtraSeats > 0)
-            //{
-            //    if (P.Memory.RidePillion == null) goto Mount;
-            //    // ignore DistanceToKeep
-            //    if (!Player.IsNear(master))
-            //    {
-            //        movement.Enabled = true;
-            //        movement.DesiredPosition = master.Position;
-            //        return;
-            //    }
-            //    else
-            //    {
-            //        movement.Enabled = false;
-            //        if (Svc.Condition[ConditionFlag.Mounted])
-            //        {
-            //            ActionManager.Instance()->UseAction(ActionType.GeneralAction, 23);
-            //            return;
-            //        }
-            //        TaskManager.Enqueue(() => Svc.Log.Debug("Detected mounted party member with extra seats, mounting..."));
-            //        TaskManager.Enqueue(() => P.Memory.RidePillion(master.BattleChara(), 10));
-            //        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
-            //        return;
-            //    }
-            //}
+            if (Svc.Party.Any(p => p.EntityId == master.GameObjectId) && master.CanRidePillion()) {
+                if (Player.DistanceTo(master) > 3) {
+                    movement.Enabled = true;
+                    movement.DesiredPosition = master.Position;
+                    return;
+                }
+                else {
+                    movement.Enabled = false;
+                    if (Svc.Condition[ConditionFlag.Mounted]) {
+                        ActionManager.Instance()->UseAction(ActionType.GeneralAction, 23);
+                        return;
+                    }
+                    TaskManager.Enqueue(() => Svc.Log.Debug("Detected mounted party member with extra seats, mounting..."));
+                    TaskManager.Enqueue(() => GameMain.ExecuteCommand(CommandFlag.RidePillion.Value, (int)master.EntityId, 10));
+                    TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                    return;
+                }
+            }
 
             // mount
             if (master.Character()->IsMounted() && CanMount()) {

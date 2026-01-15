@@ -151,6 +151,13 @@ public partial class HaselWindow : Window {
             }
         }
 
+        if (!tweak.MeetsClientStructsRequirements()) {
+            ImGui.DrawSection("Invalid ClientStructs version");
+            ImGui.Icon(60074, 24);
+            ImGui.SameLine();
+            ImGuiEx.TextV(Colors.Grey2, $"[{Svc.PluginInterface.ClientStructsVersion}] not in tweak bounds [{tweak.RequiredClientStructsVersion.Min}/{tweak.RequiredClientStructsVersion.Max}]. Wait for a Dalamud update.");
+        }
+
         if (tweak.IncompatibilityWarnings.Any(entry => entry.IsLoaded)) {
             ImGui.DrawSection("Incompatibility Warning");
             ImGui.Icon(60073, 24);

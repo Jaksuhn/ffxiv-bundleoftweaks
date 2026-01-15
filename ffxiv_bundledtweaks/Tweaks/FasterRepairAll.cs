@@ -5,8 +5,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace ComplexTweaks.Tweaks;
 
-#if DEBUG
 [Tweak]
+[RequiresClientStructs(7240)]
 public partial class FasterRepairAll : Tweak {
     public override string Name => "Faster Repair All";
     public override string Description => "Is this company stupid";
@@ -54,4 +54,3 @@ public partial class FasterRepairAll : Tweak {
         }
     }
 }
-#endif

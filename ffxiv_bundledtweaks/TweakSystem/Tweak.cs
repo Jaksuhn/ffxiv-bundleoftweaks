@@ -26,6 +26,7 @@ public abstract partial class Tweak : ITweak {
         DisabledReason = tweakAttr?.DisabledReason;
         IsDebug = tweakAttr?.Debug ?? false;
         Requirements = Service.IPC.GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Where(id => id != Ipc.None).Distinct()]);
+        RequiredClientStructsVersion = (CachedType.GetCustomAttribute<RequiresClientStructsAttribute>()?.MinVersion ?? 0, CachedType.GetCustomAttribute<RequiresClientStructsAttribute>()?.MaxVersion ?? uint.MaxValue);
 
         try {
             EzSignatureHelper.Initialize(this);
@@ -66,6 +67,7 @@ public abstract partial class Tweak : ITweak {
     public bool Enabled { get; protected set; }
     public bool Disabled { get; protected set; }
     public string? DisabledReason { get; protected set; }
+    public (uint Min, uint Max) RequiredClientStructsVersion { get; protected set; }
 
     protected TaskManager TaskManager = null!;
 
@@ -178,6 +180,10 @@ public abstract partial class Tweak // Internal
             ModuleMessage("Feature not enabled due to missing dependencies. Please install them then re-enable this feature.");
             return;
         }
+        if (!MeetsClientStructsRequirements()) {
+            ModuleMessage($"Feature not enabled due to invalid ClientStructs version [{Svc.PluginInterface.ClientStructsVersion}].");
+            return;
+        }
 
         if (CachedWindowType != null && _window == null) {
             try {
@@ -245,7 +251,9 @@ public abstract partial class Tweak // Internal
         Enabled = true;
     }
 
-    public bool CanBeEnabled() => Ready && !Outdated && !Disabled && Requirements.All(r => r.IsLoaded);
+    public bool CanBeEnabled() => Ready && !Outdated && !Disabled && Requirements.All(r => r.IsLoaded) && MeetsClientStructsRequirements();
+
+    public bool MeetsClientStructsRequirements() => Svc.PluginInterface.ClientStructsVersion <= RequiredClientStructsVersion.Max && Svc.PluginInterface.ClientStructsVersion >= RequiredClientStructsVersion.Min;
 
     internal virtual void DisableInternal(bool isDisposing = false) {
         if (!Enabled) return;

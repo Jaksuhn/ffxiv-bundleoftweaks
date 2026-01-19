@@ -17,6 +17,10 @@ namespace ComplexTweaks.Tweaks;
 
 public class GlamourSetsTrackerConfiguration {
     [BoolConfig] public bool ShowOnlyMissing = false;
+    [BoolConfig] public bool ShowPartiallyCompleted = false;
+    [BoolConfig] public bool ShowCanAfford = false;
+    [BoolConfig] public bool ShowDoneNotInDresser = false;
+    [BoolConfig] public bool ShowMarketboardPurchasable = false;
 }
 
 [Tweak]
@@ -25,7 +29,7 @@ public unsafe class GlamourSets : Tweak<GlamourSetsTrackerConfiguration, Glamour
     public override string Description => "A tracking window for glamour sets";
 
     [CommandHandler("/glamoursets", "Toggle the Glamour Sets Tracker window")]
-    internal void OnCommand(string command, string arguments) => Window<GlamourSetsWindow>()?.Toggle();
+    internal void OnCommand(string _, string __) => Window<GlamourSetsWindow>()?.Toggle();
 }
 
 public unsafe class GlamourSetsWindow : Window {
@@ -161,8 +165,28 @@ public unsafe class GlamourSetsWindow : Window {
         if (config == null) return;
 
         var missingOnly = config.ShowOnlyMissing;
-        if (ImGui.Checkbox("Show missing only", ref missingOnly))
+        if (ImGui.Checkbox("Missing", ref missingOnly))
             config.ShowOnlyMissing = missingOnly;
+
+        ImGui.SameLine();
+        var showPartiallyCompleted = config.ShowPartiallyCompleted;
+        if (ImGui.Checkbox("Partials", ref showPartiallyCompleted))
+            config.ShowPartiallyCompleted = showPartiallyCompleted;
+
+        ImGui.SameLine();
+        var showCanAfford = config.ShowCanAfford;
+        if (ImGui.Checkbox("Affordable", ref showCanAfford))
+            config.ShowCanAfford = showCanAfford;
+
+        ImGui.SameLine();
+        var showDoneNotInDresser = config.ShowDoneNotInDresser;
+        if (ImGui.Checkbox("Completable", ref showDoneNotInDresser))
+            config.ShowDoneNotInDresser = showDoneNotInDresser;
+
+        ImGui.SameLine();
+        var showMarketboardPurchasable = config.ShowMarketboardPurchasable;
+        if (ImGui.Checkbox("Marketboard", ref showMarketboardPurchasable))
+            config.ShowMarketboardPurchasable = showMarketboardPurchasable;
 
         ImGui.Separator();
 
@@ -183,8 +207,9 @@ public unsafe class GlamourSetsWindow : Window {
         if (!_glamourSetsByType.TryGetValue(setType, out var glamourSets))
             glamourSets = [];
 
-        if (config?.ShowOnlyMissing == true)
-            glamourSets = [.. glamourSets.Where(s => !ownedSets.Contains(s))];
+        if (config != null) {
+            glamourSets = [.. glamourSets.Where(s => MatchesFilters(s, ownedSets, ownedItems, config))];
+        }
 
         var missingItemIds = glamourSets.Where(s => !ownedSets.Contains(s)).SelectMany(x => x.Items).Where(itemId => !ownedItems.Contains(itemId)).ToList();
         DrawCurrencyTotals(missingItemIds);
@@ -197,6 +222,8 @@ public unsafe class GlamourSetsWindow : Window {
         if (OutfitCategories.Count == 0)
             return;
 
+        var config = _tweak.GetConfig<GlamourSetsTrackerConfiguration>();
+
         foreach (var category in OutfitCategories) {
             if (string.IsNullOrEmpty(category.Name))
                 continue;
@@ -208,8 +235,9 @@ public unsafe class GlamourSetsWindow : Window {
             if (!_glamourSetsByCategory.TryGetValue(category.Name, out var glamourSets))
                 glamourSets = [];
 
-            if (_tweak.GetConfig<GlamourSetsTrackerConfiguration>()?.ShowOnlyMissing == true)
-                glamourSets = [.. glamourSets.Where(s => !ownedSets.Contains(s))];
+            if (config != null) {
+                glamourSets = [.. glamourSets.Where(s => MatchesFilters(s, ownedSets, ownedItems, config))];
+            }
 
             DrawCustomCategoryHeader(glamourSets, category, ownedSets, ownedItems);
 
@@ -548,6 +576,66 @@ public unsafe class GlamourSetsWindow : Window {
 
         var ownedCount = GetOwnedCountForCost(firstCost.Value.CostItemId);
         return totalCostQuantity <= ownedCount;
+    }
+
+    private bool IsPartiallyCompleted(GlamourSet glamourSet, HashSet<GlamourSet> ownedSets, HashSet<uint> ownedItems) {
+        if (ownedSets.Contains(glamourSet))
+            return false;
+
+        var ownedCount = 0;
+        foreach (var itemId in glamourSet.Items) {
+            if (ownedItems.Contains(itemId))
+                ownedCount++;
+        }
+
+        return ownedCount > 0 && ownedCount < glamourSet.Items.Count;
+    }
+
+    private bool IsDoneButNotInDresser(GlamourSet glamourSet, HashSet<GlamourSet> ownedSets, HashSet<uint> ownedItems) {
+        if (ownedSets.Contains(glamourSet))
+            return false;
+
+        var ownedCount = 0;
+        foreach (var itemId in glamourSet.Items) {
+            if (ownedItems.Contains(itemId))
+                ownedCount++;
+        }
+
+        return ownedCount == glamourSet.Items.Count;
+    }
+
+    private bool IsMarketboardPurchasable(GlamourSet glamourSet) {
+        foreach (var itemId in glamourSet.Items) {
+            var item = Item.GetRef(itemId).Value;
+            if (!item.IsUntradable)
+                return true;
+        }
+        return false;
+    }
+
+    private bool MatchesFilters(GlamourSet glamourSet, HashSet<GlamourSet> ownedSets, HashSet<uint> ownedItems, GlamourSetsTrackerConfiguration config) {
+        if (config.ShowOnlyMissing && ownedSets.Contains(glamourSet))
+            return false;
+
+        var hasPositiveFilters = config.ShowPartiallyCompleted || config.ShowCanAfford || config.ShowDoneNotInDresser || config.ShowMarketboardPurchasable;
+        if (!hasPositiveFilters)
+            return true;
+
+        var matchesAnyFilter = false;
+
+        if (config.ShowPartiallyCompleted && IsPartiallyCompleted(glamourSet, ownedSets, ownedItems))
+            matchesAnyFilter = true;
+
+        if (config.ShowCanAfford && CanAffordAllMissingGearPieces(glamourSet, ownedItems))
+            matchesAnyFilter = true;
+
+        if (config.ShowDoneNotInDresser && IsDoneButNotInDresser(glamourSet, ownedSets, ownedItems))
+            matchesAnyFilter = true;
+
+        if (config.ShowMarketboardPurchasable && IsMarketboardPurchasable(glamourSet))
+            matchesAnyFilter = true;
+
+        return matchesAnyFilter;
     }
 
     private string? GetCostDisplay(uint itemId, string? categoryName = null) {

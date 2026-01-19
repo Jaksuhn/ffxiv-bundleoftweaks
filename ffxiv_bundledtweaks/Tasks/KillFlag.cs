@@ -18,7 +18,7 @@ public sealed class KillFlag(string world) : TaskBase {
 
         await MoveTo(
             Player.MapFlag,
-            MovementConfig.Default.WithOptions(MovementOptions.Mount | (Player.MapFlag.TerritoryId != 180 ? MovementOptions.Fly : MovementOptions.None)),
+            MovementConfig.Default.WithOptions(MovementOptions.Mount | (Player.MapFlag.TerritoryId != 180 ? MovementOptions.Fly : MovementOptions.None)).WithTolerance(5f),
             stopCondition: () => FindHuntTarget() is not null,
             onStopReached: async () => {
                 if (FindHuntTarget() is DGameObject target)

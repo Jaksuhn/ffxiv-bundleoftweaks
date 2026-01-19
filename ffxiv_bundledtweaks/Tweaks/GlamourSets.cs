@@ -47,71 +47,9 @@ public unsafe class GlamourSetsWindow : Window {
         public Func<SpecialShop, bool>? SpecialShopPredicateDiscriminator { get; set; }
     }
 
-    private static byte[] TradeScripSpecialIds => [1, 2, 3, 4, 6, 7];
-
-    private readonly List<OutfitCategory> OutfitCategories = [
-        new OutfitCategory {
-            Name = "Saucer",
-            Discriminators = [29, 41629] // MGP, MGF
-        },
-        new OutfitCategory {
-            Name = "PvP",
-            Discriminators = [25, 36656, 40479] // Wolf Marks, Trophy Crystals, Commendation Crystals
-        },
-        new OutfitCategory {
-            Name = "Tribes",
-            Discriminators = [.. FindRows<BeastTribe>(r => r.CurrencyItem.RowId != 0).Select(r => r.CurrencyItem.RowId)]
-        },
-        new OutfitCategory { // must be after tribes because some tribe outfits are gil based
-            Name = "Gil",
-            Discriminators = [1], // Gil
-            AmountDiscriminator = amount => amount > 0 // job gear is always 0, filter them
-        },
-        new OutfitCategory {
-            Name = "Trades",
-            Discriminators = [.. TradeScripSpecialIds.Select(sid => CurrencyManager.Instance()->GetItemIdBySpecialId(sid))]
-        },
-        new OutfitCategory {
-            Name = "Job Gear",
-            SpecialShopPredicateDiscriminator = shop => shop.UseCurrencyType == 8 && shop.Quest.RowId > 0
-        },
-        new OutfitCategory {
-            Name = "Eureka",
-            Discriminators = [21801, 21803] // Protean/Anemos Crystals
-        },
-        new OutfitCategory {
-            Name = "Crescent",
-            Discriminators = [45043, 45044] // Enlightenment pieces
-        },
-        new OutfitCategory {
-            Name = "Raids",
-            Discriminators = [.. Svc.Data.GetSupplemental<DungeonBossDrop>(CsvLoader.DungeonBossDropResourceName).Where(r => r.FightNo is 0).Select(r => r.ItemId), 22599, 23383, 47100]
-            // all totems + monster hunter scales (they don't drop from the boss)
-        },
-        new OutfitCategory {
-            Name = "Variant/DD",
-            Discriminators = [15422, 23164, 38533, 39884, 41078, 46186] // All potsherds
-        },
-        new OutfitCategory {
-            Name = "Fates",
-            Discriminators = [12252, 27972, 36634, 41804] // Coeurlregina horn, Archaeotania's horn, Daivadipa's bead, Mica magicog
-        },
-        new OutfitCategory {
-            Name = "Island",
-            Discriminators = [37549, 37550] // Searfarer/Islander Cowries
-        },
-        new OutfitCategory {
-            Name = "Eternal Bonding",
-            ItemPredicateDiscriminator = item => item.WithLanguage(Dalamud.Game.ClientLanguage.English).Description.ToString().Equals("Fits: Everyone ♥", StringComparison.OrdinalIgnoreCase)
-        },
-        new OutfitCategory {
-            Name = "Vintage",
-            Discriminators = [9387, 9388, 9389, 9390, 9391] // Antique pieces from 2.x dungeons
-        },
-    ];
-
     private readonly GlamourSets _tweak;
     private readonly ReadOnlyCollection<GlamourSet> _glamourSets;
+    private readonly List<OutfitCategory> _outfitCategories;
     private readonly ItemCostLookup _costsLookup;
 
     // caches
@@ -126,7 +64,8 @@ public unsafe class GlamourSetsWindow : Window {
         _tweak = tweak;
         _costsLookup = new();
 
-        _categoryDiscriminators = OutfitCategories
+        _outfitCategories = BuildOutfitCategories();
+        _categoryDiscriminators = _outfitCategories
             .Where(c => c.Discriminators != null && c.Discriminators.Count > 0)
             .ToDictionary(c => c.Name, c => c.Discriminators);
 
@@ -152,13 +91,10 @@ public unsafe class GlamourSetsWindow : Window {
             return;
         }
 
-        var ownedItems = GetOwnedItems();
         var dresserItemIds = new HashSet<uint>(agent->GlamourDresserBaseItemIds.ToArray());
-        var ownedSetsHashSet = new HashSet<GlamourSet>(_glamourSets.Where(x => dresserItemIds.Contains(x.ItemId)));
-        var ownedSets = ownedSetsHashSet.ToList();
+        var ownedSets = new HashSet<GlamourSet>(_glamourSets.Where(x => dresserItemIds.Contains(x.ItemId)));
 
-        var obtainableCount = _glamourSets.Count(x => x.SetType != ESetType.Unobtainable || ownedSetsHashSet.Contains(x));
-        ImGui.Text($"Complete Sets: {ownedSets.Count} / {obtainableCount}");
+        ImGui.Text($"Complete Sets: {ownedSets.Count} / {_glamourSets.Count(x => x.SetType != ESetType.Unobtainable || ownedSets.Contains(x))}");
         ImGui.Text($"Space saved: {ownedSets.Sum(x => x.Items.Count - 1)} items");
 
         var config = _tweak.GetConfig<GlamourSetsTrackerConfiguration>();
@@ -190,11 +126,12 @@ public unsafe class GlamourSetsWindow : Window {
 
         ImGui.Separator();
 
+        var ownedItems = GetOwnedItems();
         using var tabBar = ImRaii.TabBar("Tabs");
         if (tabBar) {
-            DrawTab("Normal", ownedSetsHashSet, ownedItems, ESetType.Default);
-            DrawCustomCategoryTabs(ownedSetsHashSet, ownedItems);
-            DrawTab("Unobtainable", ownedSetsHashSet, ownedItems, ESetType.Unobtainable);
+            DrawTab("Normal", ownedSets, ownedItems, ESetType.Default);
+            DrawCustomCategoryTabs(ownedSets, ownedItems);
+            DrawTab("Unobtainable", ownedSets, ownedItems, ESetType.Unobtainable);
         }
     }
 
@@ -219,12 +156,12 @@ public unsafe class GlamourSetsWindow : Window {
     }
 
     private void DrawCustomCategoryTabs(HashSet<GlamourSet> ownedSets, HashSet<uint> ownedItems) {
-        if (OutfitCategories.Count == 0)
+        if (_outfitCategories.Count == 0)
             return;
 
         var config = _tweak.GetConfig<GlamourSetsTrackerConfiguration>();
 
-        foreach (var category in OutfitCategories) {
+        foreach (var category in _outfitCategories) {
             if (string.IsNullOrEmpty(category.Name))
                 continue;
 
@@ -435,6 +372,70 @@ public unsafe class GlamourSetsWindow : Window {
         return ownedItems;
     }
 
+    private static byte[] TradeScripSpecialIds => [1, 2, 3, 4, 6, 7];
+    private List<OutfitCategory> BuildOutfitCategories() {
+        return [
+            new OutfitCategory {
+                Name = "Saucer",
+                Discriminators = [29, 41629] // MGP, MGF
+            },
+            new OutfitCategory {
+                Name = "PvP",
+                Discriminators = [25, 36656, 40479] // Wolf Marks, Trophy Crystals, Commendation Crystals
+            },
+            new OutfitCategory {
+                Name = "Tribes",
+                Discriminators = [.. FindRows<BeastTribe>(r => r.CurrencyItem.RowId != 0).Select(r => r.CurrencyItem.RowId)]
+            },
+            new OutfitCategory { // must be after tribes because some tribe outfits are gil based
+                Name = "Gil",
+                Discriminators = [1], // Gil
+                AmountDiscriminator = amount => amount > 0 // job gear is always 0, filter them
+            },
+            new OutfitCategory {
+                Name = "Trades",
+                Discriminators = [.. TradeScripSpecialIds.Select(sid => CurrencyManager.Instance()->GetItemIdBySpecialId(sid)).Where(id => id != 0)]
+            },
+            new OutfitCategory {
+                Name = "Job Gear",
+                SpecialShopPredicateDiscriminator = shop => shop.UseCurrencyType == 8 && shop.Quest.RowId > 0
+            },
+            new OutfitCategory {
+                Name = "Eureka",
+                Discriminators = [21801, 21803] // Protean/Anemos Crystals
+            },
+            new OutfitCategory {
+                Name = "Crescent",
+                Discriminators = [45043, 45044] // Enlightenment pieces
+            },
+            new OutfitCategory {
+                Name = "Raids",
+                Discriminators = [.. Svc.Data.GetSupplemental<DungeonBossDrop>(CsvLoader.DungeonBossDropResourceName).Where(r => r.FightNo is 0).Select(r => r.ItemId), 22599, 23383, 47100]
+                // all totems + monster hunter scales (they don't drop from the boss)
+            },
+            new OutfitCategory {
+                Name = "Variant/DD",
+                Discriminators = [15422, 23164, 38533, 39884, 41078, 46186] // All potsherds
+            },
+            new OutfitCategory {
+                Name = "Fates",
+                Discriminators = [12252, 27972, 36634, 41804] // Coeurlregina horn, Archaeotania's horn, Daivadipa's bead, Mica magicog
+            },
+            new OutfitCategory {
+                Name = "Island",
+                Discriminators = [37549, 37550] // Searfarer/Islander Cowries
+            },
+            new OutfitCategory {
+                Name = "Eternal Bonding",
+                ItemPredicateDiscriminator = item => item.WithLanguage(Dalamud.Game.ClientLanguage.English).Description.ToString().Equals("Fits: Everyone ♥", StringComparison.OrdinalIgnoreCase)
+            },
+            new OutfitCategory {
+                Name = "Vintage",
+                Discriminators = [9387, 9388, 9389, 9390, 9391] // Antique pieces from 2.x dungeons
+            },
+        ];
+    }
+
     private ReadOnlyCollection<GlamourSet> BuildGlamourSets(HashSet<uint> armoireItems, ItemCostLookup costsLookup) {
         var specialShopByItemId = GetSheet<SpecialShop>()
             .Where(s => s.RowId > 0 && !string.IsNullOrEmpty(s.Name.ToString()))
@@ -526,7 +527,7 @@ public unsafe class GlamourSetsWindow : Window {
     }
 
     private string? FindCategoryForItems(ReadOnlyCollection<uint> itemIds, ItemCostLookup costsLookup, SpecialShop? specialShopRow) {
-        foreach (var cat in OutfitCategories) {
+        foreach (var cat in _outfitCategories) {
             if (specialShopRow != null && cat.SpecialShopPredicateDiscriminator?.Invoke(specialShopRow.Value) == true) {
                 return cat.Name;
             }

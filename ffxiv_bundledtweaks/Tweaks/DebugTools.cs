@@ -141,7 +141,7 @@ public class DebugTools : Tweak<DebugToolsConfiguration> {
             if (_keys["MOVE_LEFT"].IsHeldRaw() || _keys["MOVE_STRIFE_L"].IsHeldRaw())
                 Player.SetPosition(Player.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle));
             if (_keys["MOVE_RIGHT"].IsHeldRaw() || _keys["MOVE_STRIFE_R"].IsHeldRaw())
-                Player.SetPosition(Player.Position.AddX(Config.NoClipSpeed).RotatePoint(cx, cy, angle));
+                Player.SetPosition(Player.Position.AddX(-Config.NoClipSpeed).RotatePoint(cx, cy, angle));
         }
     }
 

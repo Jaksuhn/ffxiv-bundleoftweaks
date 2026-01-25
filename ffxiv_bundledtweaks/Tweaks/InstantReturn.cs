@@ -1,8 +1,9 @@
-﻿using ECommons.Automation;
+using ECommons.Automation;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Group;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -19,11 +20,11 @@ public unsafe partial class InstantReturn : Tweak {
         if (ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 6) != 0 || Player.IsInPvP)
             return AgentReturn_ReturnHook.Original(agent);
 
-        if (Svc.Party.Length > 1) {
-            if (GroupManager.Instance()->MainGroup.IsEntityIdPartyLeader(Svc.PlayerState.EntityId))
-                Chat.SendMessage("/partycmd breakup");
+        if (InfoProxyCrossRealm.IsLocalPlayerInParty()) {
+            if (InfoProxyCrossRealm.IsLocalPlayerPartyLeader())
+                Svc.Chat.ExecuteCommand("/partycmd breakup");
             else
-                Chat.SendMessage("/leave");
+                Svc.Chat.ExecuteCommand("/leave");
         }
 
         GameMain.ExecuteCommand(CommandFlag.InstantReturn.Value);

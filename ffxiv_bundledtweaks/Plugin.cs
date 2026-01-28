@@ -19,6 +19,7 @@ public class Plugin : IDalamudPlugin {
     public Version Version { get; private set; } = null!;
 
     public static readonly HashSet<Tweak> Tweaks = [];
+    public readonly bool IsLocalCs;
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
         P = this;
@@ -30,6 +31,7 @@ public class Plugin : IDalamudPlugin {
         FFXIVClientStructs.Interop.Generated.Addresses.Register();
         InteropGenerator.Runtime.Resolver.GetInstance.Setup(Svc.SigScanner.SearchBase, Svc.Data.GameData.Repositories["ffxiv"].Version, new(System.IO.Path.Join(pluginInterface.ConfigDirectory.FullName, "SigCache.json")));
         InteropGenerator.Runtime.Resolver.GetInstance.Resolve();
+        IsLocalCs = true;
 #endif
 
         EzConfig.DefaultSerializationFactory = new YamlFactory();

@@ -253,7 +253,7 @@ public abstract partial class Tweak // Internal
 
     public bool CanBeEnabled() => Ready && !Outdated && !Disabled && Requirements.All(r => r.IsLoaded) && MeetsClientStructsRequirements();
 
-    public bool MeetsClientStructsRequirements() => Svc.PluginInterface.ClientStructsVersion <= RequiredClientStructsVersion.Max && Svc.PluginInterface.ClientStructsVersion >= RequiredClientStructsVersion.Min;
+    public bool MeetsClientStructsRequirements() => P.IsLocalCs || Svc.PluginInterface.ClientStructsVersion <= RequiredClientStructsVersion.Max && Svc.PluginInterface.ClientStructsVersion >= RequiredClientStructsVersion.Min;
 
     internal virtual void DisableInternal(bool isDisposing = false) {
         if (!Enabled) return;

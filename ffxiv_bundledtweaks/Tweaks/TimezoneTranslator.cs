@@ -1,4 +1,4 @@
-﻿using Dalamud.Game;
+using Dalamud.Game;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -56,48 +56,95 @@ public class TimezoneTranslator : Tweak {
         if (message.TextValue.IsNullOrEmpty()) return;
 
         if (_kvp.TryGetValue(Svc.ClientState.ClientLanguage, out var conf)) {
-            if (conf.Culture.GetFullDateTimeRegexPattern().Match(message.TextValue) is not { Success: true } match) return;
+            var regex = conf.Culture.GetFullDateTimeRegexPattern();
+            if (!regex.IsMatch(message.TextValue))
+                return;
 
-            Log($"Detected timestamp [{match.Value}] in message {message.TextValue}");
-            if (DateTime.TryParse(match.Value, conf.Culture, out var serverTime)) {
-                var localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(serverTime, conf.ServerTimeZone, TimeZoneInfo.Local.Id).ToString(conf.Culture.DateTimeFormat.FullDateTimePattern, conf.Culture);
-                var sb = new SeStringBuilder();
-                foreach (var item in message.Payloads) {
-                    if (item is TextPayload tp && (tp.Text?.Contains(match.Value) ?? false)) // there might be multiple text payloads (like if ST clickable chat links is enabled)
-                    {
-                        string text, original = text = string.Concat(tp.Text.AsSpan(0, match.Index), localTime, tp.Text.AsSpan(match.Index + match.Length));
-                        var serverTz = Svc.ClientState.ClientLanguage == ClientLanguage.French ? conf.LongName : conf.Abbreviation; // french has to be special as always
-                        text = Regex.Replace(text, $@"\({Regex.Escape(serverTz)}\)", $"({LocalTzAbbreviation})", RegexOptions.IgnoreCase);
-                        if (text == original)
-                            text += $" ({LocalTzAbbreviation})"; // if any original string (jp) doesn't have a timezone to replace, append
+            var serverTz = Svc.ClientState.ClientLanguage == ClientLanguage.French ? conf.LongName : conf.Abbreviation; // french has to be special as always
+            var sb = new SeStringBuilder();
+            foreach (var item in message.Payloads) {
+                if (item is TextPayload tp && !string.IsNullOrEmpty(tp.Text)) {
+                    // replace every timestamp in this payload (there can be multiple)
+                    var replacedTimes = regex.Replace(tp.Text, m => {
+                        if (!DateTime.TryParse(m.Value, conf.Culture, out var serverTime)) {
+                            Error($"Failed to parse a {nameof(DateTime)} from [{m.Value}] with culture [{conf.Culture.Name}]");
+                            return m.Value;
+                        }
 
-                        Log($"Replaced [{match.Value} ({serverTz})] with [{localTime} ({LocalTzAbbreviation})]");
-                        sb.Add(new TextPayload(text));
-                    }
-                    else
-                        sb.Add(item);
+                        var localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(serverTime, conf.ServerTimeZone, TimeZoneInfo.Local.Id)
+                            .ToString(conf.Culture.DateTimeFormat.FullDateTimePattern, conf.Culture);
+
+                        Log($"Replaced timestamp [{m.Value} ({serverTz})] with [{localTime} ({LocalTzAbbreviation})]");
+                        return localTime;
+                    });
+
+                    // replace / append timezone abbreviation.
+                    var withLocalTz = Regex.Replace(replacedTimes, $@"\({Regex.Escape(serverTz)}\)", $"({LocalTzAbbreviation})", RegexOptions.IgnoreCase);
+                    if (withLocalTz == replacedTimes && !withLocalTz.Contains($"({LocalTzAbbreviation})", StringComparison.OrdinalIgnoreCase))
+                        withLocalTz += $" ({LocalTzAbbreviation})"; // if any original string (jp) doesn't have a timezone to replace, append
+
+                    sb.Add(new TextPayload(withLocalTz));
                 }
-                message = sb.Build();
+                else {
+                    sb.Add(item);
+                }
             }
-            else
-                Error($"Failed to parse a {nameof(DateTime)} from [{match.Value}] with culture [{conf.Culture.Name}]");
+
+            message = sb.Build();
         }
     }
 
-    private string LocalTzAbbreviation
-        => TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)
-        ? TZNames.GetAbbreviationsForTimeZone(TimeZoneInfo.Local.Id, CultureInfo.CurrentCulture.Name).Daylight ?? "null"
-        : TZNames.GetAbbreviationsForTimeZone(TimeZoneInfo.Local.Id, CultureInfo.CurrentCulture.Name).Standard ?? "null";
+    private string LocalTzAbbreviation {
+        get {
+            var local = TimeZoneInfo.Local;
+            var now = DateTime.Now;
+
+            try {
+                var abbrs = TZNames.GetAbbreviationsForTimeZone(local.Id, CultureInfo.CurrentCulture.Name);
+                var candidate = local.IsDaylightSavingTime(now) ? abbrs.Daylight : abbrs.Standard;
+                if (!string.IsNullOrWhiteSpace(candidate))
+                    return candidate;
+            }
+            catch {
+                // fall through to offset-based abbreviation
+            }
+
+            var offset = local.GetUtcOffset(now);
+            var sign = offset >= TimeSpan.Zero ? "+" : "-";
+            var hours = Math.Abs(offset.Hours).ToString("00", CultureInfo.InvariantCulture);
+            var minutes = Math.Abs(offset.Minutes).ToString("00", CultureInfo.InvariantCulture);
+
+            return minutes == "00" ? $"GMT{sign}{hours}" : $"GMT{sign}{hours}:{minutes}";
+        }
+    }
 
     private sealed class LanguageConfig(CultureInfo cultureInfo, string serverTimezone) {
         public CultureInfo Culture { get; } = cultureInfo;
         public string ServerTimeZone { get; } = serverTimezone;
         public TimeZoneInfo Id => TimeZoneInfo.FindSystemTimeZoneById(ServerTimeZone);
-        public string Abbreviation => TimeZoneInfo.FindSystemTimeZoneById(ServerTimeZone) is var tz
-            ? TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now)
-                ? TZNames.GetAbbreviationsForTimeZone(tz.Id, Culture.Name).Daylight ?? "null"
-                : TZNames.GetAbbreviationsForTimeZone(tz.Id, Culture.Name).Standard ?? "null"
-            : "null";
+        public string Abbreviation {
+            get {
+                var now = DateTime.Now;
+                try {
+                    var tz = TimeZoneInfo.FindSystemTimeZoneById(ServerTimeZone);
+                    var candidate = TimeZoneInfo.Local.IsDaylightSavingTime(now) ? TZNames.GetAbbreviationsForTimeZone(tz.Id, Culture.Name).Daylight : TZNames.GetAbbreviationsForTimeZone(tz.Id, Culture.Name).Standard;
+                    if (!string.IsNullOrWhiteSpace(candidate))
+                        return candidate;
+
+                    var offset = tz.GetUtcOffset(now);
+                    var sign = offset >= TimeSpan.Zero ? "+" : "-";
+                    var hours = Math.Abs(offset.Hours).ToString("00", CultureInfo.InvariantCulture);
+                    var minutes = Math.Abs(offset.Minutes).ToString("00", CultureInfo.InvariantCulture);
+
+                    return minutes == "00"
+                        ? $"GMT{sign}{hours}"
+                        : $"GMT{sign}{hours}:{minutes}";
+                }
+                catch {
+                    return "GMT";
+                }
+            }
+        }
 
         public string LongName // yes this is pointlessly complicated
         {

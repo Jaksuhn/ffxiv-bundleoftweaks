@@ -2,14 +2,15 @@
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
 [RequiresClientStructs(7240)]
 public partial class FasterRepairAll : Tweak {
-    public override string Name => "Faster Repair All";
-    public override string Description => "Is this company stupid";
+    public override string Name => "Faster Npc Repair All";
+    public override string Description => "Instantly repair all inventories when repairing at an npc.";
 
     private const uint eventParamId = 0x43425400;
     public override void Enable() {
@@ -28,8 +29,8 @@ public partial class FasterRepairAll : Tweak {
         // you have to match the event type that you're trying to replace or else the custom event doesn't go through
     }
 
-    private void HandleEvent(AddonEvent type, AddonArgs args) {
-        if (args is not AddonReceiveEventArgs rea) return;
+    private unsafe void HandleEvent(AddonEvent type, AddonArgs args) {
+        if (args is not AddonReceiveEventArgs rea || AgentRepair.Instance()->IsSelfRepairOpen) return;
         // the normal event. Set both to 0 to block
         if (rea is { AtkEventType: (byte)AtkEventType.ButtonClick, EventParam: 5 }) {
             rea.AtkEventType = 0;
@@ -45,12 +46,26 @@ public partial class FasterRepairAll : Tweak {
 
     private unsafe void RepairAll() {
         if (AgentRepair.Instance()->IsSelfRepairOpen) {
-            GameMain.ExecuteCommand(CommandFlag.RepairEquippedItems, (int)InventoryType.EquippedItems);
-            RepairCategory.Values.ForEach(inv => GameMain.ExecuteCommand(CommandFlag.RepairAllItems, (int)inv));
+            //Svc.Automation.Start(new RepairAllTask());
+            return;
         }
         else {
             GameMain.ExecuteCommand(CommandFlag.RepairEquippedItemsNPC, (int)InventoryType.EquippedItems);
             RepairCategory.Values.ForEach(inv => GameMain.ExecuteCommand(CommandFlag.RepairAllItemsNPC, (int)inv));
         }
+    }
+
+    private class RepairAllTask : TaskBase {
+        // all this avoids is the progress UI, but takes longer since it will "repair" empty inventories and waste time
+        protected override async Task Execute() {
+            await WaitUntil(() => Svc.Condition.HasPermission(39), "WaitForCanRepair");
+            RepairEquipped();
+            foreach (var inv in RepairCategory.Values) {
+                await WaitUntil(() => Svc.Condition.HasPermission(39), "WaitForCanRepair");
+                inv.Repair();
+            }
+        }
+
+        private static unsafe void RepairEquipped() => RepairManager.Instance()->RepairEquipped(false);
     }
 }

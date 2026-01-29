@@ -1,3 +1,4 @@
+using clib;
 using ComplexTweaks.Configuration;
 using ComplexTweaks.UI;
 using Dalamud.Plugin;
@@ -25,7 +26,7 @@ public class Plugin : IDalamudPlugin {
         P = this;
         Version = P.GetType().Assembly.GetName().Version ?? new(0, 0);
         ECommonsMain.Init(pluginInterface, P, ECommons.Module.DalamudReflector, ECommons.Module.ObjectFunctions);
-        clib.CLibMain.Init(pluginInterface, P);
+        CLibMain.Init(pluginInterface, P);
 
 #if LOCAL_CS
         FFXIVClientStructs.Interop.Generated.Addresses.Register();
@@ -87,6 +88,7 @@ public class Plugin : IDalamudPlugin {
         }
         C.EnabledTweaks.CollectionChanged -= OnChange;
         ECommonsMain.Dispose();
+        CLibMain.Dispose();
     }
 
     private void OnCommand(string command, string args) {

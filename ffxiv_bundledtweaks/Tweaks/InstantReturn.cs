@@ -2,6 +2,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -14,6 +15,9 @@ public unsafe partial class InstantReturn : Tweak {
     public override void Enable() => Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", HandleReturn);
     public override void Disable() => Svc.AddonLifecycle.UnregisterListener(HandleReturn);
 
+    private delegate void DisbandPartyDelegate();
+    private readonly DisbandPartyDelegate DisbandParty = Marshal.GetDelegateForFunctionPointer<DisbandPartyDelegate>(Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 40 88 B7 ?? ?? ?? ?? EB 0B C6 87 ?? ?? ?? ?? ??"));
+
     [AddressHook<AgentReturn>(nameof(AgentReturn.MemberFunctionPointers.Return))]
     private byte AgentReturn_Return(AgentInterface* agent) {
         if (ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 6) != 0 || Player.IsInPvP)
@@ -21,7 +25,7 @@ public unsafe partial class InstantReturn : Tweak {
 
         if (InfoProxyCrossRealm.IsLocalPlayerInParty()) {
             if (InfoProxyCrossRealm.IsLocalPlayerPartyLeader())
-                Svc.Chat.ExecuteCommand("/partycmd breakup");
+                DisbandParty();
             else
                 Svc.Chat.ExecuteCommand("/leave");
         }

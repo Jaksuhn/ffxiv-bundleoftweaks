@@ -148,6 +148,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
         };
 
         protected override async Task Execute() {
+            using var stop = new OnDispose(() => Svc.TextAdvance.DisableExternalControl(Plugin.Name));
             try {
                 while (!CancelToken.IsCancellationRequested && tweak.Running) {
                     var state = State;
@@ -292,7 +293,17 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             var rnd = NextFate.Position.RandomPoint(NextFate.Radius * 0.5f);
             var msh = rnd.OnMesh();
             Log($"NextFate Position: {NextFate.Position} -> {rnd} -> {msh}");
-            await MoveTo(msh, MovementConfig.Everything);
+
+            bool FateNoLongerValid() => NextFate is null || !FateConditions(NextFate);
+            bool ShouldSwitchToNpc() => NextFate?.MotivationNpc is { } && NextFate.State == FFXIVClientStructs.FFXIV.Client.Game.Fate.FateState.Preparing;
+
+            await MoveTo(msh, MovementConfig.Everything,
+                stopCondition: () => FateNoLongerValid() || ShouldSwitchToNpc(),
+                onStopReached: async () => {
+                    if (ShouldSwitchToNpc())
+                        await ActivateFate();
+                });
+
             if (NextFate is { State: FFXIVClientStructs.FFXIV.Client.Game.Fate.FateState.Preparing })
                 await ActivateFate();
         }
@@ -300,7 +311,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
         private async Task ActivateFate() {
             using var scope = BeginScope(nameof(ActivateFate));
             if (NextFate?.MotivationNpc is not { } npc) return;
-            await MoveTo(npc.Position, MovementConfig.InteractRange);
+            await MoveTo(npc.Position, MovementConfig.InteractRange.WithOptions(MovementOptions.GetCurrent()));
             await InteractWith(npc, () => NextFate?.State == FFXIVClientStructs.FFXIV.Client.Game.Fate.FateState.Running, skip: UiSkipOptions.Talk | UiSkipOptions.YesNo);
         }
 

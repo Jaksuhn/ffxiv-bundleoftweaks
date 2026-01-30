@@ -297,7 +297,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             bool FateNoLongerValid() => NextFate is null || !FateConditions(NextFate);
             bool ShouldSwitchToNpc() => NextFate?.MotivationNpc is { } && NextFate.State == FFXIVClientStructs.FFXIV.Client.Game.Fate.FateState.Preparing;
 
-            await MoveTo(msh, MovementConfig.Everything,
+            await MoveTo(msh, MovementConfig.Everything.WithTolerance(3),
                 stopCondition: () => FateNoLongerValid() || ShouldSwitchToNpc(),
                 onStopReached: async () => {
                     if (ShouldSwitchToNpc())

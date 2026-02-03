@@ -1,4 +1,4 @@
-﻿using ComplexTweaks.Tweaks;
+using ComplexTweaks.Tweaks;
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.Automation;
 using Lumina.Excel.Sheets;
@@ -16,8 +16,7 @@ public sealed class KillFlag(string world) : TaskBase {
         if (!world.IsNullOrEmpty())
             await HandleWorldTravel();
 
-        await MoveTo(
-            Player.MapFlag,
+        await MoveToFlag(
             MovementConfig.Default.WithOptions(MovementOptions.Mount | (Player.MapFlag.TerritoryId != 180 ? MovementOptions.Fly : MovementOptions.None)).WithTolerance(5f),
             stopCondition: () => FindHuntTarget() is not null,
             onStopReached: async () => {

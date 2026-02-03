@@ -41,9 +41,28 @@ public class FateToolKitConfig {
         new() { Criteria = FateSortCriteria.Progress, Descending = true },
         new() { Criteria = FateSortCriteria.HasBonus, Descending = true },
         new() { Criteria = FateSortCriteria.TimeRemainingUrgent, Descending = false },
+        new() { Criteria = FateSortCriteria.TimeRemaining, Descending = false },
         new() { Criteria = FateSortCriteria.Distance, Descending = false },
     ];
 }
+
+/*
+ * TODO:
+ * announce next fate in party chat? might be good if you were multiboxing
+ * better handling of hitting a mob at the end of the fight (don't think I can do anything tbh, vbm needs to)
+ * identify fate chains and wait around for the next
+ * config: blacklist fate types
+ * gemstone spending or at least stop when full
+ * more dynamic pull sizes. Like if fates have a ton of enemies, they're generally low health and you could just pull them all
+ * fix status names: things like mounting don't show and last status shows once stopped
+ * better handling of new fates spawning on top of you
+ * 
+ * vbm:
+ * treat all engaged enemies as your own
+ * somehow fix engaging enemies as the fight is ending
+ * calculate enemies to kill/things to turn in by the fate progress step size
+ * 
+ */
 
 [Tweak]
 [Requires(Ipc.Navmesh | Ipc.BossMod | Ipc.TextAdvance)]
@@ -281,6 +300,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             bool ShouldSwitchToNpc() => NextFate?.MotivationNpc is { } && NextFate.State == FateState.Preparing;
 
             await MoveTo(msh, MovementConfig.Everything.WithTolerance(3),
+                allowTeleportIfFaster: NextFate is { Progress: > 0 }, // in progress = urgent, otherwise I'd rather just waste a few extra seconds
                 stopCondition: () => FateNoLongerValid() || ShouldSwitchToNpc(),
                 onStopReached: async () => {
                     if (ShouldSwitchToNpc())

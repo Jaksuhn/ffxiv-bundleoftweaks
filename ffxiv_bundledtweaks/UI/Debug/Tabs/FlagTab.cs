@@ -16,7 +16,7 @@ internal unsafe class FlagTab : DebugTab {
 
         ImGui.TextUnformatted($"Map Position: {new Vector2(Player.MapFlag.XFloat, Player.MapFlag.YFloat)}");
 
-        var pos = Player.MapFlag.ToVector3();
+        if (Svc.Navmesh.FlagToPoint() is not { } pos) return;
         ImGui.TextUnformatted($"World Position: {pos}");
 
         var territory = Player.MapFlag.TerritoryId;

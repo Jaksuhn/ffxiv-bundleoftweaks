@@ -34,6 +34,7 @@ public class NavmeshIPC : BaseIPC {
     [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3, float, float, Vector3?> NearestPoint;
     /// <summary> Vector3 p, bool allowUnlandable, float halfExtentXZ (default 5) </summary>
     [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3, bool, float, Vector3?> PointOnFloor;
+    [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3?> FlagToPoint;
 
     /// <summary> List<Vector3> waypoints, bool fly </summary>
     [EzIPC("Path.%m")] public readonly Action<List<Vector3>, bool> MoveTo;

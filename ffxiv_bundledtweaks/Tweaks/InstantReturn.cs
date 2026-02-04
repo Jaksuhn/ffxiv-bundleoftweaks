@@ -15,7 +15,7 @@ public unsafe partial class InstantReturn : Tweak {
     public override void Enable() => Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", HandleReturn);
     public override void Disable() => Svc.AddonLifecycle.UnregisterListener(HandleReturn);
 
-    private delegate void DisbandPartyDelegate();
+    private delegate void DisbandPartyDelegate(); // TODO: cs 7372
     private readonly DisbandPartyDelegate DisbandParty = Marshal.GetDelegateForFunctionPointer<DisbandPartyDelegate>(Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 40 88 B7 ?? ?? ?? ?? EB 0B C6 87 ?? ?? ?? ?? ??"));
 
     [AddressHook<AgentReturn>(nameof(AgentReturn.MemberFunctionPointers.Return))]

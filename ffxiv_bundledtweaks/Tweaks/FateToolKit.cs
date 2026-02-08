@@ -114,6 +114,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
                 Service.Automation.Start(new FateGrind(this));
             }
             else {
+                CurrentState = "Idle";
                 Service.BossMod.ClearActive();
                 Svc.Automation.Stop();
             }

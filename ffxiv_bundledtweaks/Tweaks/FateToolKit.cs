@@ -357,7 +357,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
         }
 
         private uint GetRandomSameExpacZone() {
-            var rows = TerritoryType.Where(x => x.IsInUse && x.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && x.ExVersion.RowId == Player.Territory.Value.ExVersion.RowId);
+            var rows = TerritoryType.Where(x => x.IsInUse && x.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && x.ExVersion.RowId == Player.Territory.Value.ExVersion.RowId && !x.IsPvpZone);
             return rows[new Random().Next(rows.Length)].RowId;
         }
     }

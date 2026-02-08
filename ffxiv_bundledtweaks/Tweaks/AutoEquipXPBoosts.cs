@@ -28,6 +28,7 @@ internal class AutoEquipXPBoosts : Tweak {
     ];
 
     private unsafe void CheckForLevelSync(uint classJobId, uint level) {
+        if (!Player.IsInDuty) return;
         var expItems = _expItems.GroupBy(x => x.GameData.Value.EquipSlotCategory.RowId)
             .Where(group => group.Any(x => level <= x.MaxLevel && x.GameData.Value.Handle.HasItem))
             .Select(group => group.Where(x => level <= x.MaxLevel && x.GameData.Value.Handle.HasItem)

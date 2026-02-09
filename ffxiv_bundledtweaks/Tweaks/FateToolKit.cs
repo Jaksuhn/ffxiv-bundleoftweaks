@@ -289,8 +289,8 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
             var candidates = PublicEvent.CurrentFate is { Rule: PublicEvent.FateRule.Collect, Progress: >= 100 } ? AvailableFates.Where(f => f.Id != PublicEvent.CurrentFate.Id) : AvailableFates;
             if (candidates.FirstOrDefault() is not { } nextFate) return;
             NextFate = nextFate;
-            await WaitWhile(() => Player.IsBusy, "WaitingForNotBusy");
-            await WaitWhile(NearbyPendingMobs, "WaitForEngagedMobsToDisappear");
+            //await WaitWhile(() => Player.IsBusy, "WaitingForNotBusy");
+            //await WaitWhile(NearbyPendingMobs, "WaitForEngagedMobsToDisappear");
 
             // TODO: if rnd=msh, retry?
             var rnd = NextFate.Position.RandomPoint(NextFate.Radius * 0.5f);

@@ -9,6 +9,7 @@ using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ComplexTweaks.Tweaks;
@@ -107,6 +108,7 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration> {
         if (Svc.Condition[ConditionFlag.RidingPillion]) return;
 
         if (master.ObjectKind == ObjectKind.Player) {
+            if (TrySprint(master)) return;
             if (TryPillion(master)) return;
             if (TryMount(master)) return;
             if (TryFly(master)) return;
@@ -138,6 +140,19 @@ public unsafe class AutoFollow : Tweak<AutoFollowConfiguration> {
         if (Config.ExcludeCombat && Svc.Condition[ConditionFlag.InCombat])
             return true;
 
+        return false;
+    }
+
+    private bool TrySprint(DGameObject master) {
+        if (master is IBattleChara { StatusList: var status } && status.Any(s => s.StatusId is 50)) {
+            if (MJIManager.Instance()->IsPlayerInSanctuary && Player.Status.None(s => s.StatusId is 50)) {
+                return ActionManager.Instance()->UseAction(ActionType.Action, 31314);
+            }
+            else {
+                if (Player.Status.None(s => s.StatusId is 50))
+                    return ActionManager.Instance()->UseAction(ActionType.GeneralAction, 4);
+            }
+        }
         return false;
     }
 

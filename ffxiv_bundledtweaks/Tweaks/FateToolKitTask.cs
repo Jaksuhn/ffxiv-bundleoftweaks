@@ -249,9 +249,17 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     }
 
     private async Task HandleNoFates() {
-        if (tweak.Config.SwapZones && !HasTwistOfFate) {
+        if (!HasTwistOfFate && (tweak.HasSelectedSwapZones || tweak.Config.SwapZones)) {
             using var scope = BeginScope("SwapZones");
-            await TeleportTo(GetNextAchievementZone() ?? GetRandomSameExpacZone(), Vector3.Zero);
+            var destination = tweak.GetNextSelectedSwapZone(Player.Territory.RowId) ?? GetNextAchievementZone() ?? GetRandomSameExpacZone();
+            if (destination == Player.Territory.RowId) {
+                Status = "Waiting for fates in selected zones";
+                await Mount();
+                await NextFrame(60);
+                return;
+            }
+
+            await TeleportTo(destination, Vector3.Zero);
         }
         else {
             using var scope = BeginScope("WaitForFates");

@@ -1,6 +1,8 @@
 using ECommons;
+using ECommons.ImGuiMethods.TerritorySelection;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -89,6 +91,7 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
     public int CompletedCount { get; private set; }
     public int? RunUntilCompleted { get; private set; }
     public int? RemainingUntilCompleted => RunUntilCompleted is { } runUntil ? Math.Max(0, runUntil - CompletedCount) : null;
+    internal HashSet<uint> SelectedSwapZones { get; } = [];
 
     public bool Running {
         get;
@@ -134,6 +137,41 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
     internal void SyncRunningState() {
         if (Running && !Service.Automation.Running)
             Running = false;
+    }
+
+    internal bool HasSelectedSwapZones => SelectedSwapZones.Count > 0;
+
+    private int _selectedZoneRotation = -1;
+    internal uint? GetNextSelectedSwapZone(uint currentTerritoryId) {
+        if (SelectedSwapZones.Count == 0)
+            return null;
+
+        var zones = SelectedSwapZones.Where(id => id != 0).Distinct().OrderBy(id => id).ToList();
+
+        if (zones.Count == 0)
+            return null;
+
+        if (zones.Count == 1)
+            return zones[0];
+
+        _selectedZoneRotation = (_selectedZoneRotation + 1) % zones.Count;
+        if (zones[_selectedZoneRotation] == currentTerritoryId)
+            _selectedZoneRotation = (_selectedZoneRotation + 1) % zones.Count;
+        return zones[_selectedZoneRotation];
+    }
+
+    internal void OpenZoneSelector() {
+        var selector = new TerritorySelector(SelectedSwapZones, (_, selected) => {
+            SelectedSwapZones.Clear();
+            foreach (var zoneId in selected)
+                SelectedSwapZones.Add(zoneId);
+        }, "FTK Zones");
+
+        var allowedIds = TerritoryType.Where(row => row.IsInUse && row.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && !row.IsPvpZone).Select(row => row.RowId).ToHashSet();
+        selector.HiddenTerritories = [.. TerritoryType.Select(row => row.RowId).Where(id => !allowedIds.Contains(id))];
+
+        selector.HiddenCategories = [TerritorySelector.Category.All];
+        selector.SelectedCategory = TerritorySelector.Category.World;
     }
 
     public void ToggleRunning() {

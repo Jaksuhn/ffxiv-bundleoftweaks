@@ -55,6 +55,21 @@ public class FateToolKitWindow : Window {
                 ImGui.SameLine();
                 DrawHeaderChip($"Remaining: {remaining}", Colors.ChipInfo, Colors.Grey2);
             }
+
+            ImGui.SameLine();
+            ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - ImGui.GetFrameHeight());
+            if (_tweak.HasSelectedSwapZones) {
+                using var zoneButtonColor = ImRaii.PushColor(ImGuiCol.Text, (uint)Colors.Gold);
+                if (ImGuiComponents.IconButton("###ZoneSelector", FontAwesomeIcon.Globe))
+                    _tweak.OpenZoneSelector();
+            }
+            else if (ImGuiComponents.IconButton("###ZoneSelector", FontAwesomeIcon.Globe))
+                _tweak.OpenZoneSelector();
+
+            if (!_tweak.HasSelectedSwapZones)
+                ImGui.TooltipOnHover("Swap Zones (uses default swap behaviour if none selected)");
+            else
+                ImGui.TooltipOnHover($"Swap Zones: {_tweak.SelectedSwapZones.Count}");
         }
 
         ImGui.SpacedSeparator();

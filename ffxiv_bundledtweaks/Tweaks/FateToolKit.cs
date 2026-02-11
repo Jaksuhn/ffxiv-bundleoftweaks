@@ -107,7 +107,6 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
     }
 
     public override void Enable() => Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "FateReward", OnFateRewardPostSetup);
-
     public override void Disable() => Svc.AddonLifecycle.UnregisterListener(OnFateRewardPostSetup);
 
     private void OnFateRewardPostSetup(AddonEvent type, AddonArgs args) {
@@ -128,6 +127,11 @@ public partial class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow> {
 
     internal void StopIfNoRemaining() {
         if (RunUntilCompleted is { } runUntil && CompletedCount >= runUntil)
+            Running = false;
+    }
+
+    internal void SyncRunningState() {
+        if (Running && !Service.Automation.Running)
             Running = false;
     }
 

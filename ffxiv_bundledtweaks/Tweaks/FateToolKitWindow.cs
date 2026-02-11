@@ -23,6 +23,8 @@ public class FateToolKitWindow : Window {
     public override bool DrawConditions() => Player.Available;
 
     public override void Draw() {
+        _tweak.SyncRunningState();
+
         using (var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f))
         using (var runButtonColor = ImRaii.PushColor(ImGuiCol.Button, _tweak.Running ? (uint)Colors.Negative : (uint)Colors.Positive)
             .Push(ImGuiCol.ButtonHovered, _tweak.Running ? (uint)Colors.NegativeHover : (uint)Colors.PositiveHover)

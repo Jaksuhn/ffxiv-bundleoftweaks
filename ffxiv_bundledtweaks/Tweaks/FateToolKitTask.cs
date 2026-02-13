@@ -360,22 +360,30 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
 
     private async Task ActivateFate() {
         using var scope = BeginScope(nameof(ActivateFate));
-        if (NextFate is not { } fate || !TryGetValidMotivationNpc(fate, out var npc))
+        if (NextFate is not { } fate)
             return;
-        Log($"ActivateFate start: fate={NextFate.Id} npc={npc.EntityId} npcPos={npc.Position} playerPos={Player.Position} dist={Player.DistanceTo(npc.Position):F2} inRange={npc.IsInInteractRange()}");
-        await MoveTo(npc.Position, MovementConfig.InteractRange.WithOptions(MovementOptions.GetCurrent()));
-        Log($"ActivateFate after MoveTo: npc={npc.EntityId} playerPos={Player.Position} dist={Player.DistanceTo(npc.Position):F2} inRange={npc.IsInInteractRange()}");
-        try {
-            await InteractWith(npc, () => NextFate?.State == FateState.Running, skip: UiSkipOptions.Talk | UiSkipOptions.YesNo);
-        }
-        catch (Exception ex) {
-            // will crash if we don't catch and it's fine if interact fails because the npc/fate disappeared before we could start
-            if (NextFate is null || !TryGetValidMotivationNpc(NextFate, out _) || NextFate.State != FateState.Preparing) {
-                Warning($"Skipping fate activation: npc/fate vanished before interact ({ex.Message})");
-                return;
+
+        // sometimes fates are in prep for a very long time before they're on the map. Wait until the npc is actually ready before returning/attempting anything
+        await WaitUntil(() => TryGetValidMotivationNpc(fate, out _), "");
+
+        if (TryGetValidMotivationNpc(fate, out var npc)) {
+            Log($"ActivateFate start: fate={NextFate.Id} npc={npc.EntityId} npcPos={npc.Position} playerPos={Player.Position} dist={Player.DistanceTo(npc.Position):F2} inRange={npc.IsInInteractRange()}");
+            await MoveTo(npc.Position, MovementConfig.InteractRange.WithOptions(MovementOptions.GetCurrent()));
+            Log($"ActivateFate after MoveTo: npc={npc.EntityId} playerPos={Player.Position} dist={Player.DistanceTo(npc.Position):F2} inRange={npc.IsInInteractRange()}");
+            try {
+                await InteractWith(npc, () => NextFate?.State == FateState.Running, skip: UiSkipOptions.Talk | UiSkipOptions.YesNo);
             }
-            throw;
+            catch (Exception ex) {
+                // will crash if we don't catch and it's fine if interact fails because the npc/fate disappeared before we could start
+                if (NextFate is null || !TryGetValidMotivationNpc(NextFate, out _) || NextFate.State != FateState.Preparing) {
+                    Warning($"Skipping fate activation: npc/fate vanished before interact ({ex.Message})");
+                    return;
+                }
+                throw;
+            }
         }
+        else
+            Error($"Something weird happened with the activation npc [{fate}]");
     }
 
     private async Task HandleNoFates() {

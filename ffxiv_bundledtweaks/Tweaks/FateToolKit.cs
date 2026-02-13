@@ -36,7 +36,7 @@ public class FateToolKitConfig {
         new() { Criteria = FateSortCriteria.HasBonusWithTwist, Descending = true },
         new() { Criteria = FateSortCriteria.Progress, Descending = true },
         new() { Criteria = FateSortCriteria.HasBonus, Descending = true },
-        new() { Criteria = FateSortCriteria.TimeRemainingUrgent, Descending = false },
+        new() { Criteria = FateSortCriteria.TimeRemainingUrgent, Descending = true },
         new() { Criteria = FateSortCriteria.TimeRemaining, Descending = false },
         new() { Criteria = FateSortCriteria.Distance, Descending = false },
     ];

@@ -459,6 +459,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             return false;
 
         // TODO: see if this is still needed after objectkind change
+        /*
         if (target.Position == Player.Position) {
             Warning($"[{fate.Id}] npc {target} [{target.Position}] has same position as player");
             return false;
@@ -468,7 +469,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             Warning($"[{fate.Id}] npc {target} [{target.Position}] way outside the fate [{fate.Position}]");
             return false;
         }
-
+        */
         npc = target;
         return true;
     }

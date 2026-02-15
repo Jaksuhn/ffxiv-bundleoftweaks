@@ -187,7 +187,7 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
         var distinct = pool.Where(id => id != 0).Distinct().ToList();
         if (distinct.Count == 0) return [];
         if (GetCurrentMode().DisplayName != "Gemstones")
-            return distinct.OrderBy(id => id).ToList();
+            return [.. distinct.OrderBy(id => id)];
         return [.. TerritoryType.Where(r => pool.Contains(r.RowId)).OrderByDescending(r => r.ExVersion.RowId).Select(r => r.RowId)];
     }
 

@@ -449,6 +449,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             NextFate = null;
 
         Service.BossMod.ClearActive();
+        Svc.Targets.Target = null; // avoid preset trying to go to the mob and interfering with casts
         if (Svc.TextAdvance.IsInExternalControl())
             Svc.TextAdvance.DisableExternalControl(Name);
     }

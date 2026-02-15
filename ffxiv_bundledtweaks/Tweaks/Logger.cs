@@ -3,6 +3,7 @@ using System.Reflection;
 
 namespace ComplexTweaks.Tweaks;
 
+#if DEBUG
 [Tweak(debug: true)]
 public unsafe partial class DebugLogging : Tweak {
     public override string Name => "Logger";
@@ -32,3 +33,4 @@ public unsafe partial class DebugLogging : Tweak {
         return ret;
     }
 }
+#endif

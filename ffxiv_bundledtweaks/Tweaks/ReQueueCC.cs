@@ -9,7 +9,7 @@ namespace Automaton.Tweaks;
 [Tweak]
 public class ReQueueCC : Tweak {
     public override string Name => "CC Error Requeue";
-    public override string Description => "Requeues for CC when your registration was cancelled due to a map change.";
+    public override string Description => "Requeues for Crystalline Conflict when your registration was cancelled due to a map change.";
 
     public override void Enable() => Svc.Chat.ChatMessage += CheckForMessage;
     public override void Disable() => Svc.Chat.ChatMessage -= CheckForMessage;

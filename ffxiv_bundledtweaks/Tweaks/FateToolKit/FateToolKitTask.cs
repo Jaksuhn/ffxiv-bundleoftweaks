@@ -353,7 +353,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         }
 
         // only activate after a normal arrival; if we explicitly stopped (e.g. npcloaded), let the loop re-handle
-        if (stopReason == MoveStopReason.None && NextFate is { State: FateState.Preparing } && PublicEvent.Fates.Any(f => f.Id == NextFate.Id))
+        if (stopReason == MoveStopReason.None && NextFate is { State: FateState.Preparing, MotivationNpcId: not 0xE0000000 } && PublicEvent.Fates.Any(f => f.Id == NextFate.Id))
             await ActivateFate();
     }
 
@@ -363,7 +363,9 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             return;
 
         // sometimes fates are in prep for a very long time before they're on the map. Wait until the npc is actually ready before returning/attempting anything
-        await WaitUntil(() => TryGetValidMotivationNpc(fate, out _), "");
+        await WaitUntil(() => TryGetValidMotivationNpc(fate, out _) || fate.State is FateState.Running, "");
+
+        if (fate.State is FateState.Running) return;
 
         if (TryGetValidMotivationNpc(fate, out var npc)) {
             Log($"ActivateFate start: fate={NextFate.Id} npc={npc.EntityId} npcPos={npc.Position} playerPos={Player.Position} dist={Player.DistanceTo(npc.Position):F2} inRange={npc.IsInInteractRange()}");

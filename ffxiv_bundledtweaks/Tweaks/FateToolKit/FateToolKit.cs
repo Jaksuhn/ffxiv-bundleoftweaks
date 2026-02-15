@@ -258,7 +258,8 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
         => f.Duration <= Config.MaxDuration
         && f.Progress <= Config.MaxProgress
         && (f.TimeRemaining < 0 || f.TimeRemaining > Config.MinTimeRemaining)
-        && !IsBlacklisted(f);
+        && !IsBlacklisted(f)
+        && !f.IsPending;
 
     public IEnumerable<(PublicEvent Fate, bool IsAvailable)> GetOrderedFates() {
         var all = PublicEvent.Fates.ToList();

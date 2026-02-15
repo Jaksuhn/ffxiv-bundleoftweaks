@@ -69,15 +69,8 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     private uint? FollowUpFateId { get; set; } // id to store to check if NextFate is a follow up to this
     private long FollowUpWatchUntilMs { get; set; }
 
-    public IOrderedEnumerable<PublicEvent> AvailableFates => FateToolKit.ApplySortOrder(PublicEvent.Fates.Where(FateConditions), tweak.Config.SortOrder);
+    public IOrderedEnumerable<PublicEvent> AvailableFates => FateToolKit.ApplySortOrder(PublicEvent.Fates.Where(tweak.FateConditions), tweak.Config.SortOrder);
     private bool HasTwistOfFate => Player.Status.Any(status => DateWithDestiny.TwistOfFateStatusIDs.Contains(status.StatusId));
-
-    private bool FateConditions(PublicEvent f)
-        => f.Duration <= tweak.Config.MaxDuration
-        && f.Progress <= tweak.Config.MaxProgress
-        && (f.TimeRemaining < 0 || f.TimeRemaining > tweak.Config.MinTimeRemaining)
-        && !tweak.IsBlacklisted(f)
-        && !f.IsPending;
 
     private GrindState State {
         get {
@@ -259,7 +252,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
                 return true;
 
             NextFate = current; // keep nextfate fresh in case an unactivated fate disappears while pathing to it
-            return ReturnToFateId == current.Id ? current.Progress >= 100 : !FateConditions(current);
+            return ReturnToFateId == current.Id ? current.Progress >= 100 : !tweak.FateConditions(current);
         }
 
         bool TrySwitchToHigherPriorityFate() {

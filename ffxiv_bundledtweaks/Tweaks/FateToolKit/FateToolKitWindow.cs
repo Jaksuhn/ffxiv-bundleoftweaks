@@ -1,5 +1,6 @@
 using clib.ImGuiHelpers;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
@@ -30,10 +31,22 @@ public class FateToolKitWindow : MinimisableWindow {
         using (var runButtonColor = ImRaii.PushColor(ImGuiCol.Button, _tweak.Running ? (uint)Colors.Negative : (uint)Colors.Positive)
             .Push(ImGuiCol.ButtonHovered, _tweak.Running ? (uint)Colors.NegativeHover : (uint)Colors.PositiveHover)
             .Push(ImGuiCol.ButtonActive, _tweak.Running ? (uint)Colors.NegativeActive : (uint)Colors.PositiveActive)) {
-            if (ImGui.Button(_tweak.Running ? "Stop" : "Start")) {
-                _tweak.ToggleRunning();
-                Service.Navmesh.Stop();
+
+            if (ImGui.Button(_tweak.Running ? (_tweak.PendingStopWhenSafe ? "Stopping" : "Stop") : "Start")) {
+                if (_tweak.Running) {
+                    if (ImGui.GetIO().KeyCtrl) {
+                        _tweak.PendingStopWhenSafe = true;
+                    }
+                    else {
+                        _tweak.ToggleRunning();
+                        Service.Navmesh.Stop();
+                    }
+                }
+                else {
+                    _tweak.ToggleRunning();
+                }
             }
+            ImGui.TooltipOnHover(_tweak.Running, $"Stop. Ctrl+{SeIconChar.MouseLeftClick.ToIconString()} soft stop");
 
             ImGui.SameLine();
             DrawHeaderChip(

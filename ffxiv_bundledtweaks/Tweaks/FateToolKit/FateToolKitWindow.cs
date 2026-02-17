@@ -1,27 +1,29 @@
+using clib.ImGuiHelpers;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 using ECommons.ImGuiMethods;
 
 namespace ComplexTweaks.Tweaks;
 
-public class FateToolKitWindow : Window {
+public class FateToolKitWindow : MinimisableWindow {
     private readonly FateToolKit _tweak;
+    private bool _showSettings;
+
     public FateToolKitWindow(FateToolKit tweak) : base($"Fate Tracker##{nameof(FateToolKitWindow)}") {
         _tweak = tweak;
-        TitleBarButtons.Add(new() {
+        TitleBarButtons.Add(new TitleBarButton {
             Icon = FontAwesomeIcon.Cog,
             Click = _ => _showSettings = !_showSettings,
         });
     }
 
-    private bool _showSettings = false;
+    protected override Vector2 MinimisedSize => new(700, 90);
 
     public override bool DrawConditions() => Player.Available;
 
-    public override void Draw() {
+    protected override void DrawContent(bool minimised) {
         _tweak.SyncRunningState();
 
         using (var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f))
@@ -64,8 +66,12 @@ public class FateToolKitWindow : Window {
 
             ImGui.SameLine();
             var style = ImGui.GetStyle();
-            var rightButtonWidth = 2f * ImGui.GetFrameHeight() + style.ItemSpacing.X;
-            ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - rightButtonWidth);
+            var rightButtonWidth = (ImGui.GetFrameHeight() + style.FramePadding.X * 2f) * 2f + style.ItemSpacing.X;
+            var leftRightGap = style.ItemSpacing.X;
+            var leftContentRight = ImGui.GetItemRectMax().X;
+            var rightStart = Math.Max(leftContentRight + leftRightGap, ImGui.GetWindowContentRegionMax().X - rightButtonWidth);
+
+            ImGui.SetCursorPosX(rightStart);
             DrawModeButton();
             ImGui.SameLine();
             using (var _ = ImRaii.Disabled(_tweak.ModeSuppliesSwapZones))
@@ -79,12 +85,21 @@ public class FateToolKitWindow : Window {
                 ImGui.TooltipOnHover($"Swap Zones: {_tweak.SelectedSwapZones.Count}");
             else
                 ImGui.TooltipOnHover("Swap Zones (uses default swap behaviour if none selected)");
-        }
 
-        ImGui.SpacedSeparator();
+            if (minimised) {
+                var windowLeft = ImGui.GetWindowPos().X;
+                var padding = style.WindowPadding.X;
+                MinimisedContentWidth = Math.Max(400, (leftContentRight - windowLeft) + leftRightGap + rightButtonWidth + padding * 2);
+            }
+        }
 
         if (_showSettings)
             DrawSettings();
+
+        if (minimised)
+            return;
+
+        ImGui.SpacedSeparator();
 
         if (_tweak.GetOrderedFates().ToList() is not { Count: > 0 } fates) {
             ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), "No fates match the current filters.");
@@ -129,7 +144,7 @@ public class FateToolKitWindow : Window {
                              $"ID: {fate.Id}\n" +
                              $"Type: {fate.FateType}\n" +
                              $"Rule: {fate.Rule}\n" +
-                             $"State: {fate.State}" +
+                             $"State: {fate.State}\n" +
                              $"Level: {fate.Level}\n" +
                              $"Progress: {fate.Progress}%\n" +
                              $"Time Remaining: {(fate.TimeRemaining >= 0 ? TimeSpan.FromSeconds(fate.TimeRemaining).ToString(@"mm\:ss") : "∞")}\n" +

@@ -80,6 +80,8 @@ public class FateToolKitWindow : MinimisableWindow {
             ImGui.SameLine();
             var style = ImGui.GetStyle();
             var rightButtonWidth = (ImGui.GetFrameHeight() + style.FramePadding.X * 2f) * 2f + style.ItemSpacing.X;
+            var leftRightGap = style.ItemSpacing.X;
+            var leftContentRight = ImGui.GetItemRectMax().X;
             if (Math.Max(0f, ImGui.GetContentRegionAvail().X - rightButtonWidth) is > 0 and var spacer) {
                 ImGui.Dummy(new Vector2(spacer, 0f));
                 ImGui.SameLine();
@@ -99,7 +101,7 @@ public class FateToolKitWindow : MinimisableWindow {
                 ImGui.TooltipOnHover("Swap Zones (uses default swap behaviour if none selected)");
 
             if (minimised) {
-                MinimisedContentWidth = Math.Max(400, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + style.WindowPadding.X * 2);
+                MinimisedContentWidth = Math.Max(400, leftContentRight - ImGui.GetWindowPos().X + leftRightGap + rightButtonWidth + style.WindowPadding.X * 2);
             }
         }
 

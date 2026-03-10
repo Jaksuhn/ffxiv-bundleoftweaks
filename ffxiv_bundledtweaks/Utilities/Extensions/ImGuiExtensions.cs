@@ -173,45 +173,6 @@ public static class ImGuiExtensions {
             return GetContrastingTextColor(dominantColor);
         }
 
-        /// <summary>
-        /// Sets up drag and drop source for reordering list items.
-        /// Call this after drawing the draggable item (e.g., after a Button or Selectable).
-        /// </summary>
-        public static void DragDropSource(int index, ReadOnlySpan<byte> payloadType, string? dragPreviewText = null) {
-            using var source = ImRaii.DragDropSource();
-            if (source) {
-                if (!string.IsNullOrEmpty(dragPreviewText))
-                    ImGui.Text(dragPreviewText);
-                ImGui.SetDragDropPayload(payloadType, BitConverter.GetBytes(index), ImGuiCond.None);
-            }
-        }
-
-        /// <summary>
-        /// Sets up drag and drop target for reordering list items.
-        /// Call this after drawing the drop target item.
-        /// </summary>
-        /// <param name="onReorder">Callback that performs the reorder: (sourceIndex, targetIndex) => { /* reorder logic */ }</param>
-        public static void DragDropTarget(int targetIndex, ReadOnlySpan<byte> payloadType, int listCount, Action<int, int> onReorder) {
-            using var target = ImRaii.DragDropTarget();
-            if (target) {
-                var payload = ImGui.AcceptDragDropPayload(payloadType);
-                unsafe {
-                    if (!payload.IsNull && payload.IsDelivery() && payload.Data != null && payload.DataSize == sizeof(int)) {
-                        var sourceIndex = *(int*)payload.Data;
-                        if (sourceIndex != targetIndex && sourceIndex >= 0 && sourceIndex < listCount) {
-                            // Calculate insert index before removal
-                            // When dragging down (sourceIndex < targetIndex), insert after target (at targetIndex+1)
-                            // When dragging up (sourceIndex > targetIndex), insert before target (at targetIndex)
-                            var insertIndex = sourceIndex < targetIndex ? targetIndex + 1 : targetIndex;
-
-                            // Call the reorder callback with source and calculated insert index
-                            onReorder(sourceIndex, insertIndex);
-                        }
-                    }
-                }
-            }
-        }
-
         // https://github.com/KazWolfe/CollectorsAnxiety/blob/bf48a4b0681e5f70fb67e3b1cb22b4565ecfcc02/CollectorsAnxiety/Util/ImGuiUtil.cs#L10
         public static void DrawProgressBar(int progress, int total, Vector4 colour) {
             try {

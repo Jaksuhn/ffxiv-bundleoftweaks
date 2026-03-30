@@ -106,11 +106,20 @@
           "ECommons": "[3.1.0.1, )"
         }
       },
-      "clib": {
+      "croizat.clib": {
         "type": "Project",
         "dependencies": {
           "LuminaSupplemental.Excel": "[4.1.1, )"
         }
+      },
+      "ffxivclientstructs": {
+        "type": "Project",
+        "dependencies": {
+          "InteropGenerator.Runtime": "[1.0.0, )"
+        }
+      },
+      "interopgenerator.runtime": {
+        "type": "Project"
       }
     }
   }

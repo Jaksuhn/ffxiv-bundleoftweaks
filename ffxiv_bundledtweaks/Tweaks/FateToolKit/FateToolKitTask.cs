@@ -440,6 +440,11 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
                 return;
             }
 
+            if (Player.Mounted) {
+                DeactivateIntegrations(clearNextFate: false);
+                return;
+            }
+
             if (Service.BossMod.GetActive() != _presetName) {
                 if (Service.BossMod.Get(_presetName) is null)
                     Service.BossMod.Create(_preset, true);

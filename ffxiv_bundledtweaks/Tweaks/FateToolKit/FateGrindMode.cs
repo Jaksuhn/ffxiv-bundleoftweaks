@@ -211,9 +211,14 @@ public sealed class GemstoneGrindMode : IFateGrindMode {
 
     public string DisplayName => "Gemstones";
 
-    // any zone shb+ is valid unless they stop doing this in the future
-    public IReadOnlySet<uint>? GetAllowedZones()
-        => TerritoryType.Where(r => r.IsInUse && r.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && r.ExVersion.RowId >= 3 && !r.IsPvpZone).Select(r => r.RowId).ToHashSet();
+    // shb+ zones, prio highest expac
+    public IReadOnlySet<uint>? GetAllowedZones() {
+        var unlocked = TerritoryType.Where(r => r.IsInUse && r.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && r.ExVersion.RowId >= 3 && !r.IsPvpZone && r.IsPrimaryAetheryteUnlocked).ToList();
+        if (unlocked.Count == 0)
+            return new HashSet<uint>();
+        var topEx = unlocked.Max(r => r.ExVersion.RowId);
+        return unlocked.Where(r => r.ExVersion.RowId == topEx).Select(r => r.RowId).ToHashSet();
+    }
 
     public bool IsComplete(IFateGrindRunState _) => GetGemstoneRemaining() == 0;
 

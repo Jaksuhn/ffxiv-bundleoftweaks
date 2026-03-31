@@ -186,13 +186,9 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
 
     private int _selectedZoneRotation = -1;
 
-    /// <summary>Zone list for rotation. Gemstone mode: order by ExVersion descending (later expansions first).</summary>
     private List<uint> GetOrderedSwapZones(IReadOnlySet<uint> pool) {
         var distinct = pool.Where(id => id != 0).Distinct().ToList();
-        if (distinct.Count == 0) return [];
-        if (GetCurrentMode().DisplayName != "Gemstones")
-            return [.. distinct.OrderBy(id => id)];
-        return [.. TerritoryType.Where(r => pool.Contains(r.RowId)).OrderByDescending(r => r.ExVersion.RowId).Select(r => r.RowId)];
+        return distinct.Count == 0 ? [] : [.. distinct.OrderBy(id => id)];
     }
 
     internal uint? GetNextSelectedSwapZone(uint currentTerritoryId) {

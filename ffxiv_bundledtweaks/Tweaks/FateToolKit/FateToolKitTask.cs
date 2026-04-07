@@ -135,6 +135,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     private enum MoveStopReason {
         None,
         FateInvalid,
+        FatePending,
         HigherPriority,
         NpcLoaded,
         StuckRetry,
@@ -240,6 +241,15 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
                 ReturnToFateId = null;
             }
 
+            if (FollowUpFateId is { } parentId && Environment.TickCount64 < FollowUpWatchUntilMs) {
+                var parent = Fate.GetRow(parentId);
+                // allow even if pending
+                if (PublicEvent.Fates.Where(f => f.Id > parentId && Fate.GetRow(f.Id).Location == parent.Location).OrderBy(f => Player.DistanceTo(f.Position)).FirstOrDefault() is { } followUp) {
+                    selected = followUp;
+                    return true;
+                }
+            }
+
             if (GetAvailableFates().FirstOrDefault() is { } candidate) {
                 selected = candidate;
                 return true;
@@ -253,6 +263,13 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             return;
 
         NextFate = nextFate;
+        if (!NextFate.IsOnMap) {
+            Status = "Waiting for fate to appear";
+            await Mount();
+            await NextFrame(30);
+            return;
+        }
+
         // TODO: if rnd=msh, retry?
         var rnd = NextFate.Position.RandomPoint(NextFate.Radius * 0.5f);
         var msh = rnd.OnMesh();
@@ -269,6 +286,9 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
                 return true;
 
             NextFate = current; // keep nextfate fresh in case an unactivated fate disappears while pathing to it
+            if (!current.IsOnMap)
+                return false;
+
             return ReturnToFateId == current.Id ? current.Progress >= 100 : !tweak.FateConditions(current);
         }
 
@@ -301,6 +321,11 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
 
             if (TrySwitchToHigherPriorityFate()) {
                 stopReason = MoveStopReason.HigherPriority;
+                return true;
+            }
+
+            if (NextFate is { IsOnMap: false }) {
+                stopReason = MoveStopReason.FatePending;
                 return true;
             }
 
@@ -355,6 +380,13 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         if (stopReason == MoveStopReason.HigherPriority)
             return;
 
+        if (stopReason == MoveStopReason.FatePending) {
+            Status = "Waiting for fate to appear";
+            await Mount();
+            await NextFrame(30);
+            return;
+        }
+
         if (stopReason == MoveStopReason.StuckTeleport && WaitForExpiryFateId is null && NextFate is { Id: var fateId } && PublicEvent.GetFateById(fateId) is { } currentFate) {
             NextFate = currentFate;
             LastStuckFateId = null;
@@ -373,6 +405,8 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     private async Task ActivateFate() {
         using var scope = BeginScope(nameof(ActivateFate));
         if (NextFate is not { } fate)
+            return;
+        if (!fate.IsOnMap)
             return;
 
         // sometimes fates are in prep for a very long time before they're on the map. Wait until the npc is actually ready before returning/attempting anything

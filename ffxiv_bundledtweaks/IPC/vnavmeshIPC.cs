@@ -1,3 +1,4 @@
+using Dalamud.Plugin.Ipc;
 using ECommons.EzIpcManager;
 using System.Threading;
 
@@ -32,6 +33,7 @@ public class NavmeshIPC : BaseIPC {
 
     /// <summary> Vector3 p, float halfExtentXZ, float halfExtentY </summary>
     [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3, float, float, Vector3?> NearestPoint;
+    [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3, float, float, Vector3?> NearestPointReachable;
     /// <summary> Vector3 p, bool allowUnlandable, float halfExtentXZ (default 5) </summary>
     [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3, bool, float, Vector3?> PointOnFloor;
     [EzIPC("Query.Mesh.%m")] public readonly Func<Vector3?> FlagToPoint;

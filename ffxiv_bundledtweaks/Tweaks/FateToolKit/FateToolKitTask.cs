@@ -409,9 +409,20 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             await ActivateFate();
     }
 
+    // some are just so bad it's not worth it having them. I don't really have a better solution than this.
+    private readonly List<uint> _obstacleMapBlacklist = [1831, 1832];
     private async Task GenerateObstacleMap(PublicEvent evt) {
         using var scope = BeginScope(nameof(GenerateObstacleMap));
-        Svc.BossMod.Generate(evt.Position, evt.Radius + 10, false);
+
+        if (_obstacleMapBlacklist.Contains(evt.Id)) {
+            Log($"Skipping obstacle map generation for blacklisted fate {evt.Id}");
+            return;
+        }
+
+        // sometimes the center of a fate is unreachable (tower fate in amh araeng), so generate from a reachable point then compensate for being off center
+        var safe = Svc.Navmesh.NearestPointReachable(evt.Position, 5, 5);
+        float? margin = safe is { } ? Vector3.Distance(evt.Position, safe.Value) : null;
+        Svc.BossMod.Generate(safe ?? evt.Position, evt.Radius + margin ?? 10, false);
         await WaitUntil(() => {
             var status = Svc.BossMod.GetGenerationStatus();
             if (status is TaskStatus.RanToCompletion) {

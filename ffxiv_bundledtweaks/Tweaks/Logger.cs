@@ -1,4 +1,9 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using Dalamud.Game.Chat;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.Network;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System.Reflection;
 
 namespace ComplexTweaks.Tweaks;
@@ -32,5 +37,32 @@ public unsafe partial class DebugLogging : Tweak {
         MethodBase.GetCurrentMethod()?.Log([(LocationCommandFlag)command, *location, param1, param2, param3, param4], ret);
         return ret;
     }
+
+    //[AddressHook<PacketDispatcher>(nameof(PacketDispatcher.MemberFunctionPointers.HandleActorControlPacket))]
+    //internal void HandleActorControlPacket(uint entityId, uint category, uint arg1, uint arg2, uint arg3, uint arg4, uint arg5, uint arg6, uint arg7, uint arg8, GameObjectId targetId, bool isRecorded) {
+    //    MethodBase.GetCurrentMethod()?.Log([entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId.Id, isRecorded]);
+    //    HandleActorControlPacketHook.Original(entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId, isRecorded);
+    //}
+
+    [AddressHook<ActionManager>(nameof(ActionManager.MemberFunctionPointers.GetActionInRangeOrLoS))]
+    internal uint GetActionInRangeOrLoS(uint actionId, GameObject* sourceObject, GameObject* targetObject) {
+        var ret = GetActionInRangeOrLoSHook.Original(actionId, sourceObject, targetObject);
+        MethodBase.GetCurrentMethod()?.Log([actionId, (nint)sourceObject, (nint)targetObject], ret);
+        return ret;
+    }
+
+    [AddressHook<AgentCatch>(nameof(AgentCatch.MemberFunctionPointers.UpdateCatch))]
+    internal void UpdateCatch(AgentCatch* thisPtr, uint fishId, bool isLarge, ushort size, byte amount, byte level, byte a6, byte a7, bool isMoochable, bool isFirstTimeCatch, byte a10, byte a11) {
+        MethodBase.GetCurrentMethod()?.Log([(nint)thisPtr, fishId, isLarge, size, amount, level, a6, a7, isMoochable, isFirstTimeCatch, a10, a11]);
+        UpdateCatchHook.Original(thisPtr, fishId, isLarge, size, amount, level, a6, a7, isMoochable, isFirstTimeCatch, a10, a11);
+    }
+
+    [AddressHook<PacketDispatcher>(nameof(PacketDispatcher.MemberFunctionPointers.SendEventCompletePacket))]
+    internal void SendEventCompletePacket(EventId eventId, short scene, byte a3, uint* payload, byte payloadSize, void* a6) {
+        MethodBase.GetCurrentMethod()?.Log([ToString(eventId), scene, a3, (nint)payload, payloadSize, (nint)a6]);
+        SendEventCompletePacketHook.Original(eventId, scene, a3, payload, payloadSize, a6);
+    }
+
+    private static string ToString(EventId eventid) => $"{eventid.Id}/{eventid.EntryId}/{eventid.ContentId}";
 }
 #endif

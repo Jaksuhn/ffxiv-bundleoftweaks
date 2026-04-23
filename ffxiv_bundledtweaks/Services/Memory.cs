@@ -1,5 +1,4 @@
 ﻿using ECommons.EzHookManager;
-using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using System.Runtime.InteropServices;
 
 namespace ComplexTweaks.Services;
@@ -15,15 +14,7 @@ public unsafe class Memory {
         internal const string FreeCompanyDialogPacketReceive = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 42 31"; // xan
     }
 
-    public static class Delegates {
-        internal delegate void FreeCompanyDialogPacketReceiveDelegate(InfoProxyInterface* ptr, byte* packetData);
-    }
-
     public Memory() => EzSignatureHelper.Initialize(this);
-
-    public class Hook {
-        public Hook() => EzSignatureHelper.Initialize(this);
-    }
 
     public void Dispose() { }
 
@@ -38,20 +29,6 @@ public unsafe class Memory {
 
     private static unsafe void SetMoveControlData(float speed)
         => Dalamud.SafeMemory.Write(((delegate* unmanaged[Stdcall]<byte, nint>)Svc.SigScanner.ScanText(Signatures.MoveController))(1) + 8, speed);
-    #endregion
-
-    #region Server IPC Packet Receive
-    public class FreeCompanyDialogIPCReceive : Hook {
-        [EzHook(Signatures.FreeCompanyDialogPacketReceive, false)]
-        internal readonly EzHook<Delegates.FreeCompanyDialogPacketReceiveDelegate> FreeCompanyDialogPacketReceiveHook = null!;
-
-        internal DateTime LastPacketTimestamp = DateTime.MinValue;
-        private void FreeCompanyDialogPacketReceiveDetour(InfoProxyInterface* ptr, byte* packetData) {
-            LastPacketTimestamp = DateTime.Now;
-            Svc.Log.Info($"{nameof(FreeCompanyDialogPacketReceiveDetour)}: Packet received at {LastPacketTimestamp}");
-            FreeCompanyDialogPacketReceiveHook.Original(ptr, packetData);
-        }
-    }
     #endregion
 }
 

@@ -73,7 +73,7 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
     );
 
     private static readonly Dictionary<FateSortCriteria, Func<PublicEvent, IComparable>> SortKeys = new() {
-        [FateSortCriteria.HasBonusWithTwist] = f => f.HasBonus && Player.Status.FirstOrDefault(x => DateWithDestiny.TwistOfFateStatusIDs.Contains(x.StatusId)) != null,
+        [FateSortCriteria.HasBonusWithTwist] = f => f.HasBonus && Player.Status.HasTwistOfFate(),
         [FateSortCriteria.Progress] = f => f.Progress,
         [FateSortCriteria.HasBonus] = f => f.HasBonus,
         // Unactivated fates report negative time; treat them as non-urgent.

@@ -84,7 +84,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     private uint? WaitForExpiryFateId { get; set; } // id for when we leave a collect fate. Stay in zone until fate is null
 
     public IOrderedEnumerable<PublicEvent> AvailableFates => FateToolKit.ApplySortOrder(PublicEvent.Fates.Where(tweak.FateConditions), tweak.Config.SortOrder);
-    private bool HasTwistOfFate => Player.Status.Any(status => DateWithDestiny.TwistOfFateStatusIDs.Contains(status.StatusId));
+    private bool HasTwistOfFate => Player.Status.HasTwistOfFate();
 
     private GrindState State {
         get {
@@ -410,7 +410,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     }
 
     // some are just so bad it's not worth it having them. I don't really have a better solution than this.
-    private readonly List<uint> _obstacleMapBlacklist = [1831, 1832];
+    private readonly List<uint> _obstacleMapBlacklist = [1831, 1832, 1914, 1915];
     private async Task GenerateObstacleMap(PublicEvent evt) {
         using var scope = BeginScope(nameof(GenerateObstacleMap));
 

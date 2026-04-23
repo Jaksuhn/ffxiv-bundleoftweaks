@@ -1,7 +1,15 @@
+using clib.Extensions.ClientStructs;
+using Dalamud.Memory;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Controllers;
 using KamiToolKit.Extensions;
 using KamiToolKit.Nodes;
+using Lumina.Excel.Sheets;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Automaton.Tweaks;
@@ -114,16 +122,98 @@ public class MailEnhancements : Tweak<MailEnhanacementsConfig> {
     }
 
     private class RetrieveAllTask(bool deleteAfterRetrieval, bool useAfterRetrieval) : TaskBase {
-        protected override Task Execute() {
-            Svc.Chat.Print($"retrieve all test!");
-            return Task.CompletedTask;
+        private unsafe InfoProxyLetter.Letter[] Letters => InfoProxyLetter.Instance()->Letters.ToArray();
+        private unsafe bool UseItem(uint itemId) => ActionManager.Instance()->UseAction(ActionType.Item, itemId, extraParam: 65535);
+        protected override async Task Execute() {
+            using var scope = BeginScope("RetrieveAll");
+            List<InfoProxyLetter.Letter.ItemAttachment> attachements = [];
+
+            foreach (var letter in Letters) {
+                if (letter.Attachments.Length == 0) continue;
+                attachements.AddRange(letter.Attachments.ToArray().Where(a => a.ItemId != 0));
+                await WaitUntil(InfoProxyLetter.CanTakeAttachement, "WaitCooldown");
+                await WaitUntil(() => InfoProxyLetter.TakeAllAttachements(letter.Index, letter.SenderContentId), "TakeAttachments");
+
+                if (deleteAfterRetrieval) {
+                    await WaitUntil(() => InfoProxyLetter.DeleteLetter(letter.Index), "DeleteLetter");
+                }
+            }
+
+            if (useAfterRetrieval) {
+                foreach (var attach in attachements) {
+                    await WaitUntil(Svc.Condition.CanMoveItems, "WaitCanMoveItems"); // get another condition
+                    await WaitUntil(() => UseItem(attach.ItemId), "UseItem");
+                }
+            }
         }
     }
 
     private class RestockMapsTask : AutoTask {
-        protected override Task Execute() {
-            Svc.Chat.Print($"restock maps test!");
-            return Task.CompletedTask;
+        private unsafe Span<InfoProxyLetter.Letter> Letters => InfoProxyLetter.Instance()->Letters;
+        private int LetterMapCount() => Letters.ToArray().Count(i => i.Attachments.ToArray().Any(a => Item.GetRow(a.ItemId).FilterGroup == 18));
+
+        protected override async Task Execute() {
+            GameMain.ExecuteCommand(CommandFlag.RequestSaddleBag);
+            var inventoryHasMap = InventoryType.Bags.Any(i => i.Items.Any(i => i.IsTreasureMap));
+            var hasMapDeciphered = InventoryType.KeyItems.Items.Any(i => i.IsTreasureMap);
+            var saddleBagHasMap = InventoryType.SaddleBag.Any(i => i.Items.Any(i => i.IsTreasureMap));
+
+            if (hasMapDeciphered && inventoryHasMap && saddleBagHasMap) return;
+
+            while (LetterMapCount() > 0) {
+                if (hasMapDeciphered && inventoryHasMap && saddleBagHasMap) return;
+
+                if (!hasMapDeciphered && inventoryHasMap) {
+                    // decipher from bags
+                }
+                else if (!inventoryHasMap) {
+                    // retrieve from mail -> bags
+                }
+                else if (!saddleBagHasMap) {
+                    // move map bags -> saddlebag
+                }
+
+                await NextFrame();
+            }
+        }
+
+        private async Task Decipher() {
+            using var scope = BeginScope(nameof(Decipher));
+            // back out of mail
+            foreach (var b in InventoryType.Bags) {
+                if (b.Items.FirstOrDefault(i => i.IsTreasureMap) is not { } map) continue;
+
+                map.OpenContext();
+                await WaitUntil(() => AtkUnitBase.IsAddonReady("ContextMenu"), "WaitForCtx");
+                if (TryGetDecipherIndex(out var i)) {
+                    DecipherCallback(i.Value);
+                    await WaitUntil(() => InventoryType.KeyItems.Items.Any(i => i.IsTreasureMap), "WaitForDecipher");
+                }
+            }
+        }
+
+        private unsafe bool TryGetDecipherIndex([NotNullWhen(true)] out int? index) {
+            foreach (var (contextObj, i) in AgentInventoryContext.Instance()->EventParams.ToArray().WithIndex()) {
+                if (contextObj.Type == AtkValueType.String) {
+                    if (Addon.GetRow(8100).Text == MemoryHelper.ReadSeStringNullTerminated(new IntPtr(contextObj.String)).TextValue) {
+                        index = i;
+                        return true;
+                    }
+                }
+            }
+            index = -1;
+            return false;
+        }
+
+        private unsafe void DecipherCallback(int indexDecipher) {
+            var ctx = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1).Address;
+            var values = stackalloc AtkValue[5];
+            values[0].SetInt(0);
+            values[1].SetInt(indexDecipher);
+            values[2].SetInt(0);
+            values[3].SetInt(0);
+            values[4].SetInt(0);
+            ctx->FireCallback(5, values, true);
         }
     }
 }

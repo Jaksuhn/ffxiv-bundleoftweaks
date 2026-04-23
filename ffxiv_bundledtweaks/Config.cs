@@ -24,7 +24,6 @@ public class TweakConfigs {
     public ARQuestingConfiguration ARQuestingConfiguration { get; init; } = new();
     public ClickToMoveConfiguration ClickToMove { get; init; } = new();
     public CommandsConfiguration Commands { get; init; } = new();
-    public DateWithDestinyConfiguration DateWithDestiny { get; init; } = new();
     public DebugToolsConfiguration DebugTools { get; init; } = new();
     public EnhancedDutyStartEndConfiguration EnhancedDutyStartEnd { get; init; } = new();
     public EnhancedLoginLogoutConfig EnhancedLoginLogout { get; init; } = new();

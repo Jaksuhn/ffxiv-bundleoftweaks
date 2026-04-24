@@ -222,8 +222,12 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         }
         await WaitWhile(() => Svc.Condition[ConditionFlag.Unconscious], "WaitForAlive");
 
+        // if the zone we were in was an instanced zone, we might end up in a different one when tp'ing back
+        // if the way back involves taking a city route, we don't be near an aetheryte to swap instances
+        // TODO: figure out instance swapping, and bypass city routes and go directly back to zone
         if (Player.Territory.RowId != lastZone.RowId) {
             await TeleportTo(lastZone.RowId, lastPos);
+            await UseAethernet(lastZone.RowId, lastPos);
         }
     }
 

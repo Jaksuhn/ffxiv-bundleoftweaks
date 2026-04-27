@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
@@ -18,8 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteropSourceGenerator", "InteropSourceGenerators\InteropSourceGenerator.csproj", "{65EA3B87-2F52-1E2E-9D8D-EA5B73222891}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "clib", "clib\clib.csproj", "{937C0018-997C-1624-E53D-BB135DDEB066}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KamiToolKit", "KamiToolKit\KamiToolKit.csproj", "{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,22 +95,6 @@ Global
 		{937C0018-997C-1624-E53D-BB135DDEB066}.Release|Any CPU.Build.0 = Release|x64
 		{937C0018-997C-1624-E53D-BB135DDEB066}.Release|x64.ActiveCfg = Release|x64
 		{937C0018-997C-1624-E53D-BB135DDEB066}.Release|x64.Build.0 = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Debug|Any CPU.Build.0 = Debug|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Debug|x64.ActiveCfg = Debug|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Debug|x64.Build.0 = Debug|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportDebug|Any CPU.ActiveCfg = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportDebug|Any CPU.Build.0 = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportDebug|x64.ActiveCfg = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportDebug|x64.Build.0 = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportRelease|Any CPU.ActiveCfg = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportRelease|Any CPU.Build.0 = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportRelease|x64.ActiveCfg = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.ExportRelease|x64.Build.0 = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Release|Any CPU.ActiveCfg = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Release|Any CPU.Build.0 = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Release|x64.ActiveCfg = Release|x64
-		{0FC77B1B-A7E0-0E25-A2BF-1211E39B36BB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

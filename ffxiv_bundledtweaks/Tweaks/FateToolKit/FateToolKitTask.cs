@@ -419,7 +419,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         using var scope = BeginScope(nameof(GenerateObstacleMap));
 
         if (_obstacleMapBlacklist.Contains(evt.Id)) {
-            Log($"Skipping obstacle map generation for blacklisted fate {evt.Id}");
+            Verbose($"Skipping obstacle map generation for blacklisted fate {evt.Id}");
             return;
         }
 
@@ -444,6 +444,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             Log($"Generated obstacle map quality for fate {evt.Id}: {quality}");
             if (quality.IsBad) {
                 Log($"Obstacle map quality too poor. Clearing obstacle map. BossMod won't navigate in case of obstacles. Consider blacklisting this fate if it's problematic.");
+                _obstacleMapBlacklist.Add(evt.Id);
                 Svc.BossMod.ClearTempMap();
             }
         }

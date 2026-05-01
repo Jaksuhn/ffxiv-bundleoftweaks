@@ -1,3 +1,5 @@
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -7,14 +9,12 @@ using Dalamud.Utility;
 using ECommons.Automation;
 using ECommons.ExcelServices;
 using ECommons.ImGuiMethods;
-using Dalamud.Bindings.ImGui;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Lumina.Excel.Sheets;
 using System.Data;
 using System.Text;
 using System.Text.RegularExpressions;
 using static Dalamud.Game.Text.XivChatType;
-using FFXIVClientStructs.FFXIV.Client.UI.Info;
-using Dalamud.Game.Chat;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -180,7 +180,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
 
     private void OnChatMessage(IHandleableChatMessage message) {
         if (!Svc.ClientState.IsLoggedIn) return; // messages sometimes trigger during login, but before fully logged in and thus stuff like checking player DC fails later
-        if (message.Sender.TextValue == Player.Name) return;
+        if (message.Sender.TextValue == Svc.PlayerState.CharacterName) return;
         var maplink = message.Message.Payloads.FirstOrDefault(x => x is MapLinkPayload, null);
         if (maplink is not MapLinkPayload mlp) return;
 
@@ -191,15 +191,15 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
                 return;
             }
             if (world is null && message.LogKind is XivChatType.NoviceNetwork)
-                world = Player.CurrentWorld.Value;
+                world = Svc.PlayerState.CurrentWorld.Value;
             if (world is null && Config.AssumeBlankWorldsAreLocal) {
                 world = Config.AssumedLocality switch {
-                    Locality.PlayerHomeWorld => Player.HomeWorld.Value,
-                    Locality.PlayerCurrentWorld => Player.CurrentWorld.Value,
+                    Locality.PlayerHomeWorld => Svc.PlayerState.HomeWorld.Value,
+                    Locality.PlayerCurrentWorld => Svc.PlayerState.CurrentWorld.Value,
                     Locality.SenderHomeWorld => message.Sender.Payloads.OfType<TextPayload>().Select(p => p.Text!.Contains((char)SeIconChar.CrossWorld)
                         ? FindRow<World>(x => x!.IsPublic && p.Text.Split((char)SeIconChar.CrossWorld)[1].Contains(x.Name.ToString(), StringComparison.OrdinalIgnoreCase))
-                        : Player.CurrentWorld.Value)
-                        .FirstOrDefault(Player.CurrentWorld.Value),
+                        : Svc.PlayerState.CurrentWorld.Value)
+                        .FirstOrDefault(Svc.PlayerState.CurrentWorld.Value),
                     _ => null
                 };
             }
@@ -221,7 +221,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
         var payload = link.Payloads.OfType<RawPayload>().Select(RelayPayload.Parse).FirstOrDefault(x => x != default);
         if (payload == default) { Error($"Failed to parse {nameof(RelayPayload)}"); return; }
         if (Player.TerritoryIntendedUseEnum is TerritoryIntendedUseEnum.Crystalline_Conflict or TerritoryIntendedUseEnum.Crystalline_Conflict_2 or TerritoryIntendedUseEnum.Deep_Dungeon) {
-            Log($"Relay link ignored. Player in territory {Player.Territory} ({Player.TerritoryIntendedUse}) where chat is not permitted.");
+            Log($"Relay link ignored. Player in territory {Player.Territory.RowId} ({Player.TerritoryIntendedUse}) where chat is not permitted.");
             return;
         }
         if (payload == LastRelay) {
@@ -234,9 +234,9 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
         foreach (var (channel, command, islocal, _) in Config.Channels.Where(c => c.Enabled)) {
             var channelName = channel.GetAttribute<XivChatTypeInfoAttribute>()?.FancyName ?? throw new Exception($"Channel has no {nameof(XivChatTypeInfoAttribute)}");
             if (Config.DontRepeatRelays && payload.OriginChannel == ((uint)channel)) continue; // don't send to the channel that relay was clicked from
-            if (channelName.StartsWith("Linkshell") && Player.CurrentWorld.RowId != Player.HomeWorld.RowId) continue; // don't send to linkshells when off homeworld
-            if (Config.OnlySendLocalHuntsToLocalChannels && islocal && !channelName.StartsWith("Novice") && Player.HomeWorld.RowId != payload.World.RowId) continue; // don't send to non-novice local channels when off homeworld
-            if (channelName.StartsWith("Novice") && Player.CurrentWorld.RowId != payload.World.RowId) continue; // don't send offworld relays to NN
+            if (channelName.StartsWith("Linkshell") && Svc.PlayerState.CurrentWorld.RowId != Svc.PlayerState.HomeWorld.RowId) continue; // don't send to linkshells when off homeworld
+            if (Config.OnlySendLocalHuntsToLocalChannels && islocal && !channelName.StartsWith("Novice") && Svc.PlayerState.HomeWorld.RowId != payload.World.RowId) continue; // don't send to non-novice local channels when off homeworld
+            if (channelName.StartsWith("Novice") && Svc.PlayerState.CurrentWorld.RowId != payload.World.RowId) continue; // don't send offworld relays to NN
             if (channelName.StartsWith("Novice") && !InfoProxyNoviceNetwork.IsInNoviceNetwork()) continue;
 
             if (Config.DryRun) {

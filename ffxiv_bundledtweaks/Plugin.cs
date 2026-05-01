@@ -80,6 +80,9 @@ public class Plugin : IDalamudPlugin {
 
             if (tweak.Enabled && !tweak.CanBeEnabled())
                 TryExecute(() => tweak.DisableInternal());
+
+            if (tweak.Enabled && tweak.CanBeEnabled())
+                TryExecute(tweak.RefreshCommands);
         }
     }
 

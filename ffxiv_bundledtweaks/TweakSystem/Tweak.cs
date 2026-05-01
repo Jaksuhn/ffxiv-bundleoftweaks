@@ -402,7 +402,7 @@ public abstract partial class Tweak // Internal
         }
     }
 
-    protected virtual void EnableCommands() {
+    protected virtual void EnableCommands(bool onlyAbsent = false) {
         foreach (var methodInfo in CommandHandlers) {
             var attr = methodInfo.GetCustomAttribute<CommandHandlerAttribute>()!;
             var enabled = string.IsNullOrEmpty(attr.ConfigFieldName);
@@ -416,16 +416,33 @@ public abstract partial class Tweak // Internal
 
             if (enabled && methodInfo.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Where(id => id != Ipc.None).Distinct().ToArray() is { Length: > 0 } reqs) {
                 if (!Service.IPC.AreAllLoaded(reqs)) {
-                    var missing = Service.IPC.GetMissing(reqs);
-                    var missingNames = missing.Length > 0 ? string.Join(", ", missing.Select(ipc => ipc.Name)) : "one or more required IPCs are not registered";
-                    Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {missingNames}");
+                    if (!onlyAbsent) {
+                        var missing = Service.IPC.GetMissing(reqs);
+                        var missingNames = missing.Length > 0 ? string.Join(", ", missing.Select(ipc => ipc.Name)) : "one or more required IPCs are not registered";
+                        Warning($"Cannot enable command(s) [{string.Join(", ", attr.Commands)}]: missing dependencies: {missingNames}");
+                    }
                     continue;
                 }
             }
 
-            if (enabled)
-                foreach (var c in attr.Commands)
+            if (enabled) {
+                foreach (var c in attr.Commands) {
+                    if (onlyAbsent && Svc.Commands.Commands.ContainsKey(c))
+                        continue;
                     EnableCommand(c, attr.HelpMessage, methodInfo, attr);
+                }
+            }
+        }
+    }
+
+    internal void RefreshCommands() {
+        if (!Enabled || !CanBeEnabled()) return;
+        try {
+            EnableCommands(onlyAbsent: true);
+        }
+        catch (Exception ex) {
+            Error(ex, "Unexpected error during RefreshCommands");
+            LastInternalException = ex;
         }
     }
 

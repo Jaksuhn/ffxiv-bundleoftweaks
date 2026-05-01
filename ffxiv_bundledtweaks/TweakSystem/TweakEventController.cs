@@ -3,11 +3,10 @@ using System.Reflection;
 namespace ComplexTweaks.TweakSystem;
 
 internal sealed class TweakEventController(Tweak owner) {
-    private readonly List<(MethodInfo Method, FrameworkUpdateAttribute Attribute)> _frameworkMethods = owner.CachedType
+    private readonly List<(MethodInfo Method, FrameworkUpdateAttribute Attribute)> _frameworkMethods = [.. owner.CachedType
         .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
         .Where(mi => mi.GetCustomAttribute<FrameworkUpdateAttribute>() is not null)
-        .Select(mi => (Method: mi, Attribute: mi.GetCustomAttribute<FrameworkUpdateAttribute>()!))
-        .ToList();
+        .Select(mi => (Method: mi, Attribute: mi.GetCustomAttribute<FrameworkUpdateAttribute>()!))];
 
     private readonly Dictionary<MethodInfo, IFramework.OnUpdateDelegate> _frameworkHandlers = [];
 

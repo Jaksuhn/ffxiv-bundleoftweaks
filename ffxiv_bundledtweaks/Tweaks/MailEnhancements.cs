@@ -1,6 +1,8 @@
 using clib.Extensions.ClientStructs;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -147,38 +149,71 @@ public class MailEnhancements : Tweak<MailEnhanacementsConfig> {
         }
     }
 
-    private class RestockMapsTask : AutoTask {
+    private class RestockMapsTask : TaskBase {
         private unsafe Span<InfoProxyLetter.Letter> Letters => InfoProxyLetter.Instance()->Letters;
         private int LetterMapCount() => Letters.ToArray().Count(i => i.Attachments.ToArray().Any(a => Item.GetRow(a.ItemId).FilterGroup == 18));
 
         protected override async Task Execute() {
             GameMain.ExecuteCommand(CommandFlag.RequestSaddleBag);
-            var inventoryHasMap = InventoryType.Bags.Any(i => i.Items.Any(i => i.IsTreasureMap));
-            var hasMapDeciphered = InventoryType.KeyItems.Items.Any(i => i.IsTreasureMap);
-            var saddleBagHasMap = InventoryType.SaddleBag.Any(i => i.Items.Any(i => i.IsTreasureMap));
+            static bool InventoryHasMap() => InventoryType.Bags.Any(i => i.Items.Any(i => i.IsTreasureMap));
+            static bool HasMapDeciphered() => InventoryType.KeyItems.Items.Any(i => i.IsTreasureMap);
+            static bool SaddleBagHasMap() => InventoryType.SaddleBag.Any(i => i.Items.Any(i => i.IsTreasureMap));
 
-            if (hasMapDeciphered && inventoryHasMap && saddleBagHasMap) return;
+            if (HasMapDeciphered() && InventoryHasMap() && SaddleBagHasMap()) return;
 
             while (LetterMapCount() > 0) {
+                var inventoryHasMap = InventoryHasMap();
+                var hasMapDeciphered = HasMapDeciphered();
+                var saddleBagHasMap = SaddleBagHasMap();
+
                 if (hasMapDeciphered && inventoryHasMap && saddleBagHasMap) return;
 
                 if (!hasMapDeciphered && inventoryHasMap) {
-                    // decipher from bags
+                    await CloseMail();
+                    await Decipher();
                 }
                 else if (!inventoryHasMap) {
-                    // retrieve from mail -> bags
+                    if (InfoProxyLetter.MapLetter is not { } letter) return;
+                    await OpenMailbox();
+                    InfoProxyLetter.TakeAllAttachements(letter.Index, letter.SenderContentId);
                 }
                 else if (!saddleBagHasMap) {
-                    // move map bags -> saddlebag
+                    if (InventoryType.SaddleBag.Any(i => i.IsFull)) return;
+                    await CloseMail();
+                    await OpenSaddlebag();
+                    InventoryType.Bags.FirstOrNull(b => b.Items.FirstOrDefault(i => i.IsTreasureMap) is not null)?.Items.FirstOrDefault(i => i.IsTreasureMap)?.MoveTo(InventoryType.SaddleBag);
+                    await WaitUntilThenFalse(() => InventoryManager.IsUpdating, "WaitForMove");
                 }
 
                 await NextFrame();
             }
         }
 
+        private async Task OpenMailbox() {
+            using var scope = BeginScope(nameof(OpenMailbox));
+            if (AtkUnitBase.IsAddonReady("LetterList")) return;
+            var obj = Svc.Objects.FirstOrDefault(o => o.ObjectKind is ObjectKind.EventNpc && o.Name.TextValue == "Delivery Moogle" || o.ObjectKind is ObjectKind.HousingEventObject && o.Name.TextValue == "Moogle Letter Box");
+            if (obj is null) return;
+            await InteractWith(obj);
+            await WaitUntil(() => AtkUnitBase.IsAddonReady("LetterList"), "WaitForMailbox");
+        }
+
+        private async Task CloseMail() {
+            using var scope = BeginScope(nameof(CloseMail));
+            AtkUnitBase.CloseAddon("LetterList");
+            await WaitWhile(() => Player.IsBusy, "WaitCloseMail");
+        }
+
+        private async Task OpenSaddlebag() {
+            using var scope = BeginScope(nameof(OpenSaddlebag));
+            if (AtkUnitBase.IsAddonReady("InventoryBuddy")) return;
+            await WaitUntil(() => Svc.Condition.HasPermission(134), "WaitCanOpenSaddleBag");
+            ActionManager.ExecuteMainCommand(77); // chocobo saddlebag
+            await WaitUntil(() => AtkUnitBase.IsAddonReady("InventoryBuddy"), "WaitForSaddlebag");
+        }
+
         private async Task Decipher() {
             using var scope = BeginScope(nameof(Decipher));
-            // back out of mail
             foreach (var b in InventoryType.Bags) {
                 if (b.Items.FirstOrDefault(i => i.IsTreasureMap) is not { } map) continue;
 

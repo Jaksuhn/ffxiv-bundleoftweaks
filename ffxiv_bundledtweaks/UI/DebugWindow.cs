@@ -47,7 +47,7 @@ internal class DebugWindow : Window {
         }
     }
 
-    private unsafe void DrawTab() {
+    private void DrawTab() {
         if (SelectedTab == null) {
             ImGui.Dummy(Vector2.Zero);
             return;

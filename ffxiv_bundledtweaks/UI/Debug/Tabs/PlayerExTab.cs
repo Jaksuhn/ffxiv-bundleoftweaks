@@ -2,7 +2,7 @@
 
 namespace ComplexTweaks.UI.Debug.Tabs;
 
-internal unsafe class PlayerExTab : DebugTab {
+internal class PlayerExTab : DebugTab {
     public override void Draw() {
         //var pi = typeof(PlayerEx).GetProperties();
         //foreach (var p in pi)

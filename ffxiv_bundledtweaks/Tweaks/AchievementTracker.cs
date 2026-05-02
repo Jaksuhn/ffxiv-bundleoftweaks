@@ -57,7 +57,7 @@ public unsafe partial class AchievementTracker : Tweak<AchievementTrackerConfigu
     }
 }
 
-public unsafe class AchievementTrackerWindow(AchievementTracker tweak) : Window($"Achievement Tracker##{nameof(AchievementTrackerWindow)}") {
+public class AchievementTrackerWindow(AchievementTracker tweak) : Window($"Achievement Tracker##{nameof(AchievementTrackerWindow)}") {
     private Sheets.Achievement? selectedAchievement;
     private string _search = string.Empty;
     private DateTime _lastCall;

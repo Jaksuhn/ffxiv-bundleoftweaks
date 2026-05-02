@@ -4,14 +4,14 @@ namespace ComplexTweaks.Utilities;
 
 public static unsafe class Structs {
     [StructLayout(LayoutKind.Explicit)]
-    public unsafe struct PlayerController {
+    public struct PlayerController {
         [FieldOffset(0x10)] public PlayerMoveControllerWalk MoveControllerWalk;
         [FieldOffset(0x150)] public PlayerMoveControllerFly MoveControllerFly;
         [FieldOffset(0x559)] public byte ControlMode;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0x140)]
-    public unsafe struct PlayerMoveControllerWalk {
+    public struct PlayerMoveControllerWalk {
         [FieldOffset(0x10)] public Vector3 MovementDir;
         [FieldOffset(0x58)] public float BaseMovementSpeed;
         [FieldOffset(0x90)] public float MovementDirRelToCharacterFacing;
@@ -24,7 +24,7 @@ public static unsafe class Structs {
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0xB0)]
-    public unsafe struct PlayerMoveControllerFly {
+    public struct PlayerMoveControllerFly {
         [FieldOffset(0x10)] public float unk10; // x coord?
         [FieldOffset(0x14)] public float unk14; // y coord?
         [FieldOffset(0x18)] public float unk18; // z coord?

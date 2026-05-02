@@ -20,7 +20,7 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig> {
     public override void Enable() => Svc.ClientState.TerritoryChanged += OnTerritoryChanged;
     public override void Disable() => Svc.ClientState.TerritoryChanged -= OnTerritoryChanged;
 
-    private unsafe void OnTerritoryChanged(uint obj) {
+    private void OnTerritoryChanged(uint obj) {
         foreach (var currency in Config.Alerts) {
             var count = GetAlertCount(currency);
 
@@ -105,10 +105,10 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig> {
             _ => ItemId,
         };
 
-        public unsafe ushort Icon => (ushort)(CurrentItemId != 0 ? GetRow<Item>(CurrentItemId)?.Icon ?? 0 : 0);
-        public unsafe string Name => CurrentItemId != 0 ? GetRow<Item>(CurrentItemId)?.Name.ToString() ?? string.Empty : string.Empty;
+        public ushort Icon => (ushort)(CurrentItemId != 0 ? GetRow<Item>(CurrentItemId)?.Icon ?? 0 : 0);
+        public string Name => CurrentItemId != 0 ? GetRow<Item>(CurrentItemId)?.Name.ToString() ?? string.Empty : string.Empty;
 
-        public unsafe string DisplayName => Type switch {
+        public string DisplayName => Type switch {
             SpecialCurrencyType.Tomestone => GetTomestoneDisplayName(LogicalId),
             SpecialCurrencyType.SpecialBucket => GetSpecialBucketDisplayName((byte)LogicalId),
             _ => Name,
@@ -180,7 +180,7 @@ public class SimpleCurrencyAlert : Tweak<SimpleCurrencyAlertConfig> {
             : InventoryManager.Instance()->GetInventoryItemCount(alert.CurrentItemId);
     }
 
-    private unsafe void DrawAlertList(params SpecialCurrencyType[] types) {
+    private void DrawAlertList(params SpecialCurrencyType[] types) {
         var alerts = Config.Alerts.Where(a => types.Contains(a.Type)).ToList();
 
         if (alerts.Count == 0) {

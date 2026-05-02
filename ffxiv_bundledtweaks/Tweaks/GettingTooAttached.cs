@@ -4,7 +4,7 @@ using Dalamud.Game.Gui.ContextMenu;
 namespace ComplexTweaks.Tweaks;
 
 [Tweak]
-public unsafe class GettingTooAttached : Tweak {
+public class GettingTooAttached : Tweak {
     public override string Name => "Getting Too Attached";
     public override string Description => "Adds a context menu to items to loop through attaching and removing materia for the Getting Too Attached achievement";
 

@@ -11,7 +11,7 @@ public sealed class MateriaTransmutation : TaskBase {
         return Task.CompletedTask;
     }
 
-    private unsafe List<MateriaWrapper> GetMateria() {
+    private List<MateriaWrapper> GetMateria() {
         List<MateriaWrapper> materia = [];
         foreach (var row in FindRows<Materia>(x => x.Item.FirstOrDefault().RowId != 0))
             foreach (var item in row.Item)

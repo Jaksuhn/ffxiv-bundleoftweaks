@@ -105,7 +105,7 @@ internal class WondrousTailsClickToOpen : Tweak {
         }
     }
 
-    private unsafe List<uint> GetInstanceListFromId(uint orderDataId) {
+    private List<uint> GetInstanceListFromId(uint orderDataId) {
         var bingoOrderData = GetSheet<WeeklyBingoOrderData>().GetRow(orderDataId);
         Debug($"{nameof(OnDutySlotClick)}: [row={bingoOrderData.RowId}; type={bingoOrderData.Type}; text={bingoOrderData.Text.Value.Description};]");
         switch (bingoOrderData.Type) {

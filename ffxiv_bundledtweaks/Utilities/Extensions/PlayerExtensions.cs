@@ -25,7 +25,7 @@ public static unsafe class PlayerExtensions {
             SetMoveControlData(speedBase);
         }
 
-        private static unsafe void SetMoveControlData(float speed)
+        private static void SetMoveControlData(float speed)
             => Dalamud.SafeMemory.Write(((delegate* unmanaged[Stdcall]<byte, nint>)Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 48 85 C0 74 AE 83 FD 05"))(1) + 8, speed);
     }
 }

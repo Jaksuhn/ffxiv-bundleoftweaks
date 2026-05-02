@@ -9,7 +9,7 @@ using Lumina.Excel.Sheets;
 namespace ComplexTweaks.UI.Debug.Tabs;
 
 internal unsafe class InventoryTab : DebugTab {
-    private unsafe List<Pointer<InventoryItem>> InventoryItems {
+    private List<Pointer<InventoryItem>> InventoryItems {
         get {
             List<Pointer<InventoryItem>> items = [];
             foreach (var inv in InventoryType.FullInventory) {
@@ -22,7 +22,7 @@ internal unsafe class InventoryTab : DebugTab {
         }
     }
 
-    private unsafe List<Pointer<InventoryItem>> FilteredItems => [.. InventoryItems.Where(x => GetRow<Item>(x.Value->ItemId)?.Name.ExtractText().ToLowerInvariant().Contains(searchFilter.ToLowerInvariant()) ?? false)];
+    private List<Pointer<InventoryItem>> FilteredItems => [.. InventoryItems.Where(x => GetRow<Item>(x.Value->ItemId)?.Name.ExtractText().ToLowerInvariant().Contains(searchFilter.ToLowerInvariant()) ?? false)];
     private string searchFilter = "";
 
     public override void Draw() {

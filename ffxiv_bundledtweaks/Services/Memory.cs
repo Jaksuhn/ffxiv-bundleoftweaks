@@ -27,7 +27,7 @@ public unsafe class Memory {
         SetMoveControlData(speedBase);
     }
 
-    private static unsafe void SetMoveControlData(float speed)
+    private static void SetMoveControlData(float speed)
         => Dalamud.SafeMemory.Write(((delegate* unmanaged[Stdcall]<byte, nint>)Svc.SigScanner.ScanText(Signatures.MoveController))(1) + 8, speed);
     #endregion
 }

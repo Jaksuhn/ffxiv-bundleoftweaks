@@ -27,7 +27,7 @@ internal class AutoEquipXPBoosts : Tweak {
         new ExpItem(44410, 60, 30), // Neophyte's ring
     ];
 
-    private unsafe void CheckForLevelSync(uint classJobId, uint level) {
+    private void CheckForLevelSync(uint classJobId, uint level) {
         if (!Player.IsInDuty) return;
         var expItems = _expItems.GroupBy(x => x.GameData.Value.EquipSlotCategory.RowId)
             .Where(group => group.Any(x => level <= x.MaxLevel && x.GameData.Value.Handle.HasItem))

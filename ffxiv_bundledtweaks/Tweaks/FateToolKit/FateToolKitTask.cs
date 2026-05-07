@@ -403,8 +403,9 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             LastStuckFateId = null;
             ConsecutiveStuckRetries = 0;
             Status = "Teleporting to fate";
-            await Mount();
-            await TeleportTo(Player.Territory.RowId, currentFate.Position, allowSameZoneTeleport: true);
+            var fateTerritoryId = Player.Territory.RowId;
+            await TeleportTo(fateTerritoryId, currentFate.Position, allowSameZoneTeleport: true);
+            await UseAethernet(fateTerritoryId, currentFate.Position);
             return;
         }
 
@@ -416,12 +417,11 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
     // some are just so bad it's not worth it having them. I don't really have a better solution than this.
     private readonly List<uint> _obstacleMapBlacklist = [1831, 1832, 1914, 1915];
     private async Task GenerateObstacleMap(PublicEvent evt) {
-        using var scope = BeginScope(nameof(GenerateObstacleMap));
-
         if (_obstacleMapBlacklist.Contains(evt.Id)) {
-            Verbose($"Skipping obstacle map generation for blacklisted fate {evt.Id}");
             return;
         }
+
+        using var scope = BeginScope(nameof(GenerateObstacleMap));
 
         // sometimes the center of a fate is unreachable (tower fate in amh araeng), so generate from a reachable point then compensate for being off center
         var safe = Svc.Navmesh.NearestPointReachable(evt.Position, 5, 5);

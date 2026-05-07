@@ -58,10 +58,20 @@ public unsafe partial class DebugLogging : Tweak {
 
     [AddressHook<PacketDispatcher>(nameof(PacketDispatcher.MemberFunctionPointers.SendEventCompletePacket))]
     internal void SendEventCompletePacket(EventId eventId, short scene, byte a3, uint* payload, byte payloadSize, void* a6) {
-        MethodBase.GetCurrentMethod()?.Log([ToString(eventId), scene, a3, (nint)payload, payloadSize, (nint)a6]);
+        MethodBase.GetCurrentMethod()?.Log([ToString(eventId), scene, a3, (nint)payload, payloadSize, FormatPayload(payload, payloadSize), (nint)a6]);
         SendEventCompletePacketHook.Original(eventId, scene, a3, payload, payloadSize, a6);
     }
 
     private static string ToString(EventId eventid) => $"{eventid.Id}/{eventid.EntryId}/{eventid.ContentId}";
+
+    private static string FormatPayload(uint* payload, byte payloadSize) {
+        if (payload == null || payloadSize == 0)
+            return "[]";
+
+        var values = new string[payloadSize];
+        for (var i = 0; i < payloadSize; i++)
+            values[i] = payload[i].ToString();
+        return $"[{string.Join(", ", values)}]";
+    }
 }
 #endif

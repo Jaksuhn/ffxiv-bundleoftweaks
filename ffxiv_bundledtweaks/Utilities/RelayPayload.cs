@@ -1,4 +1,6 @@
-﻿using Dalamud.Game.Text.SeStringHandling;
+﻿using ComplexTweaks.Tweaks;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Lumina.Excel.Sheets;
 using System.IO;
@@ -45,7 +47,7 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
         originChannel = GetInteger(reader);
     }
 
-    public override string ToString() => $"{nameof(RelayPayload)}[{mapLink}, {worldId}, {instance}, {relayType}, {originChannel}]";
+    public override string ToString() => $"{nameof(RelayPayload)}[{mapLink}, {World.GetRow(worldId).Name}#{worldId}, i:{instance}, {(HuntRelayHelper.RelayTypes)relayType}#{relayType}, {(XivChatType)originChannel}#{originChannel}]";
 
     public static bool operator ==(RelayPayload? left, RelayPayload? right) {
         if (left is null) return right is null;

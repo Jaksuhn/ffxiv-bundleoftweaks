@@ -66,15 +66,24 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     private DalamudLinkPayload RelayLinkPayload = null!;
     private readonly string InstanceHeuristics = @"\b(?:instance\s*(?<instanceNumber>\d+)|i(?<iNumber>\d+))\b";
     private RelayPayload? LastRelay;
+    private readonly List<RelayPayload> _huntAlertsRelays = [];
+
+    private record struct HuntAlertsMessage(string Message, string HuntType, string HuntKind, string HuntWorld,
+        string CurrentWorldName, string CurrentRegionName, string HuntRegionName, string PostedTime,
+        long PostedEpoch, string StartLocation, uint StartLocationAetheryteId, string StartZone, int Instance,
+        string LocationCoords, bool OpenMapOnArrival, bool LifestreamEnabled);
 
     public override void Enable() {
         Svc.Chat.ChatMessage += OnChatMessage;
         RelayLinkPayload = Svc.Chat.AddChatLinkHandler((uint)LinkHandlerId.RelayLinkPayload, HandleRelayLink);
+        Svc.Interface.GetIpcSubscriber<HuntAlertsMessage, object>("HuntAlerts.OnHuntTrainMessageReceived").Subscribe(OnHuntAlert);
     }
 
     public override void Disable() {
         Svc.Chat.ChatMessage -= OnChatMessage;
         Svc.Chat.RemoveChatLinkHandler((uint)LinkHandlerId.RelayLinkPayload);
+        Svc.Interface.GetIpcSubscriber<HuntAlertsMessage, object>("HuntAlerts.OnHuntTrainMessageReceived").Unsubscribe(OnHuntAlert);
+        _huntAlertsRelays.Clear();
     }
 
     public enum Locality {
@@ -179,8 +188,20 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     private void OnChatMessage(IHandleableChatMessage message) {
         if (!Svc.ClientState.IsLoggedIn) return; // messages sometimes trigger during login, but before fully logged in and thus stuff like checking player DC fails later
         if (message.Sender.TextValue == Svc.PlayerState.CharacterName) return;
-        var maplink = message.Message.Payloads.FirstOrDefault(x => x is MapLinkPayload, null);
-        if (maplink is not MapLinkPayload mlp) return;
+
+        if (message.Message.Payloads.FirstOrDefault(x => x is MapLinkPayload, null) is not MapLinkPayload mlp) {
+            if (message.Message.Payloads.OfType<DalamudLinkPayload>().Any(p => p.Plugin == "HuntAlerts") && _huntAlertsRelays.Count > 0) {
+                var (world, i, relayType) = DetectWorldInstanceRelayType(message.Message);
+                // ignoring instance matching cause that won't ever be right for no instance s ranks and trains
+                if (_huntAlertsRelays.FirstOrDefault(r => r.World.RowId == world?.RowId && r.RelayType == relayType) is RelayPayload relay) {
+                    Log($"HuntAlerts relay detected: {relay}");
+                    mlp = relay.MapLink;
+                    message.Message = new SeString().Append(message.Message.Payloads).Append([RelayLinkPayload, new IconPayload(BitmapFontIcon.NotoriousMonster), relay.ToRawPayload(), RawPayload.LinkTerminator]);
+                    _huntAlertsRelays.Remove(relay);
+                }
+            }
+            return;
+        }
 
         try {
             var (world, instance, relayType) = DetectWorldInstanceRelayType(message.Message);
@@ -242,7 +263,6 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
                 continue;
             }
 
-#pragma warning disable CS0618 // Type or member is obsolete
             TaskManager.Enqueue(() => {
                 if (Player.Available) // messages can't be sent when travelling between zones where your player goes null
                 {
@@ -251,7 +271,6 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
                 }
                 else return false;
             });
-#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         LastRelay = payload;
@@ -307,14 +326,14 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     private (World?, uint, uint) DetectWorldInstanceRelayType(SeString message) {
         var text = string.Join(" ", message.Payloads.OfType<TextPayload>().Select(x => x.Text));
         var heuristicInstance = 0;
-        var mapInstance = text.Select(ReplaceSeIconIntanceNumber).OfType<int>().FirstOrDefault(0);
+        var mapInstance = text.Select(c => c.ReplaceSeIconInstanceNumber()).OfType<int>().FirstOrDefault(0);
 
         // trim texts within MapLinkPayload
         const string linkPattern = ".*?\\)";
         var rgx = new Regex(linkPattern);
         text = rgx.Replace(text, "");
         // replace Boxed letters with alphabets
-        text = string.Join(string.Empty, text.Select(ReplaceSeIconChar));
+        text = string.Join(string.Empty, text.Select(c => c.ReplaceSeIconLetters()));
 
         var instanceMatch = Regex.Match(text, InstanceHeuristics, RegexOptions.IgnoreCase);
         if (instanceMatch.Success) {
@@ -335,83 +354,34 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
         World? partial = null;
         if (Config.AllowPartialWorldMatches)
             foreach (var word in RemoveConflicts(text).Split(' ').Where(t => !ECommons.GenericHelpers.IsNullOrEmpty(t) && t.Length > 2))
-                partial ??= FindRow<World>(x => x.IsPublic && x.DataCenter.RowId == Svc.PlayerState.CurrentWorld.Value.DataCenter.RowId && x.Name.ExtractText().Contains(RemoveNonAlphaNumeric(word), StringComparison.OrdinalIgnoreCase));
+                partial ??= FindRow<World>(x => x.IsPublic && x.DataCenter.RowId == Svc.PlayerState.CurrentWorld.Value.DataCenter.RowId && x.Name.ExtractText().Contains(word.FilterNonAlphanumeric(), StringComparison.OrdinalIgnoreCase));
 
         return (partial ?? FindRow<World>(x => x.IsPublic && RemoveConflicts(text).Contains(x.Name.ExtractText(), StringComparison.OrdinalIgnoreCase)) ?? null, heuristicInstance != 0 ? (uint)heuristicInstance : (uint)mapInstance, (uint)relayType);
     }
 
     // I think this is the only case where an S rank has the name of a world contained within it
     private string RemoveConflicts(string text) => text.Replace("kaiser behemoth", string.Empty, StringComparison.OrdinalIgnoreCase);
-    private string RemoveNonAlphaNumeric(string text) => Regex.Replace(text, @"\W+", "");
 
-    private char ReplaceSeIconChar(char c) {
-        return c switch {
-            (char)SeIconChar.BoxedLetterA => 'A',
-            (char)SeIconChar.BoxedLetterB => 'B',
-            (char)SeIconChar.BoxedLetterC => 'C',
-            (char)SeIconChar.BoxedLetterD => 'D',
-            (char)SeIconChar.BoxedLetterE => 'E',
-            (char)SeIconChar.BoxedLetterF => 'F',
-            (char)SeIconChar.BoxedLetterG => 'G',
-            (char)SeIconChar.BoxedLetterH => 'H',
-            (char)SeIconChar.BoxedLetterI => 'I',
-            (char)SeIconChar.BoxedLetterJ => 'J',
-            (char)SeIconChar.BoxedLetterK => 'K',
-            (char)SeIconChar.BoxedLetterL => 'L',
-            (char)SeIconChar.BoxedLetterM => 'M',
-            (char)SeIconChar.BoxedLetterN => 'N',
-            (char)SeIconChar.BoxedLetterO => 'O',
-            (char)SeIconChar.BoxedLetterP => 'P',
-            (char)SeIconChar.BoxedLetterQ => 'Q',
-            (char)SeIconChar.BoxedLetterR => 'R',
-            (char)SeIconChar.BoxedLetterS => 'S',
-            (char)SeIconChar.BoxedLetterT => 'T',
-            (char)SeIconChar.BoxedLetterU => 'U',
-            (char)SeIconChar.BoxedLetterV => 'V',
-            (char)SeIconChar.BoxedLetterW => 'W',
-            (char)SeIconChar.BoxedLetterX => 'X',
-            (char)SeIconChar.BoxedLetterY => 'Y',
-            (char)SeIconChar.BoxedLetterZ => 'Z',
-            _ => c,
+    private void OnHuntAlert(HuntAlertsMessage message) {
+        Log($"Received HuntAlert: {message}");
+        var territory = TerritoryType.Where(r => r.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld).FirstOrNull(r => r.PlaceName.Value.Name == message.StartZone);
+        if (territory is null) return;
+
+        var world = World.Where(r => r.IsPublic).FirstOrNull(r => r.Name == message.HuntWorld);
+        if (world is null) return;
+
+        Vector2 pos = new(float.Parse(message.LocationCoords.Split(", ")[0]), float.Parse(message.LocationCoords.Split(", ")[1]));
+        var maplink = new MapLinkPayload(territory.Value.RowId, territory.Value.Map.RowId, pos.X, pos.Y);
+        var relayType = message.HuntType switch {
+            "srank" => RelayTypes.SRank,
+            "new_hunt" => RelayTypes.Train,
+            _ => RelayTypes.None
         };
+        if (relayType == RelayTypes.None)
+            return;
+        // no way of knowing if a zone has instances so we'll just null all instance 1s to avoid inserting an instance for a zone that doesn't have them
+        var relay = new RelayPayload(maplink, world.Value.RowId, message.Instance > 1 ? (uint)message.Instance : null, (uint)relayType, (uint)Echo);
+        Log($"Constructed {nameof(RelayPayload)}: {relay}");
+        _huntAlertsRelays.Add(relay);
     }
-
-    private int? ReplaceSeIconIntanceNumber(char c) {
-        return c switch {
-            (char)SeIconChar.Instance1 => 1,
-            (char)SeIconChar.Instance2 => 2,
-            (char)SeIconChar.Instance3 => 3,
-            (char)SeIconChar.Instance4 => 4,
-            (char)SeIconChar.Instance5 => 5,
-            (char)SeIconChar.Instance6 => 6,
-            (char)SeIconChar.Instance7 => 7,
-            (char)SeIconChar.Instance8 => 8,
-            (char)SeIconChar.Instance9 => 9,
-            _ => null
-        };
-    }
-
-    //private int ReplaceSeIconCharNumber(char c) {
-    //    return c switch {
-    //        (char)SeIconChar.Number1 => 1,
-    //        (char)SeIconChar.BoxedNumber1 => 1,
-    //        (char)SeIconChar.Number2 => 2,
-    //        (char)SeIconChar.BoxedNumber2 => 2,
-    //        (char)SeIconChar.Number3 => 3,
-    //        (char)SeIconChar.BoxedNumber3 => 3,
-    //        (char)SeIconChar.Number4 => 4,
-    //        (char)SeIconChar.BoxedNumber4 => 4,
-    //        (char)SeIconChar.Number5 => 5,
-    //        (char)SeIconChar.BoxedNumber5 => 5,
-    //        (char)SeIconChar.Number6 => 6,
-    //        (char)SeIconChar.BoxedNumber6 => 6,
-    //        (char)SeIconChar.Number7 => 7,
-    //        (char)SeIconChar.BoxedNumber7 => 7,
-    //        (char)SeIconChar.Number8 => 8,
-    //        (char)SeIconChar.BoxedNumber8 => 8,
-    //        (char)SeIconChar.Number9 => 9,
-    //        (char)SeIconChar.BoxedNumber9 => 9,
-    //        _ => c,
-    //    };
-    //}
 }

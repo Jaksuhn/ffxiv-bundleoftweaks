@@ -68,21 +68,33 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     private RelayPayload? LastRelay;
     private readonly List<RelayPayload> _huntAlertsRelays = [];
 
-    private record struct HuntAlertsMessage(string Message, string HuntType, string HuntKind, string HuntWorld,
-        string CurrentWorldName, string CurrentRegionName, string HuntRegionName, string PostedTime,
-        long PostedEpoch, string StartLocation, uint StartLocationAetheryteId, string StartZone, int Instance,
-        string LocationCoords, bool OpenMapOnArrival, bool LifestreamEnabled);
+    public record struct HuntAlertMessage(
+        string Message,
+        string HuntType,
+        string HuntKind,
+        uint HuntWorldId,
+        uint CurrentWorldId,
+        uint CurrentWorldRegionGroupId,
+        uint HuntWorldRegionGroupId,
+        DateTimeOffset PostedTime,
+        long PostedEpoch,
+        uint StartingAetheryteId,
+        uint StartingTerritoryTypeId,
+        int Instance,
+        Vector2? MapLocationCoords,
+        uint? CreatureNameId
+    );
 
     public override void Enable() {
         Svc.Chat.ChatMessage += OnChatMessage;
         RelayLinkPayload = Svc.Chat.AddChatLinkHandler((uint)LinkHandlerId.RelayLinkPayload, HandleRelayLink);
-        Svc.Interface.GetIpcSubscriber<HuntAlertsMessage, object>("HuntAlerts.OnHuntTrainMessageReceived").Subscribe(OnHuntAlert);
+        Svc.Interface.GetIpcSubscriber<HuntAlertMessage, object>("HuntAlerts.OnHuntAlertMessageReceived").Subscribe(OnHuntAlert);
     }
 
     public override void Disable() {
         Svc.Chat.ChatMessage -= OnChatMessage;
         Svc.Chat.RemoveChatLinkHandler((uint)LinkHandlerId.RelayLinkPayload);
-        Svc.Interface.GetIpcSubscriber<HuntAlertsMessage, object>("HuntAlerts.OnHuntTrainMessageReceived").Unsubscribe(OnHuntAlert);
+        Svc.Interface.GetIpcSubscriber<HuntAlertMessage, object>("HuntAlerts.OnHuntAlertMessageReceived").Unsubscribe(OnHuntAlert);
         _huntAlertsRelays.Clear();
     }
 
@@ -362,16 +374,11 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     // I think this is the only case where an S rank has the name of a world contained within it
     private string RemoveConflicts(string text) => text.Replace("kaiser behemoth", string.Empty, StringComparison.OrdinalIgnoreCase);
 
-    private void OnHuntAlert(HuntAlertsMessage message) {
+    private void OnHuntAlert(HuntAlertMessage message) {
         Log($"Received HuntAlert: {message}");
-        var territory = TerritoryType.Where(r => r.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld).FirstOrNull(r => r.PlaceName.Value.Name == message.StartZone);
-        if (territory is null) return;
+        if (message.MapLocationCoords is not { } pos) return;
 
-        var world = World.Where(r => r.IsPublic).FirstOrNull(r => r.Name == message.HuntWorld);
-        if (world is null) return;
-
-        Vector2 pos = new(float.Parse(message.LocationCoords.Split(", ")[0]), float.Parse(message.LocationCoords.Split(", ")[1]));
-        var maplink = new MapLinkPayload(territory.Value.RowId, territory.Value.Map.RowId, pos.X, pos.Y);
+        var maplink = new MapLinkPayload(message.StartingTerritoryTypeId, TerritoryType.GetRow(message.StartingTerritoryTypeId).Map.RowId, pos.X, pos.Y);
         var relayType = message.HuntType switch {
             "srank" => RelayTypes.SRank,
             "new_hunt" => RelayTypes.Train,
@@ -380,7 +387,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
         if (relayType == RelayTypes.None)
             return;
         // no way of knowing if a zone has instances so we'll just null all instance 1s to avoid inserting an instance for a zone that doesn't have them
-        var relay = new RelayPayload(maplink, world.Value.RowId, message.Instance > 1 ? (uint)message.Instance : null, (uint)relayType, (uint)Echo);
+        var relay = new RelayPayload(maplink, message.HuntWorldId, message.Instance > 1 ? (uint)message.Instance : null, (uint)relayType, (uint)Echo);
         Log($"Constructed {nameof(RelayPayload)}: {relay}");
         _huntAlertsRelays.Add(relay);
     }

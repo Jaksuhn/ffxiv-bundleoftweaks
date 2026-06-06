@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 using System.Data;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -336,7 +337,12 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     }
 
     private (World?, uint, uint) DetectWorldInstanceRelayType(SeString message) {
-        var text = string.Join(" ", message.Payloads.OfType<TextPayload>().Select(x => x.Text));
+        var text = string.Join(" ", message.Payloads.Select(payload => payload switch {
+            TextPayload tp => tp.Text,
+            AutoTranslatePayload tr => tr.Text,
+            _ => string.Empty
+        }));
+        Log($"Detecting world, instance, and relay type for message: {text}");
         var heuristicInstance = 0;
         var mapInstance = text.Select(c => c.ReplaceSeIconInstanceNumber()).OfType<int>().FirstOrDefault(0);
 
@@ -376,7 +382,14 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
 
     private void OnHuntAlert(HuntAlertMessage message) {
         Log($"Received HuntAlert: {message}");
-        if (message.MapLocationCoords is not { } pos) return;
+        var mapPos = Aetheryte.TryGetRow(message.StartingAetheryteId, out var row) && MapUtil.WorldToMap(Coords.AetherytePosition(row)) is { } vec3
+            ? message.MapLocationCoords ?? new Func<Vector2>(() => {
+                Log($"{nameof(HuntAlertMessage)} didn't contain a position. Using position of {row.AethernetName.Value.Name} ({vec3.X}, {vec3.Y})");
+                return new Vector2(vec3.X, vec3.Y);
+            })()
+            : message.MapLocationCoords ?? null;
+
+        if (mapPos is not { } pos) return;
 
         var maplink = new MapLinkPayload(message.StartingTerritoryTypeId, TerritoryType.GetRow(message.StartingTerritoryTypeId).Map.RowId, pos.X, pos.Y);
         var relayType = message.HuntType switch {

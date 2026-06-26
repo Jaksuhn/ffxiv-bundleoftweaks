@@ -67,24 +67,27 @@ public class TimezoneTranslator : Tweak {
             var sb = new SeStringBuilder();
             foreach (var item in message.Message.Payloads) {
                 if (item is TextPayload tp && !string.IsNullOrEmpty(tp.Text)) {
-                    // replace every timestamp in this payload (there can be multiple)
+                    var dateTimeReplaced = false;
                     var replacedTimes = regex.Replace(tp.Text, m => {
-                        if (!DateTime.TryParse(m.Value, conf.Culture, out var serverTime)
-                            && !DateTime.TryParse(MonthPeriodRegex.Replace(m.Value, "$1. ", 1), conf.Culture, out serverTime)) {
+                        dateTimeReplaced = true;
+                        if (!DateTime.TryParse(m.Value, conf.Culture, out var serverTime) && !DateTime.TryParse(MonthPeriodRegex.Replace(m.Value, "$1. ", 1), conf.Culture, out serverTime)) {
                             Error($"Failed to parse a {nameof(DateTime)} from [{m.Value}] with culture [{conf.Culture.Name}]");
                             return m.Value;
                         }
 
-                        var localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(serverTime, conf.ServerTimeZone, TimeZoneInfo.Local.Id)
-                            .ToString(conf.Culture.DateTimeFormat.FullDateTimePattern, conf.Culture);
-
+                        var localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(serverTime, conf.ServerTimeZone, TimeZoneInfo.Local.Id).ToString(conf.Culture.DateTimeFormat.FullDateTimePattern, conf.Culture);
                         Log($"Replaced timestamp [{m.Value} ({serverTz})] with [{localTime} ({LocalTzAbbreviation})]");
                         return localTime;
                     });
 
-                    // replace / append timezone abbreviation.
+                    var containsServerTz = Regex.IsMatch(tp.Text, $@"\({Regex.Escape(serverTz)}\)", RegexOptions.IgnoreCase);
+                    if (!dateTimeReplaced && !containsServerTz) {
+                        sb.Add(tp);
+                        continue;
+                    }
+
                     var withLocalTz = Regex.Replace(replacedTimes, $@"\({Regex.Escape(serverTz)}\)", $"({LocalTzAbbreviation})", RegexOptions.IgnoreCase);
-                    if (withLocalTz == replacedTimes && !withLocalTz.Contains($"({LocalTzAbbreviation})", StringComparison.OrdinalIgnoreCase))
+                    if (withLocalTz == replacedTimes && dateTimeReplaced && !withLocalTz.Contains($"({LocalTzAbbreviation})", StringComparison.OrdinalIgnoreCase))
                         withLocalTz += $" ({LocalTzAbbreviation})"; // if any original string (jp) doesn't have a timezone to replace, append
 
                     sb.Add(new TextPayload(withLocalTz));

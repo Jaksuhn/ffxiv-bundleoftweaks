@@ -8,7 +8,7 @@ namespace ComplexTweaks.Tweaks;
 
 public unsafe partial class LiveThemeChange : Tweak {
     public override string Name => "Live Theme Change";
-    public override string Description => "Applies colour theme changes immediately, without needing to re-log. Why did the devs not just do this?";
+    public override string Description => "Applies colour theme changes immediately, without needing to re-log (doesn't apply to persistent addons).";
 
     [AddressHook<ConfigEntry>(nameof(ConfigEntry.MemberFunctionPointers.SetValueUInt))]
     private bool SetValueUInt(ConfigEntry* entry, uint value, uint save) {

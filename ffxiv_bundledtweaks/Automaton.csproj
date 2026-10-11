@@ -65,6 +65,8 @@
         <Copy SourceFiles="$(TargetDir)clib.dll" DestinationFolder="$(_SdkStage)" />
         <Copy SourceFiles="$(_GeneratorDir)InteropSourceGenerator.dll" DestinationFolder="$(_SdkAnalyzers)" />
         <Copy SourceFiles="$(_LanguageExt)" DestinationFolder="$(_SdkAnalyzers)" />
+        <Copy SourceFiles="@(ReferencePath)" DestinationFolder="$(_SdkStage)" Condition="'%(Filename)' == 'FFXIVClientStructs' or '%(Filename)' == 'InteropGenerator.Runtime'" />
+        <Error Condition="!Exists('$(_SdkStage)FFXIVClientStructs.dll')" Text="Failed to resolve FFXIVClientStructs.dll." />
         <ZipDirectory SourceDirectory="$(_SdkStage)" DestinationFile="$(TargetDir)sdk.zip" Overwrite="true" />
     </Target>
 </Project>

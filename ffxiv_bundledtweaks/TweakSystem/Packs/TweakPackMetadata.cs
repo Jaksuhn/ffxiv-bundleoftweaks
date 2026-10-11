@@ -1,8 +1,6 @@
 using System.IO;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Runtime.Loader;
 
 namespace ComplexTweaks.TweakSystem.Packs;
 
@@ -32,24 +30,6 @@ public static class TweakPackMetadata {
         if (api != TweakPackApi.Current)
             return new(false, $"Pack API {api} does not match {Svc.Interface.Manifest.Name} API #{TweakPackApi.Current}.");
 
-        Version? referenced = null;
-        foreach (var handle in reader.AssemblyReferences) {
-            var reference = reader.GetAssemblyReference(handle);
-            if (reader.GetString(reference.Name) == "FFXIVClientStructs") {
-                referenced = reference.Version;
-                break;
-            }
-        }
-
-        if (referenced is null)
-            return new(false, "Pack does not reference FFXIVClientStructs.");
-
-        var loaded = FindLoaded("FFXIVClientStructs")?.GetName().Version;
-        if (loaded is null)
-            return new(false, "FFXIVClientStructs is not loaded.");
-        if (loaded != referenced)
-            return new(false, $"Pack was built against FFXIVClientStructs {referenced}; {Svc.Interface.Manifest.Name} has {loaded}.");
-
         return new(true, null);
     }
 
@@ -66,14 +46,6 @@ public static class TweakPackMetadata {
         var type = reader.GetTypeReference((TypeReferenceHandle)parent);
         return reader.GetString(type.Name) == nameof(TweakPackAttribute) && reader.GetString(type.Namespace) == typeof(TweakPackAttribute).Namespace;
     }
-
-    private static Assembly? FindLoaded(string name) {
-        var host = AssemblyLoadContext.GetLoadContext(typeof(Tweak).Assembly);
-        return Find(host, name) ?? Find(AssemblyLoadContext.Default, name);
-    }
-
-    private static Assembly? Find(AssemblyLoadContext? context, string name)
-        => context?.Assemblies.FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, name, StringComparison.Ordinal));
 }
 
 internal static class TweakActivation {

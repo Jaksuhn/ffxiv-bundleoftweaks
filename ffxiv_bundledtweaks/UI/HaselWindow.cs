@@ -105,10 +105,6 @@ public partial class HaselWindow : Window {
 
             if (ImGui.Selectable($"{tweak.Name}##Selectable_{tweak.ConfigKey}", _selectedTweak == tweak.ConfigKey))
                 _selectedTweak = _selectedTweak != tweak.ConfigKey ? tweak.ConfigKey : string.Empty;
-            if (tweak.PackId is { } packId) {
-                ImGui.SameLine();
-                ImGui.TextColoredWrapped(Colors.Grey, packId);
-            }
         }
     }
 
@@ -138,6 +134,9 @@ public partial class HaselWindow : Window {
         ImGui.SameLine(windowX - textSize.X);
 
         ImGui.TextColored(color.Vector4, status);
+
+        if (tweak.PackId is { } packId)
+            ImGui.TextColoredWrapped(Colors.Grey, packId);
 
         if (tweak.DisabledReason is { } reason) {
             ImGui.TextColoredWrapped(Colors.Grey2, reason);

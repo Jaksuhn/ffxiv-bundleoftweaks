@@ -11,11 +11,25 @@ public sealed class TweakPackLoadContext : AssemblyLoadContext {
     protected override Assembly? Load(AssemblyName assemblyName) => Resolve(assemblyName);
 
     private static Assembly? Resolve(AssemblyName assemblyName) {
-        if (assemblyName.Name is null)
+        var name = assemblyName.Name;
+        if (name is null)
             return null;
 
         var host = GetLoadContext(typeof(Tweak).Assembly);
-        return Find(host, assemblyName.Name) ?? Find(Default, assemblyName.Name);
+        if (Find(host, name) is { } hostAssembly)
+            return hostAssembly;
+
+        Assembly? fallback = null;
+        foreach (var context in All) {
+            var found = Find(context, name);
+            if (found is null)
+                continue;
+            if (found.GetName().Version == assemblyName.Version)
+                return found;
+            fallback ??= found;
+        }
+
+        return fallback;
     }
 
     private static Assembly? Find(AssemblyLoadContext? context, string name)

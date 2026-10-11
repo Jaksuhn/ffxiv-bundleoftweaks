@@ -16,7 +16,7 @@ public partial class HaselWindow {
             _openRepos = false;
         }
 
-        ImGui.SetNextWindowSize(new Vector2(560, 420), ImGuiCond.Appearing);
+        ImGui.SetNextWindowSize(new Vector2(560, 210), ImGuiCond.Appearing);
         using var modal = ImRaii.PopupModal("Settings###Repos");
         if (!modal)
             return;
@@ -34,7 +34,8 @@ public partial class HaselWindow {
         if (repos.Count == 0)
             ImGui.TextColoredWrapped(Colors.Grey, "No repos added.");
 
-        foreach (var repo in repos) {
+        for (var i = 0; i < repos.Count; i++) {
+            var repo = repos[i];
             using var id = ImRaii.PushId(repo.Id);
             ImGui.Text(repo.Id);
             ImGui.SameLine();
@@ -53,6 +54,7 @@ public partial class HaselWindow {
                 ImGui.SameLine();
                 if (ImGui.Button("Remove")) {
                     TweakPackService.Get().Remove(repo);
+                    break;
                 }
             }
         }

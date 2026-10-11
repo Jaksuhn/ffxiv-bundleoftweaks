@@ -92,8 +92,9 @@ public abstract partial class Tweak : ITweak {
             return Task.CompletedTask;
 
         if (!CanBeEnabled()) {
-            ModuleMessage(Requirements.Any(r => !r.IsLoaded)
-                ? "Feature not enabled due to missing dependencies. Please install them then re-enable this feature."
+            var missing = Requirements.Where(r => !r.IsLoaded);
+            ModuleMessage(missing.Any()
+                ? $"Feature not enabled due to missing dependencies ({string.Join(", ", missing.Select(m => m.Name))}). Please install them then re-enable this feature."
                 : $"Feature not enabled due to invalid ClientStructs version [{Svc.Interface.ClientStructsVersion}].");
             return Task.CompletedTask;
         }

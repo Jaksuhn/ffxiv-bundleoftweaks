@@ -23,7 +23,6 @@ public abstract partial class Tweak : ITweak {
 
         Requirements = IPCRegistry.Get().GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Where(id => id != Ipc.None).Distinct()]);
         RequiredClientStructsVersion = (CachedType.GetCustomAttribute<RequiresClientStructsAttribute>()?.MinVersion ?? 0, CachedType.GetCustomAttribute<RequiresClientStructsAttribute>()?.MaxVersion ?? uint.MaxValue);
-        IsDebug = CachedType.GetCustomAttribute<DebugAttribute>() != null;
         var disabledAttr = CachedType.GetCustomAttribute<DisabledAttribute>();
         Disabled = disabledAttr != null;
         DisabledReason = disabledAttr?.Reason;
@@ -55,7 +54,6 @@ public abstract partial class Tweak : ITweak {
 
     public abstract string Name { get; }
     public abstract string Description { get; }
-    public bool IsDebug { get; }
     public bool Disabled { get; }
     public string? DisabledReason { get; }
 
@@ -79,18 +77,13 @@ public abstract partial class Tweak : ITweak {
     public virtual void OnEnable() { }
     public virtual void OnDisable() { }
 
-    public bool ShouldEnable() => ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey) && Status != TweakStatus.Enabled && (!IsDebug || ConfigService.Get().Config.ShowDebug);
-    public bool ShouldDisable() => Status == TweakStatus.Enabled && (!ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey) || IsDebug && !ConfigService.Get().Config.ShowDebug);
+    public bool ShouldEnable() => ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey) && Status != TweakStatus.Enabled;
+    public bool ShouldDisable() => Status == TweakStatus.Enabled && !ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey);
 
     public Task StartAsync(CancellationToken _) {
         var cfg = ConfigService.Get().Config;
         if (!cfg.EnabledTweaks.Contains(ConfigKey))
             return Task.CompletedTask;
-
-        if (IsDebug && !cfg.ShowDebug) {
-            cfg.EnabledTweaks.Remove(ConfigKey);
-            return Task.CompletedTask;
-        }
 
         if (Status == TweakStatus.Enabled || Status.IsTerminal())
             return Task.CompletedTask;

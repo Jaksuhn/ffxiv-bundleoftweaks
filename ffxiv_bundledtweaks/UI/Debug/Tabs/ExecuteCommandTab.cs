@@ -32,8 +32,6 @@ internal unsafe class ExecuteCommandTab : DebugTab {
         DrawLocationExecuteCommand();
     }
 
-    public override bool DrawConditions() => ConfigService.Get().Config.ShowDebug;
-
     private void DrawSimpleExecuteCommand() {
         using var _ = ImRaii.PushId("simple");
         using var table = ImRaii.Table("simpleExec", 2, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.RowBg);

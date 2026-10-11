@@ -45,7 +45,7 @@ public sealed class TweakService : IPluginService, IAsyncDisposable {
 
     public void Enable(string name) {
         var cfg = ConfigService.Get().Config;
-        if (Find(name) is { } tweak && !cfg.EnabledTweaks.Contains(tweak.ConfigKey) && (!tweak.IsDebug || cfg.ShowDebug))
+        if (Find(name) is { } tweak && !cfg.EnabledTweaks.Contains(tweak.ConfigKey))
             cfg.EnabledTweaks.Add(tweak.ConfigKey);
     }
 

@@ -54,12 +54,12 @@ internal sealed class V4 : IConfigMigration<LegacyConfig> {
     }
 }
 
-internal sealed class V5 : IConfigShapeMigration<LegacyConfig, Config> {
-    public int TargetVersion => Config.CURRENT_CONFIG_VERSION;
+internal sealed class V5 : IConfigShapeMigration<LegacyConfig, ConfigV5> {
+    public int TargetVersion => 5;
 
-    public Config Migrate(LegacyConfig from)
+    public ConfigV5 Migrate(LegacyConfig from)
         => new() {
-            Version = Config.CURRENT_CONFIG_VERSION,
+            Version = TargetVersion,
             EnabledTweaks = from.EnabledTweaks,
             ShowDebug = from.ShowDebug,
             Tweaks = new Dictionary<string, object>(StringComparer.Ordinal) {
@@ -77,4 +77,31 @@ internal sealed class V5 : IConfigShapeMigration<LegacyConfig, Config> {
                 [nameof(SimpleCurrencyAlert)] = from.Tweaks.SimpleCurrencyAlertConfig,
             },
         };
+}
+
+internal sealed class ConfigV5 : IPluginConfiguration {
+    public int Version { get; set; }
+    public ObservableCollection<string> EnabledTweaks = [];
+    public Dictionary<string, object> Tweaks = [with(StringComparer.Ordinal)];
+    public bool ShowDebug;
+}
+
+internal sealed class V6 : IConfigShapeMigration<ConfigV5, Config> {
+    public int TargetVersion => 6;
+
+    public Config Migrate(ConfigV5 from) {
+        var config = new Config {
+            Version = TargetVersion,
+            EnabledTweaks = from.EnabledTweaks,
+            Tweaks = from.Tweaks,
+        };
+        if (from.ShowDebug) {
+            config.Repos.Add(new TweakRepo {
+                Url = "https://github.com/Jaksuhn/SpicePack",
+                Owner = "Jaksuhn",
+                Name = "SpicePack",
+            });
+        }
+        return config;
+    }
 }

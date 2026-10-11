@@ -54,7 +54,7 @@ public partial class HaselWindow : Window {
         ImGui.TableSetupColumn("Checkbox", ImGuiTableColumnFlags.WidthFixed);
         ImGui.TableSetupColumn("Tweak Name", ImGuiTableColumnFlags.WidthStretch);
 
-        foreach (var tweak in TweakService.Get().Tweaks.Where(t => !t.Disabled && (!t.IsDebug || ConfigService.Get().Config.ShowDebug)).OrderBy(t => t.Name)) {
+        foreach (var tweak in TweakService.Get().Tweaks.Where(t => !t.Disabled).OrderBy(t => t.Name)) {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 

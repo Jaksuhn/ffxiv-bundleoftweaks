@@ -20,8 +20,6 @@ internal class DebugWindow : Window {
     private readonly IDebugTab[] Tabs;
     private IDrawableTab? SelectedTab;
 
-    //public override bool DrawConditions() => C.ShowDebug;
-
     public override void Draw() {
         DrawSidebar();
         ImGui.SameLine();

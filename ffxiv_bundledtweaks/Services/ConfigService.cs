@@ -56,7 +56,11 @@ public sealed class ConfigService : IPluginService {
             var yaml = File.ReadAllText(ConfigPath);
             var version = VersionProbe.Deserialize<ConfigVersionProbe>(yaml)?.Version ?? 0;
 
-            IPluginConfiguration initial = version < Config.CURRENT_CONFIG_VERSION ? LegacyDeserializer.Deserialize<LegacyConfig>(yaml) ?? new LegacyConfig() : Deserializer.Deserialize<Config>(yaml) ?? new Config();
+            IPluginConfiguration initial = version < 5
+                ? LegacyDeserializer.Deserialize<LegacyConfig>(yaml) ?? new LegacyConfig()
+                : version < Config.CURRENT_CONFIG_VERSION
+                    ? Deserializer.Deserialize<ConfigV5>(yaml) ?? new ConfigV5()
+                    : Deserializer.Deserialize<Config>(yaml) ?? new Config();
             var migrated = ConfigHelper.RunMigrationChain(initial, typeof(ConfigService).Assembly, out var final);
             return ((Config)final, migrated);
         }

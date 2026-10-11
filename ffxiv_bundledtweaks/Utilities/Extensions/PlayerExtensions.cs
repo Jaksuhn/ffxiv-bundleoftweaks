@@ -11,7 +11,7 @@ public static unsafe class PlayerExtensions {
     extension(IPlayerCharacter pc) {
         public float CurrentSpeed => ((ControlCustom*)Control.Instance())->CurrentGroundSpeed;
         public float Speed { get => pc.CurrentSpeed / 6f; set => SetSpeed(6 * value); }
-        public byte ReviveState => pc.IsDead ? AgentRevive.Instance()->ReviveState : (byte)0;
+        public ReviveState ReviveState => pc.IsDead ? AgentRevive.Instance()->State : ReviveState.Alive;
 
         public static FlagMapMarker MapFlag => AgentMap.Instance()->FlagMapMarkers[0];
         public static List<MapMarkerData> QuestLocations => [.. Map.Instance()->QuestMarkers.ToArray().SelectMany(i => i.MarkerData.ToList())];

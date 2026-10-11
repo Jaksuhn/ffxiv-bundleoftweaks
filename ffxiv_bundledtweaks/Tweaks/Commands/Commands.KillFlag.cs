@@ -36,7 +36,7 @@ public sealed class KillFlag(string world) : TaskBase {
 
     private async Task HandleWorldTravel(ushort worldId) {
         using var scope = BeginScope(nameof(HandleWorldTravel));
-        if (ConfigService.Get().Config.EnabledTweaks.Contains(nameof(InstantReturn)) && IPlayerState.Get().Territory.RowId != IPlayerState.Get().HomeAetheryte.Value.Territory.RowId)
+        if (TweakService.Get().IsEnabled("InstantReturn") && IPlayerState.Get().Territory.RowId != IPlayerState.Get().HomeAetheryte.Value.Territory.RowId)
             await Return();
         unsafe {
             AgentWorldTravel.Instance()->Travel(worldId);

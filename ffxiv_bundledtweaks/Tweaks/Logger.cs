@@ -8,7 +8,6 @@ using System.Reflection;
 namespace ComplexTweaks.Tweaks;
 
 #if DEBUG
-[Debug]
 public unsafe partial class DebugLogging : Tweak {
     public override string Name => "Logger";
     public override string Description => "It just logs random hooks.";

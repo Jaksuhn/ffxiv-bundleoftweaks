@@ -1,4 +1,3 @@
-using ComplexTweaks.Services;
 using Dalamud.Interface.Windowing;
 
 namespace ComplexTweaks.TweakSystem;
@@ -13,7 +12,7 @@ public abstract class Tweak<T> : Tweak where T : new() {
             CachedWindowType = type;
         else {
             CachedConfigType = type;
-            Config = ConfigService.Get().GetTweakConfig<T>(InternalName);
+            Config = ConfigService.Get().GetTweakConfig<T>(ConfigKey);
         }
     }
 
@@ -34,7 +33,7 @@ public abstract class Tweak<TConfig, TWindow> : Tweak where TConfig : new() wher
 
         CachedConfigType = configType;
         CachedWindowType = windowType;
-        Config = ConfigService.Get().GetTweakConfig<TConfig>(InternalName);
+        Config = ConfigService.Get().GetTweakConfig<TConfig>(ConfigKey);
     }
 
     public TConfig Config { get; init; } = default!;

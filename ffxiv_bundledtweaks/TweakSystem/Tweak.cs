@@ -1,3 +1,4 @@
+using ComplexTweaks.TweakSystem.Packs;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text;
@@ -17,6 +18,7 @@ public abstract partial class Tweak : ITweak {
     public Tweak() {
         CachedType = GetType();
         InternalName = CachedType.Name;
+        PackId = TweakActivation.PackId;
         IncompatibilityWarnings = [.. CachedType.GetCustomAttributes<IncompatibilityWarningAttribute>()];
 
         Requirements = IPCRegistry.Get().GetMany([.. CachedType.GetCustomAttributes<RequiresAttribute>().SelectMany(r => r.Id.Flags).Where(id => id != Ipc.None).Distinct()]);
@@ -46,6 +48,8 @@ public abstract partial class Tweak : ITweak {
 
     public Type CachedType { get; }
     public string InternalName { get; }
+    public string? PackId { get; }
+    public string ConfigKey => PackId == null ? InternalName : $"{PackId}/{InternalName}";
     public IncompatibilityWarningAttribute[] IncompatibilityWarnings { get; }
     public BaseIPC[] Requirements { get; }
 
@@ -75,16 +79,16 @@ public abstract partial class Tweak : ITweak {
     public virtual void OnEnable() { }
     public virtual void OnDisable() { }
 
-    public bool ShouldEnable() => ConfigService.Get().Config.EnabledTweaks.Contains(InternalName) && Status != TweakStatus.Enabled && (!IsDebug || ConfigService.Get().Config.ShowDebug);
-    public bool ShouldDisable() => Status == TweakStatus.Enabled && (!ConfigService.Get().Config.EnabledTweaks.Contains(InternalName) || IsDebug && !ConfigService.Get().Config.ShowDebug);
+    public bool ShouldEnable() => ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey) && Status != TweakStatus.Enabled && (!IsDebug || ConfigService.Get().Config.ShowDebug);
+    public bool ShouldDisable() => Status == TweakStatus.Enabled && (!ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey) || IsDebug && !ConfigService.Get().Config.ShowDebug);
 
     public Task StartAsync(CancellationToken _) {
         var cfg = ConfigService.Get().Config;
-        if (!cfg.EnabledTweaks.Contains(InternalName))
+        if (!cfg.EnabledTweaks.Contains(ConfigKey))
             return Task.CompletedTask;
 
         if (IsDebug && !cfg.ShowDebug) {
-            cfg.EnabledTweaks.Remove(InternalName);
+            cfg.EnabledTweaks.Remove(ConfigKey);
             return Task.CompletedTask;
         }
 

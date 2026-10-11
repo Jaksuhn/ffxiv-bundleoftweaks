@@ -50,4 +50,21 @@
         <ProjectReference Include="..\clib\clib.csproj" />
 		<ProjectReference Include="..\InteropSourceGenerators\InteropSourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
+
+    <Target Name="PackSdk" AfterTargets="Build">
+        <PropertyGroup>
+            <_SdkStage>$(IntermediateOutputPath)sdk\</_SdkStage>
+            <_SdkAnalyzers>$(_SdkStage)analyzers\</_SdkAnalyzers>
+            <_GeneratorDir>$(MSBuildThisFileDirectory)..\InteropSourceGenerators\bin\$(Configuration)\netstandard2.0\</_GeneratorDir>
+            <_LanguageExt>$(NuGetPackageRoot)languageext.core\4.4.7\lib\netstandard2.0\LanguageExt.Core.dll</_LanguageExt>
+            <_LanguageExt Condition="!Exists('$(_LanguageExt)')">$(_GeneratorDir)LanguageExt.Core.dll</_LanguageExt>
+        </PropertyGroup>
+        <RemoveDir Directories="$(_SdkStage)" />
+        <MakeDir Directories="$(_SdkAnalyzers)" />
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(_SdkStage)" />
+        <Copy SourceFiles="$(TargetDir)clib.dll" DestinationFolder="$(_SdkStage)" />
+        <Copy SourceFiles="$(_GeneratorDir)InteropSourceGenerator.dll" DestinationFolder="$(_SdkAnalyzers)" />
+        <Copy SourceFiles="$(_LanguageExt)" DestinationFolder="$(_SdkAnalyzers)" />
+        <ZipDirectory SourceDirectory="$(_SdkStage)" DestinationFile="$(TargetDir)sdk.zip" Overwrite="true" />
+    </Target>
 </Project>

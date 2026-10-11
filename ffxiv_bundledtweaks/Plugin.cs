@@ -30,23 +30,18 @@ public sealed class Plugin(IDalamudPluginInterface dalamud) : IAsyncDalamudPlugi
             var arguments = args.Split(' ');
             var subcommand = arguments[0];
             var @params = arguments.Skip(1).ToArray();
-            var cfg = ConfigService.Get().Config;
             switch (subcommand) {
                 case string cmd when cmd.StartsWith('d') && !cmd.EqualsIgnoreCase("disable"):
                     WindowsService.Get().ToggleDebug();
                     break;
                 case "enable":
-                    if (TweakService.Get().Tweaks.FirstOrDefault(t => t.InternalName == @params[0]) is { } tweak && !cfg.EnabledTweaks.Contains(tweak.InternalName) && (!tweak.IsDebug || cfg.ShowDebug))
-                        cfg.EnabledTweaks.Add(tweak.InternalName);
+                    TweakService.Get().Enable(@params[0]);
                     break;
                 case "disable":
-                    cfg.EnabledTweaks.Remove(@params[0]);
+                    TweakService.Get().Disable(@params[0]);
                     break;
                 case "toggle":
-                    if (cfg.EnabledTweaks.Contains(@params[0]))
-                        cfg.EnabledTweaks.Remove(@params[0]);
-                    else
-                        cfg.EnabledTweaks.Add(@params[0]);
+                    TweakService.Get().Toggle(@params[0]);
                     break;
                 case "stop":
                     Svc.Automation.Stop();

@@ -27,6 +27,38 @@ public sealed class TweakService : IPluginService, IAsyncDisposable {
         await Task.WhenAll(Tweaks.Select(t => t.StartAsync(cancellationToken)));
     }
 
+    public void Add(Tweak tweak) => Tweaks.Add(tweak);
+
+    public void Remove(Tweak tweak) => Tweaks.Remove(tweak);
+
+    public Tweak? Find(string key) {
+        var byKey = Tweaks.FirstOrDefault(tweak => tweak.ConfigKey == key);
+        if (byKey != null)
+            return byKey;
+
+        var byName = Tweaks.Where(tweak => tweak.InternalName == key).Take(2).ToArray();
+        return byName.Length == 1 ? byName[0] : null;
+    }
+
+    public bool IsEnabled(string name)
+        => ConfigService.Get().Config.EnabledTweaks.Any(key => key == name || key.EndsWith($"/{name}"));
+
+    public void Enable(string name) {
+        var cfg = ConfigService.Get().Config;
+        if (Find(name) is { } tweak && !cfg.EnabledTweaks.Contains(tweak.ConfigKey) && (!tweak.IsDebug || cfg.ShowDebug))
+            cfg.EnabledTweaks.Add(tweak.ConfigKey);
+    }
+
+    public void Disable(string name)
+        => ConfigService.Get().Config.EnabledTweaks.Remove(Find(name)?.ConfigKey ?? name);
+
+    public void Toggle(string name) {
+        var enabled = ConfigService.Get().Config.EnabledTweaks;
+        var key = Find(name)?.ConfigKey ?? name;
+        if (!enabled.Remove(key))
+            enabled.Add(key);
+    }
+
     private void OnChange(object? sender, NotifyCollectionChangedEventArgs e) {
         foreach (var t in Tweaks) {
             if (t.ShouldEnable())
@@ -39,7 +71,7 @@ public sealed class TweakService : IPluginService, IAsyncDisposable {
 
     private void OnPluginsChanged(IActivePluginsChangedEventArgs args) {
         foreach (var tweak in Tweaks) {
-            if (ConfigService.Get().Config.EnabledTweaks.Contains(tweak.InternalName) && tweak.CanBeEnabled())
+            if (ConfigService.Get().Config.EnabledTweaks.Contains(tweak.ConfigKey) && tweak.CanBeEnabled())
                 _ = tweak.StartAsync(CancellationToken.None);
 
             if (tweak.Status == TweakStatus.Enabled && !tweak.HasRuntimeRequirements())

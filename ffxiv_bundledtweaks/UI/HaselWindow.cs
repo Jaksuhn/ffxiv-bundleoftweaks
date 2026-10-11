@@ -1,5 +1,6 @@
 using clib.Ui;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
@@ -13,6 +14,11 @@ public partial class HaselWindow : Window {
         Flags |= ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings;
         AllowClickthrough = false;
         AllowPinning = false;
+        TitleBarButtons.Add(new TitleBarButton {
+            Icon = FontAwesomeIcon.Cog,
+            IconOffset = new Vector2(1.5f, 1),
+            Click = _ => _openRepos = true,
+        });
     }
 
     private const uint SidebarWidth = 250;
@@ -20,7 +26,7 @@ public partial class HaselWindow : Window {
     private string _selectedTweak = string.Empty;
     private string? _splashText = null;
 
-    private Tweak? SelectedTweak => TweakService.Get().Tweaks.FirstOrDefault(t => t.Name == _selectedTweak);
+    private Tweak? SelectedTweak => TweakService.Get().Tweaks.FirstOrDefault(t => t.ConfigKey == _selectedTweak);
 
     public override void OnClose() {
         _splashText = null;
@@ -32,6 +38,7 @@ public partial class HaselWindow : Window {
         DrawSidebar();
         ImGui.SameLine();
         DrawConfig();
+        DrawReposModal();
     }
 
     private void DrawSidebar() {
@@ -86,7 +93,7 @@ public partial class HaselWindow : Window {
                 fixY = true;
             }
             else {
-                ImGui.CollectionCheckbox($"##Enabled_{tweak.InternalName}", tweak.InternalName, ConfigService.Get().Config.EnabledTweaks);
+                ImGui.CollectionCheckbox($"##Enabled_{tweak.ConfigKey}", tweak.ConfigKey, ConfigService.Get().Config.EnabledTweaks);
             }
 
             ImGui.TableNextColumn();
@@ -96,8 +103,12 @@ public partial class HaselWindow : Window {
 
             using var colour = ImRaii.PushColor(ImGuiCol.Text, tweak.Status.IsTerminal() ? Color.Red : !enabled ? (uint)Colors.Grey : ImGui.GetColorU32(ImGuiCol.Text), tweak.Status.IsTerminal() || !enabled);
 
-            if (ImGui.Selectable($"{tweak.Name}##Selectable_{tweak.Name}", _selectedTweak == tweak.Name))
-                _selectedTweak = _selectedTweak != tweak.Name ? tweak.Name : string.Empty;
+            if (ImGui.Selectable($"{tweak.Name}##Selectable_{tweak.ConfigKey}", _selectedTweak == tweak.ConfigKey))
+                _selectedTweak = _selectedTweak != tweak.ConfigKey ? tweak.ConfigKey : string.Empty;
+            if (tweak.PackId is { } packId) {
+                ImGui.SameLine();
+                ImGui.TextColoredWrapped(Colors.Grey, packId);
+            }
         }
     }
 
@@ -113,7 +124,7 @@ public partial class HaselWindow : Window {
             return;
         }
 
-        using var id = ImRaii.PushId(tweak.Name);
+        using var id = ImRaii.PushId(tweak.ConfigKey);
 
         ImGui.TextColored((uint)Color.Gold, tweak.Name);
 

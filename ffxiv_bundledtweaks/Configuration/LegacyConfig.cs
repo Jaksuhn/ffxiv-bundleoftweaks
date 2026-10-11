@@ -25,7 +25,6 @@ internal sealed class LegacyTweakConfigs {
     public ARQuestingConfiguration ARQuestingConfiguration { get; init; } = new();
     public ClickToMoveConfiguration ClickToMove { get; init; } = new();
     public CommandsConfiguration Commands { get; init; } = new();
-    public DebugToolsConfiguration DebugTools { get; init; } = new();
     public EnhancedDutyStartEndConfiguration EnhancedDutyStartEnd { get; init; } = new();
     public EnhancedLoginLogoutConfig EnhancedLoginLogout { get; init; } = new();
     public FateToolKitConfig FateToolKit { get; init; } = new();
@@ -70,7 +69,6 @@ internal sealed class V5 : IConfigShapeMigration<LegacyConfig, Config> {
                 [nameof(ARQuesting)] = from.Tweaks.ARQuestingConfiguration,
                 [nameof(ClickToMove)] = from.Tweaks.ClickToMove,
                 [nameof(Commands)] = from.Tweaks.Commands,
-                [nameof(DebugTools)] = from.Tweaks.DebugTools,
                 [nameof(EnhancedDutyStartEnd)] = from.Tweaks.EnhancedDutyStartEnd,
                 [nameof(EnhancedLoginLogout)] = from.Tweaks.EnhancedLoginLogout,
                 [nameof(FateToolKit)] = from.Tweaks.FateToolKit,

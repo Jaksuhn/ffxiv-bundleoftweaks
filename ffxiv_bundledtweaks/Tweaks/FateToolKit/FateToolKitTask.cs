@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
@@ -235,7 +236,7 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         }
         else {
             Status = "Waiting For Raise";
-            await WaitUntil(() => Player.ReviveState is 2, "WaitingForRaise"); // 1 = return, 2 = raise
+            await WaitUntil(() => Player.ReviveState is ReviveState.Revivable, "WaitingForRaise"); // 1 = return, 2 = raise
             GameMain.ExecuteCommand(CommandFlag.Revive.Value, AgentReviveOp.AcceptRevive.Value); // a1=5 for raises
         }
         await WaitWhile(() => ICondition.Get()[ConditionFlag.Unconscious], "WaitForAlive");

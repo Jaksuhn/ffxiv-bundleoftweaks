@@ -37,11 +37,11 @@ public unsafe partial class DebugLogging : Tweak {
         return ret;
     }
 
-    //[AddressHook<PacketDispatcher>(nameof(PacketDispatcher.MemberFunctionPointers.HandleActorControlPacket))]
-    //internal void HandleActorControlPacket(uint entityId, uint category, uint arg1, uint arg2, uint arg3, uint arg4, uint arg5, uint arg6, uint arg7, uint arg8, GameObjectId targetId, bool isRecorded) {
-    //    MethodBase.GetCurrentMethod()?.Log([entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId.Id, isRecorded]);
-    //    HandleActorControlPacketHook.Original(entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId, isRecorded);
-    //}
+    [AddressHook<PacketDispatcher>(nameof(PacketDispatcher.MemberFunctionPointers.HandleActorControlPacket))]
+    internal void HandleActorControlPacket(uint entityId, uint category, uint arg1, uint arg2, uint arg3, uint arg4, uint arg5, uint arg6, uint arg7, uint arg8, GameObjectId targetId, bool isRecorded) {
+        MethodBase.GetCurrentMethod()?.Log([entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId.Id, isRecorded]);
+        HandleActorControlPacketHook.Original(entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId, isRecorded);
+    }
 
     [AddressHook<ActionManager>(nameof(ActionManager.MemberFunctionPointers.GetActionInRangeOrLoS))]
     internal uint GetActionInRangeOrLoS(uint actionId, GameObject* sourceObject, GameObject* targetObject) {

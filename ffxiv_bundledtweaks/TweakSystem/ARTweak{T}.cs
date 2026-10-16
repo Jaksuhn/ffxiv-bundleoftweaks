@@ -21,7 +21,9 @@ public abstract class ARTweak<T> : Tweak<T> where T : new() {
     }
 
     public override void Dispose() {
-        AutoRetainer.Dispose();
-        base.Dispose();
+        lock (Lifecycle) {
+            AutoRetainer.Dispose();
+            base.Dispose();
+        }
     }
 }

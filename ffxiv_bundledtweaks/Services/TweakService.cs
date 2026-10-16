@@ -6,7 +6,15 @@ using System.Threading.Tasks;
 namespace ComplexTweaks.Services;
 
 public sealed class TweakService : IPluginService, IAsyncDisposable {
-    public readonly HashSet<Tweak> Tweaks = [];
+    private readonly Lock _sync = new();
+    private readonly HashSet<Tweak> _tweaks = [];
+
+    public IReadOnlyList<Tweak> Tweaks {
+        get {
+            lock (_sync)
+                return [.. _tweaks];
+        }
+    }
 
     public TweakService() {
         ConfigService.Get().Config.EnabledTweaks.CollectionChanged += OnChange;
@@ -17,7 +25,7 @@ public sealed class TweakService : IPluginService, IAsyncDisposable {
         foreach (var tweakType in GetType().Assembly.GetTypes().Where(type => type is { IsClass: true, IsAbstract: false } && typeof(Tweak).IsAssignableFrom(type))) {
             IPluginLog.Get().Verbose($"Initializing {tweakType.Name}");
             try {
-                Tweaks.Add((Tweak)Activator.CreateInstance(tweakType)!);
+                Add((Tweak)Activator.CreateInstance(tweakType)!);
             }
             catch (Exception ex) {
                 ex.Log($"Failed to initialize {tweakType.Name}");
@@ -27,9 +35,15 @@ public sealed class TweakService : IPluginService, IAsyncDisposable {
         await Task.WhenAll(Tweaks.Select(t => t.StartAsync(cancellationToken)));
     }
 
-    public void Add(Tweak tweak) => Tweaks.Add(tweak);
+    public void Add(Tweak tweak) {
+        lock (_sync)
+            _tweaks.Add(tweak);
+    }
 
-    public void Remove(Tweak tweak) => Tweaks.Remove(tweak);
+    public void Remove(Tweak tweak) {
+        lock (_sync)
+            _tweaks.Remove(tweak);
+    }
 
     public Tweak? Find(string key) {
         var byKey = Tweaks.FirstOrDefault(tweak => tweak.ConfigKey == key);

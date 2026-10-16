@@ -58,6 +58,7 @@ public abstract partial class Tweak : ITweak {
     public string? DisabledReason { get; }
 
     public TweakStatus Status { get; protected set; } = TweakStatus.Disabled;
+    protected object Lifecycle { get; } = new();
     public (uint Min, uint Max) RequiredClientStructsVersion { get; }
 
     protected Automation Automation { get; private set; } = null!;
@@ -81,52 +82,55 @@ public abstract partial class Tweak : ITweak {
     public bool ShouldDisable() => Status == TweakStatus.Enabled && !ConfigService.Get().Config.EnabledTweaks.Contains(ConfigKey);
 
     public Task StartAsync(CancellationToken _) {
-        var cfg = ConfigService.Get().Config;
-        if (!cfg.EnabledTweaks.Contains(ConfigKey))
+        lock (Lifecycle) {
+            var cfg = ConfigService.Get().Config;
+            if (!cfg.EnabledTweaks.Contains(ConfigKey))
+                return Task.CompletedTask;
+
+            if (Status == TweakStatus.Enabled || Status.IsTerminal())
+                return Task.CompletedTask;
+
+            if (!CanBeEnabled()) {
+                var missing = Requirements.Where(r => !r.IsLoaded);
+                ModuleMessage(missing.Any()
+                    ? $"Feature not enabled due to missing dependencies ({string.Join(", ", missing.Select(m => m.Name))}). Please install them then re-enable this feature."
+                    : $"Feature not enabled due to invalid ClientStructs version [{Svc.Interface.ClientStructsVersion}].");
+                return Task.CompletedTask;
+            }
+
+            try {
+                Information("Enabling tweak");
+                EnsureWindow();
+                EnableCommands();
+                OnEnable();
+                foreach (var hook in EnumerateHooks())
+                    EnableHook(hook);
+                Status = TweakStatus.Enabled;
+            }
+            catch (SignatureException ex) {
+                Status = TweakStatus.Outdated;
+                Error(ex, "Error while enabling tweak");
+                RemoveOwnedWindow();
+            }
+            catch (KeyNotFoundException ex) {
+                Status = TweakStatus.Outdated;
+                Error(ex, "Error while enabling tweak");
+                RemoveOwnedWindow();
+            }
+            catch (Exception ex) {
+                Status = TweakStatus.Error;
+                Error(ex, "Error while enabling tweak");
+                RemoveOwnedWindow();
+            }
+
             return Task.CompletedTask;
-
-        if (Status == TweakStatus.Enabled || Status.IsTerminal())
-            return Task.CompletedTask;
-
-        if (!CanBeEnabled()) {
-            var missing = Requirements.Where(r => !r.IsLoaded);
-            ModuleMessage(missing.Any()
-                ? $"Feature not enabled due to missing dependencies ({string.Join(", ", missing.Select(m => m.Name))}). Please install them then re-enable this feature."
-                : $"Feature not enabled due to invalid ClientStructs version [{Svc.Interface.ClientStructsVersion}].");
-            return Task.CompletedTask;
         }
-
-        try {
-            Information("Enabling tweak");
-            EnsureWindow();
-            EnableCommands();
-            OnEnable();
-            foreach (var hook in EnumerateHooks())
-                EnableHook(hook);
-            Status = TweakStatus.Enabled;
-        }
-        catch (SignatureException ex) {
-            Status = TweakStatus.Outdated;
-            Error(ex, "Error while enabling tweak");
-            RemoveOwnedWindow();
-        }
-        catch (KeyNotFoundException ex) {
-            Status = TweakStatus.Outdated;
-            Error(ex, "Error while enabling tweak");
-            RemoveOwnedWindow();
-        }
-        catch (Exception ex) {
-            Status = TweakStatus.Error;
-            Error(ex, "Error while enabling tweak");
-            RemoveOwnedWindow();
-        }
-
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken _) {
-        if (Status != TweakStatus.Enabled)
-            return Task.CompletedTask;
+        lock (Lifecycle)
+            if (Status != TweakStatus.Enabled)
+                return Task.CompletedTask;
 
         try {
             Information("Disabling tweak");
@@ -147,8 +151,9 @@ public abstract partial class Tweak : ITweak {
     }
 
     public virtual void Dispose() {
-        if (Status is TweakStatus.Disposed or TweakStatus.Outdated)
-            return;
+        lock (Lifecycle)
+            if (Status is TweakStatus.Disposed or TweakStatus.Outdated)
+                return;
 
         try {
             Information("Disposing tweak");

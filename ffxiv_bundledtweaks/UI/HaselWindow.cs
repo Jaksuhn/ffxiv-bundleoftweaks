@@ -113,6 +113,8 @@ public partial class HaselWindow : Window {
         if (!child.Success)
             return;
 
+        ImGui.SetWindowFontScale(1f);
+
         var tweak = SelectedTweak;
         if (tweak == null) {
             DrawSplash();

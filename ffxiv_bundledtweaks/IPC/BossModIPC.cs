@@ -13,6 +13,9 @@ public sealed class BossModIPC : BaseIPC, IPluginService {
     private readonly ICallGateSubscriber<string> _getActive;
     private readonly ICallGateSubscriber<string, bool> _setActive;
     private readonly ICallGateSubscriber<bool> _clearActive;
+    private readonly ICallGateSubscriber<List<string>> _getActiveList;
+    private readonly ICallGateSubscriber<string, bool> _activate;
+    private readonly ICallGateSubscriber<string, bool> _deactivate;
     private readonly ICallGateSubscriber<List<string>, bool> _setActiveList;
     private readonly ICallGateSubscriber<string, string, string, string, bool> _addTransientStrategy;
     private readonly ICallGateSubscriber<Vector3, float, bool, bool> _generate;
@@ -27,6 +30,9 @@ public sealed class BossModIPC : BaseIPC, IPluginService {
         _getActive = Svc.Interface.GetIpcSubscriber<string>("BossMod.Presets.GetActive");
         _setActive = Svc.Interface.GetIpcSubscriber<string, bool>("BossMod.Presets.SetActive");
         _clearActive = Svc.Interface.GetIpcSubscriber<bool>("BossMod.Presets.ClearActive");
+        _getActiveList = Svc.Interface.GetIpcSubscriber<List<string>>("BossMod.Presets.GetActiveList");
+        _activate = Svc.Interface.GetIpcSubscriber<string, bool>("BossMod.Presets.Activate");
+        _deactivate = Svc.Interface.GetIpcSubscriber<string, bool>("BossMod.Presets.Deactivate");
         _setActiveList = Svc.Interface.GetIpcSubscriber<List<string>, bool>("BossMod.Presets.SetActiveList");
         _addTransientStrategy = Svc.Interface.GetIpcSubscriber<string, string, string, string, bool>("BossMod.Presets.AddTransientStrategy");
         _generate = Svc.Interface.GetIpcSubscriber<Vector3, float, bool, bool>("BossMod.ObstacleMap.Generate");
@@ -41,6 +47,9 @@ public sealed class BossModIPC : BaseIPC, IPluginService {
     public string GetActive() => _getActive.HasFunction ? _getActive.InvokeFunc() : string.Empty;
     public bool SetActive(string name) => _setActive.HasFunction && _setActive.InvokeFunc(name);
     public bool ClearActive() => _clearActive.HasFunction && _clearActive.InvokeFunc();
+    public List<string> GetActiveList() => _getActiveList.HasFunction ? _getActiveList.InvokeFunc() ?? [] : [];
+    public bool Activate(string name) => _activate.HasFunction && _activate.InvokeFunc(name);
+    public bool Deactivate(string name) => _deactivate.HasFunction && _deactivate.InvokeFunc(name);
     public bool SetActiveList(List<string> names) => _setActiveList.HasFunction && _setActiveList.InvokeFunc(names);
     public bool AddTransientStrategy(string presetName, string moduleTypeName, string trackName, string value)
         => _addTransientStrategy.HasFunction && _addTransientStrategy.InvokeFunc(presetName, moduleTypeName, trackName, value);

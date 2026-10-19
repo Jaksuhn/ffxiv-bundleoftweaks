@@ -6,8 +6,23 @@ public class AutoPillion : Tweak {
     public override string Name => "Auto Pillion";
     public override string Description => "Automatically hop in to other peoples' mounts when you are near them.";
 
-    public override void OnEnable() => IFramework.Get().Update += OnUpdate;
-    public override void OnDisable() => IFramework.Get().Update -= OnUpdate;
+    private long cooldownUntil;
+
+    public override void OnEnable() {
+        IFramework.Get().Update += OnUpdate;
+        ICondition.Get().ConditionChange += OnConditionChange;
+    }
+
+    public override void OnDisable() {
+        IFramework.Get().Update -= OnUpdate;
+        ICondition.Get().ConditionChange -= OnConditionChange;
+        cooldownUntil = 0;
+    }
+
+    private void OnConditionChange(ConditionFlag flag, bool value) {
+        if (flag == ConditionFlag.Mounted && !value)
+            cooldownUntil = Environment.TickCount64 + 5000; // just blanket re-pillioning for 5s
+    }
 
     private void OnUpdate(IFramework framework) {
         if (IObjectTable.Get().LocalPlayer is not { Available: true, IsBusy: false, GameObjectId: var playerId } || ICondition.Get()[ConditionFlag.Mounted]) {
@@ -16,7 +31,7 @@ public class AutoPillion : Tweak {
             return;
         }
 
-        if (Automation.Running)
+        if (Automation.Running || Environment.TickCount64 < cooldownUntil)
             return;
 
         if (IPartyList.Get().FirstOrDefault(o => o?.EntityId != playerId && o?.GameObject?.CurrentDistance < 3 && o.GameObject.CanRidePillion(), null) is { GameObject.EntityId: var entityId }) {

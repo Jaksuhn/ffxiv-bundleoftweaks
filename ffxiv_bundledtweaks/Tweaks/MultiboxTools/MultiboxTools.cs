@@ -11,13 +11,14 @@ namespace ComplexTweaks.Tweaks;
 public class MultiboxToolsConfig {
     [BoolConfig(Label = "Act as Hub", Description = "Enable on exactly one instance to mark this account as the controller. Other instances connect as clients.")]
     public bool ActAsHub;
+    public bool AllowNetwork;
 }
 
 public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
     public override string Name => "Multibox Tools";
     public override string Description => $"Connect to other local {Svc.Interface.Manifest.Name} instances and manage them.";
 
-    private readonly int _pid = Environment.ProcessId;
+    private readonly int _pid = Random.Shared.Next(1, int.MaxValue);
     private readonly Lock _lock = new();
     private readonly List<HubClient> _clients = [];
     private List<PeerInfo> _clientPeers = [];
@@ -30,7 +31,10 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
 
     private CancellationTokenSource? _cts;
     private Task? _networkTask;
+    private CancellationTokenSource? _lanCts;
+    private Task? _lanTask;
     private Stream? _hubStream;
+    private bool _hubStreamIsTcp;
     private ulong _localCid;
     private string _localName = "Not Logged In";
     private ushort _localWorldId;
@@ -38,6 +42,8 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
     private const int CommandHistoryLimit = 3;
     private readonly List<string> _commandHistory = [];
     private string _commandInput = string.Empty;
+    private volatile bool _hubMissing;
+    private long _hubSearchStart;
     private ClientSnapshot _drawSnap;
     private DutyCommands _dutyDraft = new();
     private DutyCommands? _dutyOverride;
@@ -66,7 +72,7 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
         StopNetwork();
     }
 
-    [CommandHandler("/broadcast", "Send a command to all other MultiboxTools clients on this PC")]
+    [CommandHandler("/broadcast", "Send a command to all other connected MultiboxTools clients")]
     private void OnBroadcast(string command, string arguments) {
         if (arguments.IsEmpty) {
             ModuleMessage("Usage: /broadcast <command>");
@@ -86,7 +92,14 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
             Config.ActAsHub = actAsHub;
             StartNetwork();
         }
-        ImGuiComponents.HelpMarker("Enable on exactly one instance to mark this account as the controller. Others leave this unchecked and connect as clients.");
+        ImGuiComponents.HelpMarker("Enable on exactly one instance. Other instances on this PC connect on their own.");
+
+        var allowNetwork = Config.AllowNetwork;
+        if (ImGui.Checkbox("Allow Network", ref allowNetwork)) {
+            Config.AllowNetwork = allowNetwork;
+            SetLanEnabled(allowNetwork);
+        }
+        ImGuiComponents.HelpMarker("Opens a LAN connection and allows other CBT instances on other PCs in the local network to connect.");
 
         ImGui.DrawSection("Connected Clients");
 

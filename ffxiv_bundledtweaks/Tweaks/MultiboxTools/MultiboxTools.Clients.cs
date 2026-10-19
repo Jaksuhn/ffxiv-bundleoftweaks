@@ -50,12 +50,12 @@ public partial class MultiboxTools {
     private void DrawClientPeers() {
         var peers = GetPeers();
         if (_drawSnap.Cid == 0 && peers.Count == 0) {
-            ImGui.TextColoredWrapped(Colors.Grey, "Waiting for hub...");
+            DrawHubWait();
             return;
         }
 
         if (peers.Count == 0)
-            ImGui.TextColoredWrapped(Colors.Grey, "Waiting for hub...");
+            DrawHubWait();
 
         using var table = ImRaii.Table("##MultiboxPeers", 2, ImGuiTableFlags.SizingStretchProp);
         if (!table)
@@ -69,6 +69,13 @@ public partial class MultiboxTools {
 
         foreach (var peer in peers)
             DrawClientRow(peer, self: false);
+    }
+
+    private void DrawHubWait() {
+        if (_hubMissing && !HubConnected)
+            ImGui.TextColoredWrapped(Color.Red, "No hub found.");
+        else
+            ImGui.TextColoredWrapped(Colors.Grey, "Waiting for hub...");
     }
 
     private void DrawClientRow(PeerInfo peer, bool self) {

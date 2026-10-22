@@ -17,6 +17,10 @@ public class EnhancedDutyStartEndConfiguration {
 
     [NetworkWarning]
     [StringConfig]
+    public string RecommenceMsg = string.Empty;
+
+    [NetworkWarning]
+    [StringConfig]
     public string EndMsg = string.Empty;
     [BoolConfig] public bool AutoLeaveOnEnd;
     [IntConfig] public int TimeToWait;
@@ -29,12 +33,14 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
     public override void OnEnable() {
         IDutyState.Get().DutyStarted += OnDutyStart;
         IDutyState.Get().DutyCompleted += OnDutyComplete;
+        IDutyState.Get().DutyRecommenced += OnDutyRecommenced;
         IClientState.Get().TerritoryChanged += OnTerritoryChanged;
     }
 
     public override void OnDisable() {
         IDutyState.Get().DutyStarted -= OnDutyStart;
         IDutyState.Get().DutyCompleted -= OnDutyComplete;
+        IDutyState.Get().DutyRecommenced -= OnDutyRecommenced;
         IClientState.Get().TerritoryChanged -= OnTerritoryChanged;
     }
 
@@ -42,7 +48,7 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
     public override void DrawConfig() {
         ImGui.DrawSection("Duty Start Options");
 
-        ImGui.InputText($"##{nameof(Config.StartMsg)}", ref Config.StartMsg, 50);
+        ImGui.InputText($"##{nameof(Config.StartMsg)}", ref Config.StartMsg);
         ImGui.TextColoredWrapped(Colors.Grey, "Sends a party chat message when the duty starts.");
 
         if (ImGui.InputText($"##AddPlayers", ref _name, 50, ImGuiInputTextFlags.EnterReturnsTrue))
@@ -66,9 +72,14 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
                 Config.Players.Remove(person);
         }
 
+        ImGui.DrawSection("Duty Recommence Options");
+
+        ImGui.InputText($"##{nameof(Config.EndMsg)}", ref Config.EndMsg);
+        ImGui.TextColoredWrapped(Colors.Grey, "Sends a party chat message when the duty recommences (after the wall drops post-wipe).");
+
         ImGui.DrawSection("Duty End Options");
 
-        ImGui.InputText($"##{nameof(Config.EndMsg)}", ref Config.EndMsg, 50);
+        ImGui.InputText($"##{nameof(Config.EndMsg)}", ref Config.EndMsg);
         ImGui.TextColoredWrapped(Colors.Grey, "Sends a party chat message when the duty ends.");
 
         ImGui.Checkbox("Auto Leave##End", ref Config.AutoLeaveOnEnd);
@@ -105,6 +116,15 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
                 await t.DelayMs(Config.TimeToWait * 1000);
                 EventFramework.LeaveCurrentContent(true);
             }, name: "AutoLeaveDuty"));
+        }
+    }
+
+    private void OnDutyRecommenced(IDutyStateEventArgs args) {
+        if (!Config.RecommenceMsg.IsEmpty) {
+            if (Config.RecommenceMsg.StartsWith('/'))
+                IChatGui.Get().SendMessage(Config.RecommenceMsg);
+            else
+                IChatGui.Get().SendMessage($"/p {Config.RecommenceMsg}");
         }
     }
 

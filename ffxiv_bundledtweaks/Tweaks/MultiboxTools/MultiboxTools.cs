@@ -112,8 +112,8 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
             SendCommand(null, _commandInput, remember: true);
 
         ImGui.SameLine();
-        if (ImGui.IconButton(FontAwesomeIcon.Share, "broadcast", "Broadcast command to all", disabled: !hasPeers))
-            SendCommand(null, _commandInput, remember: true);
+        if (ImGui.IconButton(FontAwesomeIcon.Share, "broadcast", "Broadcast command to all\nShift-click to include this client", disabled: !hasPeers))
+            SendCommand(null, _commandInput, remember: true, includeSelf: ImGui.GetIO().KeyShift);
 
         ImGui.SameLine();
         DrawCommandHistory();

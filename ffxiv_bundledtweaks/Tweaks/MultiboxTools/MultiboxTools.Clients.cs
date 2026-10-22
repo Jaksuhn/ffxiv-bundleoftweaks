@@ -303,7 +303,7 @@ public partial class MultiboxTools {
             return [.. _clientPeers];
     }
 
-    private void SendCommand(int? targetPid, string? command, bool remember = false) {
+    private void SendCommand(int? targetPid, string? command, bool remember = false, bool includeSelf = false) {
         var cmd = NormalizeCommand(command);
         if (cmd is null) {
             ModuleMessage("Enter a command starting with /");
@@ -334,6 +334,9 @@ public partial class MultiboxTools {
             HubRouteCommand(_pid, targetPid, cmd);
         else
             WriteHub(new CmdMessage(targetPid, cmd));
+
+        if (includeSelf && targetPid is null)
+            ExecuteRemoteCommand(cmd);
     }
 
     private void SendAction(int? targetPid, RemoteAction action) {

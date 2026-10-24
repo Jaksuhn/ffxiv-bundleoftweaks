@@ -74,7 +74,7 @@ public class EnhancedDutyStartEnd : Tweak<EnhancedDutyStartEndConfiguration> {
 
         ImGui.DrawSection("Duty Recommence Options");
 
-        ImGui.InputText($"##{nameof(Config.EndMsg)}", ref Config.EndMsg);
+        ImGui.InputText($"##{nameof(Config.RecommenceMsg)}", ref Config.RecommenceMsg);
         ImGui.TextColoredWrapped(Colors.Grey, "Sends a party chat message when the duty recommences (after the wall drops post-wipe).");
 
         ImGui.DrawSection("Duty End Options");

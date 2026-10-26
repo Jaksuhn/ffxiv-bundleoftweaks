@@ -20,7 +20,7 @@ public class AutoPillion : Tweak {
     }
 
     private void OnConditionChange(ConditionFlag flag, bool value) {
-        if (flag == ConditionFlag.Mounted && !value)
+        if (flag == ConditionFlag.RidingPillion && !value)
             cooldownUntil = Environment.TickCount64 + 5000; // just blanket re-pillioning for 5s
     }
 

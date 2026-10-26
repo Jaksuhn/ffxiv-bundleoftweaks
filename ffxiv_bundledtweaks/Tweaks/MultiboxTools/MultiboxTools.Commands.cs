@@ -23,7 +23,10 @@ public partial class MultiboxTools {
         }
     }
 
-    private readonly record struct CmdCtx(MultiboxTools Host, int? TargetPid, PeerInfo Peer, bool HasPeer, bool Self, ulong Cid, ushort WorldId, HubClient? Client, bool HasPeers, bool Toolbar);
+    private readonly record struct CmdCtx(MultiboxTools Host, ClientSnapshot? Peer, bool Self, bool HasPeers) {
+        public bool Toolbar => Peer is null;
+        public int? TargetId => Peer?.SessionId;
+    }
     private IMultiboxCommand[] _commands = [];
 
     private void DiscoverCommands() {
@@ -57,27 +60,24 @@ public partial class MultiboxTools {
                 ImGui.SameLine();
             drawn = true;
 
-            var id = ctx.Toolbar ? $"{cmd.Id}All" : $"{cmd.Id}{ctx.Peer.Pid}";
+            var id = ctx.Peer is { } peer ? $"{cmd.Id}{peer.SessionId}" : $"{cmd.Id}All";
             cmd.Draw(ctx, id);
         }
 
         return drawn;
     }
 
-    private void DrawRowActions(PeerInfo peer, bool self, ulong cid = 0, ushort worldId = 0, HubClient? client = null) {
-        var ctx = new CmdCtx(this, peer.Pid, peer, true, self, cid, worldId, client, HasPeers(), Toolbar: false);
+    private void DrawRowActions(ClientSnapshot peer, bool self, bool hasPeers) {
+        var ctx = new CmdCtx(this, peer, self, hasPeers);
         if (DrawCommands(ctx, beforeSend: true))
             ImGui.SameLine();
 
-        if (ImGui.IconButton(FontAwesomeIcon.PaperPlane, $"send{peer.Pid}", "Send command"))
-            SendCommand(peer.Pid, _commandInput, remember: true);
+        if (ImGui.IconButton(FontAwesomeIcon.PaperPlane, $"send{peer.SessionId}", "Send command"))
+            SendCommand(peer.SessionId, _commandInput, remember: true);
 
         ImGui.SameLine();
         DrawCommands(ctx, beforeSend: false);
     }
-
-    private CmdCtx ToolbarContext(bool hasPeers)
-        => new(this, null, default, false, false, 0, 0, null, hasPeers, Toolbar: true);
 
     private sealed class VbmCommand : IMultiboxCommand {
         public int Order => 0;
@@ -101,9 +101,9 @@ public partial class MultiboxTools {
         }
 
         private static void DrawPreset(CmdCtx ctx, string preset, string label) {
-            var on = ctx.Toolbar ? ctx.Host.EveryoneOn(preset) : ctx.HasPeer && ctx.Peer.PresetOn(preset);
+            var on = ctx.Peer is { } peer ? peer.PresetOn(preset) : ctx.Host.EveryoneOn(preset);
             if (ImGui.MenuItem(label, on))
-                ctx.Host.SendVbm(ctx.TargetPid, preset, !on);
+                ctx.Host.SendVbm(ctx.TargetId, preset, !on);
         }
     }
 
@@ -115,23 +115,23 @@ public partial class MultiboxTools {
         public string Id => "invite";
 
         public string Tooltip(CmdCtx ctx) {
-            if (ctx.Toolbar)
+            if (ctx.Peer is not { } peer)
                 return "Invite all to party";
             if (ctx.Self)
                 return "This client";
-            if (IsInParty(ctx.Cid))
+            if (IsInParty(peer.Cid))
                 return "Already in party";
             return "Invite to party";
         }
 
         public bool Disabled(CmdCtx ctx)
-            => ctx.Toolbar ? !ctx.HasPeers : ctx.Self || IsInParty(ctx.Cid) || ctx.Cid == 0 || ctx.WorldId == 0;
+            => ctx.Peer is not { } peer ? !ctx.HasPeers : ctx.Self || peer.Cid == 0 || peer.WorldId == 0 || IsInParty(peer.Cid);
 
         public void Execute(CmdCtx ctx) {
-            if (ctx.Toolbar)
+            if (ctx.Peer is not { } peer)
                 ctx.Host.FormParty();
-            else if (ctx.Client != null)
-                _ = IFramework.Get().Run(() => ctx.Host.TryInviteClient(ctx.Client));
+            else
+                _ = IFramework.Get().Run(() => ctx.Host.TryInviteClient(peer));
         }
     }
 
@@ -154,12 +154,12 @@ public partial class MultiboxTools {
                 return;
 
             if (ImGui.MenuItem("Zone")) {
-                ctx.Host.SendHubZone(ctx.TargetPid);
+                ctx.Host.SendHubZone(ctx.TargetId);
                 ImGui.CloseCurrentPopup();
             }
 
             if (ImGui.MenuItem("World")) {
-                ctx.Host.SendHubWorld(ctx.TargetPid);
+                ctx.Host.SendHubWorld(ctx.TargetId);
                 ImGui.CloseCurrentPopup();
             }
         }
@@ -173,7 +173,7 @@ public partial class MultiboxTools {
         public string Id => "leave";
         public string Tooltip(CmdCtx ctx) => ctx.Toolbar ? "All leave duty" : "Leave duty";
         public bool Disabled(CmdCtx ctx) => ctx.Toolbar && !ctx.HasPeers;
-        public void Execute(CmdCtx ctx) => ctx.Host.SendAction(ctx.TargetPid, RemoteAction.Leave);
+        public void Execute(CmdCtx ctx) => ctx.Host.SendAction(ctx.TargetId, RemoteAction.Leave);
     }
 
     private sealed class PowerCommand : IMultiboxCommand {
@@ -195,12 +195,12 @@ public partial class MultiboxTools {
                 return;
 
             if (ImGui.MenuItem("Logout")) {
-                ctx.Host.SendAction(ctx.TargetPid, RemoteAction.Logout);
+                ctx.Host.SendAction(ctx.TargetId, RemoteAction.Logout);
                 ImGui.CloseCurrentPopup();
             }
 
             if (ImGui.MenuItem("Exit")) {
-                ctx.Host.SendAction(ctx.TargetPid, RemoteAction.Exit);
+                ctx.Host.SendAction(ctx.TargetId, RemoteAction.Exit);
                 ImGui.CloseCurrentPopup();
             }
         }

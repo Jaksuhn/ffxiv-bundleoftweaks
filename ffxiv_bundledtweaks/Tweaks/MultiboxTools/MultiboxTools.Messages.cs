@@ -1,11 +1,14 @@
-using Lumina.Excel.Sheets;
 using System.IO;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace ComplexTweaks.Tweaks;
 
 public partial class MultiboxTools {
+    private const int MBTVersion = 2;
+
     private enum RemoteAction {
         Leave,
         Logout,
@@ -13,28 +16,22 @@ public partial class MultiboxTools {
     }
 
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-    [JsonDerivedType(typeof(HelloMessage), "hello")]
-    [JsonDerivedType(typeof(CmdMessage), "cmd")]
-    [JsonDerivedType(typeof(ExecMessage), "exec")]
-    [JsonDerivedType(typeof(ActionMessage), "action")]
-    [JsonDerivedType(typeof(RunActionMessage), "runAction")]
-    [JsonDerivedType(typeof(PeersMessage), "peers")]
     [JsonDerivedType(typeof(StatusMessage), "status")]
+    [JsonDerivedType(typeof(PeersMessage), "peers")]
+    [JsonDerivedType(typeof(CmdMessage), "cmd")]
+    [JsonDerivedType(typeof(ActionMessage), "action")]
     [JsonDerivedType(typeof(VbmMessage), "vbm")]
-    [JsonDerivedType(typeof(RunVbmMessage), "runVbm")]
     [JsonDerivedType(typeof(DutyMessage), "duty")]
     private abstract record MultiboxMessage;
 
-    private sealed record HelloMessage(int Pid, ulong Cid, string Name, ushort WorldId) : MultiboxMessage;
-    private sealed record CmdMessage(int? TargetPid, string Command) : MultiboxMessage;
-    private sealed record ExecMessage(string Command) : MultiboxMessage;
-    private sealed record ActionMessage(int? TargetPid, RemoteAction Action) : MultiboxMessage;
-    private sealed record RunActionMessage(RemoteAction Action) : MultiboxMessage;
-    private sealed record PeersMessage(List<PeerInfo> Peers) : MultiboxMessage;
-    private sealed record StatusMessage(int Pid, ulong Cid, string Name, ushort WorldId, byte JobId, bool Dead, bool RezReady, bool VbmDefault, bool VbmAi, bool Duty) : MultiboxMessage;
-    private sealed record VbmMessage(int? TargetPid, string Preset, bool Enabled) : MultiboxMessage;
-    private sealed record RunVbmMessage(string Preset, bool Enabled) : MultiboxMessage;
-    private sealed record DutyMessage(DutyWire? Duty, int? TargetPid = null) : MultiboxMessage;
+    private sealed record StatusMessage(ClientSnapshot Snapshot) : MultiboxMessage;
+    private sealed record PeersMessage(List<ClientSnapshot> Peers) : MultiboxMessage;
+
+    private abstract record RoutedMessage(int? TargetId) : MultiboxMessage; // null is a broadcast
+    private sealed record CmdMessage(int? TargetId, string Command) : RoutedMessage(TargetId);
+    private sealed record ActionMessage(int? TargetId, RemoteAction Action) : RoutedMessage(TargetId);
+    private sealed record VbmMessage(int? TargetId, string Preset, bool Enabled) : RoutedMessage(TargetId);
+    private sealed record DutyMessage(int? TargetId, DutyWire? Duty) : RoutedMessage(TargetId);
 
     private sealed record DutyWire(string? StartCommand, string? EndCommand, bool AutoLeaveOnEnd, int TimeToWait) {
         public DutyCommands ToConfig() => new() {
@@ -47,39 +44,61 @@ public partial class MultiboxTools {
         public static DutyWire From(DutyCommands config) => new(config.StartCommand, config.EndCommand, config.AutoLeaveOnEnd, config.TimeToWait);
     }
 
-    private readonly record struct PeerInfo(int Pid, string Name, string World, byte JobId, bool Dead, bool RezReady, bool VbmDefault, bool VbmAi, bool Duty) {
+    private sealed record ClientSnapshot(int SessionId, int Version, ulong Cid, string Name, ushort WorldId, string World, byte JobId, bool Dead, bool RezReady, bool VbmDefault, bool VbmAi, bool Duty) {
+        public static readonly ClientSnapshot Empty = new(0, MBTVersion, 0, "Not Logged In", 0, string.Empty, 0, false, false, false, false, false);
+
+        [JsonIgnore]
         public string DisplayName => World.IsEmpty ? Name : $"{Name}@{World}";
         public bool PresetOn(string preset) => preset == VbmDefaultPreset ? VbmDefault : preset == VbmAiPreset && VbmAi;
     }
 
-    private readonly record struct ClientSnapshot(int Pid, ulong Cid, string Name, ushort WorldId, string World, byte JobId, bool Dead, bool RezReady, bool VbmDefault, bool VbmAi, bool Duty) {
-        public PeerInfo ToPeer() => new(Pid, Name, World, JobId, Dead, RezReady, VbmDefault, VbmAi, Duty);
-        public bool PresetOn(string preset) => preset == VbmDefaultPreset ? VbmDefault : preset == VbmAiPreset && VbmAi;
+    private sealed class MessageWriter : IDisposable {
+        private const int MaxQueued = 64;
+
+        private readonly Stream _stream;
+        private readonly CancellationTokenSource _cts = new();
+        private readonly Channel<byte[]> _queue = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(MaxQueued) {
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+        });
+        private int _disposed;
+
+        public MessageWriter(Stream stream) {
+            _stream = stream;
+            var token = _cts.Token;
+            _ = Task.Run(() => PumpAsync(token));
+        }
+
+        public void Send(MultiboxMessage message) => _queue.Writer.TryWrite(Frame(message));
+
+        private async Task PumpAsync(CancellationToken ct) {
+            try {
+                await foreach (var frame in _queue.Reader.ReadAllAsync(ct)) {
+                    await _stream.WriteAsync(frame, ct);
+                    await _stream.FlushAsync(ct);
+                }
+            }
+            catch { } // peer gone, the read loop handles the disconnect
+        }
+
+        public void Dispose() {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
+            _queue.Writer.TryComplete();
+            _cts.Cancel();
+            try { _stream.Dispose(); }
+            catch { }
+        }
     }
 
     private sealed class HubClient(Stream stream) : IDisposable {
-        private readonly Lock _writeLock = new();
-        public int Pid { get; set; }
-        public ulong Cid { get; set; }
-        public string Name { get; set; } = "Unknown";
-        public ushort WorldId { get; set; }
-        public byte JobId { get; set; }
-        public bool Dead { get; set; }
-        public bool RezReady { get; set; }
-        public bool VbmDefault { get; set; }
-        public bool VbmAi { get; set; }
-        public bool Duty { get; set; }
-        public string WorldName => World.GetRowOrNull(WorldId)?.Name.ToString() ?? WorldId.ToString();
-        public string DisplayName => WorldId == 0 ? Name : $"{Name}@{WorldName}";
-        public PeerInfo ToPeer() => new(Pid, Name, WorldName, JobId, Dead, RezReady, VbmDefault, VbmAi, Duty);
+        private readonly MessageWriter _writer = new(stream);
+        public ClientSnapshot Snapshot { get; set; } = ClientSnapshot.Empty;
+        public int SessionId => Snapshot.SessionId;
 
-        public void Send(MultiboxMessage message) {
-            lock (_writeLock) {
-                try { WriteMessage(stream, message); }
-                catch { } // ded
-            }
-        }
+        public void Send(MultiboxMessage message) => _writer.Send(message);
 
-        public void Dispose() { }
+        public void Dispose() => _writer.Dispose();
     }
 }

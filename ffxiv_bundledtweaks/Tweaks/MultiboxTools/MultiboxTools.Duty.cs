@@ -43,7 +43,6 @@ public partial class MultiboxTools {
             snapshot = CloneDuty(_dutyDraft);
 
         ApplyDuty(snapshot, updateDraft: false);
-        var wire = DutyWire.From(snapshot);
         if (!HasPeers()) {
             ModuleMessage("Duty settings applied locally.");
             return;
@@ -51,65 +50,25 @@ public partial class MultiboxTools {
 
         Log("Pushing duty commands");
         ModuleMessage("Pushed duty settings.");
-        if (Config.ActAsHub)
-            HubRouteDuty(_pid, wire);
-        else
-            WriteHub(new DutyMessage(wire));
+        Dispatch(new DutyMessage(null, DutyWire.From(snapshot)));
     }
 
     private void ClearDuty() {
         ApplyDuty(null, updateDraft: false);
         ModuleMessage("Cleared duty settings.");
-        if (!HasPeers())
-            return;
-
-        if (Config.ActAsHub)
-            HubRouteDuty(_pid, null);
-        else
-            WriteHub(new DutyMessage(null));
+        if (HasPeers())
+            Dispatch(new DutyMessage(null, null));
     }
 
-    private void ClearDutyFor(PeerInfo peer) {
-        if (peer.Pid == _pid) {
-            ApplyDuty(null, updateDraft: false);
-            ModuleMessage("Cleared duty settings.");
-            return;
-        }
-
-        if (Config.ActAsHub)
-            HubRouteDuty(_pid, null, peer.Pid);
-        else if (HasPeers())
-            WriteHub(new DutyMessage(null, peer.Pid));
-        else {
+    private void ClearDutyFor(ClientSnapshot peer) {
+        var self = peer.SessionId == _sessionId;
+        if (!self && !HasPeers()) {
             ModuleMessage("No other clients connected.");
             return;
         }
 
-        ModuleMessage($"Cleared duty settings for {peer.DisplayName}.");
-    }
-
-    private void HubRouteDuty(int fromPid, DutyWire? duty, int? targetPid = null) {
-        if (targetPid is int target) {
-            if (target == _pid) {
-                if (fromPid != _pid)
-                    ApplyDuty(duty?.ToConfig(), updateDraft: true);
-                return;
-            }
-
-            var client = SnapshotClients().FirstOrDefault(c => c.Pid == target);
-            if (client == null)
-                return;
-
-            client.Duty = duty != null;
-            client.Send(new DutyMessage(duty));
-            PushPeers();
-            return;
-        }
-
-        if (fromPid != _pid)
-            ApplyDuty(duty?.ToConfig(), updateDraft: true);
-        foreach (var client in SnapshotClients().Where(c => c.Pid != 0 && c.Pid != fromPid))
-            client.Send(new DutyMessage(duty));
+        Dispatch(new DutyMessage(peer.SessionId, null));
+        ModuleMessage(self ? "Cleared duty settings." : $"Cleared duty settings for {peer.DisplayName}.");
     }
 
     private void ApplyDuty(DutyCommands? config, bool updateDraft) {

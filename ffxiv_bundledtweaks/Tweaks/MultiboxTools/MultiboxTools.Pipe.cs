@@ -20,14 +20,16 @@ public partial class MultiboxTools {
     private bool HubConnected {
         get {
             lock (_lock)
-                return _hubStream != null;
+                return _hubWriter != null;
         }
     }
 
     private void StartNetwork() {
         StopNetwork();
         _cts = new CancellationTokenSource();
-        _networkTask = Task.Run(() => Config.ActAsHub ? RunHubAsync(_cts.Token) : RunClientAsync(_cts.Token), _cts.Token);
+        var token = _cts.Token;
+        var hub = Config.ActAsHub;
+        _networkTask = Task.Run(() => hub ? RunHubAsync(token) : RunClientAsync(token), token);
         if (Config.AllowNetwork)
             StartLan();
     }
@@ -39,7 +41,7 @@ public partial class MultiboxTools {
         CloseHubStream();
         ClearClients();
 
-        _networkTask?.Wait(TimeSpan.FromSeconds(2));
+        WaitQuietly(_networkTask);
 
         _cts?.Dispose();
         _cts = null;
@@ -47,6 +49,16 @@ public partial class MultiboxTools {
 
         lock (_lock)
             _clientPeers = [];
+    }
+
+    private void WaitQuietly(Task? task) {
+        try {
+            task?.Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (AggregateException ex) when (ex.InnerExceptions.All(e => e is OperationCanceledException)) { }
+        catch (AggregateException ex) {
+            Warning(ex, "Multibox network task failed");
+        }
     }
 
     private void SetLanEnabled(bool enabled) {
@@ -63,13 +75,14 @@ public partial class MultiboxTools {
 
         _lanCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token);
         var token = _lanCts.Token;
-        _lanTask = Task.Run(() => Config.ActAsHub ? RunLanHubAsync(token) : ListenBeaconAsync(token), token);
+        var hub = Config.ActAsHub;
+        _lanTask = Task.Run(() => hub ? RunLanHubAsync(token) : ListenBeaconAsync(token), token);
     }
 
     private void StopLan() {
         _lanCts?.Cancel();
-        DisconnectTcpSession();
-        _lanTask?.Wait(TimeSpan.FromSeconds(2));
+        CloseHubStream(tcpOnly: true);
+        WaitQuietly(_lanTask);
         _lanCts?.Dispose();
         _lanCts = null;
         _lanTask = null;
@@ -82,9 +95,15 @@ public partial class MultiboxTools {
     private async Task RunClientAsync(CancellationToken ct) {
         _hubSearchStart = Environment.TickCount64;
         while (!ct.IsCancellationRequested) {
-            var connected = await TryPipeSessionAsync(ct);
-            if (!connected && Config.AllowNetwork)
-                connected = await TryTcpSessionAsync(ct);
+            bool connected;
+            try {
+                connected = await TryPipeSessionAsync(ct);
+                if (!connected && Config.AllowNetwork)
+                    connected = await TryTcpSessionAsync(ct);
+            }
+            catch (OperationCanceledException) {
+                return;
+            }
             if (ct.IsCancellationRequested)
                 return;
 
@@ -133,43 +152,32 @@ public partial class MultiboxTools {
 
     private async Task RunSessionAsync(Stream stream, bool tcp, CancellationToken ct) {
         _hubMissing = false;
+        var writer = new MessageWriter(stream);
         lock (_lock) {
-            _hubStream = stream;
+            _hubWriter = writer;
             _hubStreamIsTcp = tcp;
         }
 
         try {
-            WriteHello();
             _forceStatus = true;
             _nextStatusTick = 0;
 
-            while (!ct.IsCancellationRequested) {
-                var message = await ReadMessageAsync(stream, ct);
-                if (message is null)
-                    break;
-                HandleClientMessage(message);
+            while (!ct.IsCancellationRequested && await ReadFrameAsync(stream, ct) is { } frame) {
+                if (Parse(frame) is { } message)
+                    HandleClientMessage(message);
             }
         }
         finally {
-            CloseHubStream();
-            _hubSearchStart = Environment.TickCount64;
-            lock (_lock)
+            lock (_lock) {
+                if (_hubWriter == writer) {
+                    _hubWriter = null;
+                    _hubStreamIsTcp = false;
+                }
                 _clientPeers = [];
+            }
+            writer.Dispose();
+            _hubSearchStart = Environment.TickCount64;
         }
-    }
-
-    private void DisconnectTcpSession() {
-        Stream? stream;
-        lock (_lock) {
-            if (!_hubStreamIsTcp)
-                return;
-            stream = _hubStream;
-            _hubStream = null;
-            _hubStreamIsTcp = false;
-        }
-
-        try { stream?.Dispose(); }
-        catch { }
     }
 
     private async Task RunHubAsync(CancellationToken ct) {
@@ -186,13 +194,7 @@ public partial class MultiboxTools {
         while (!ct.IsCancellationRequested) {
             NamedPipeServerStream? pipe = null;
             try {
-                pipe = new NamedPipeServerStream(
-                    PipeName,
-                    PipeDirection.InOut,
-                    MaxClients,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous);
-
+                pipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, MaxClients, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
                 await pipe.WaitForConnectionAsync(ct);
                 var connected = pipe;
                 pipe = null;
@@ -221,25 +223,21 @@ public partial class MultiboxTools {
         var client = new HubClient(stream);
         var accepted = false;
         lock (_lock) {
-            if (_clients.Count < MaxClients) {
+            if (!ct.IsCancellationRequested && _clients.Count < MaxClients) {
                 _clients.Add(client);
                 accepted = true;
             }
         }
 
         if (!accepted) {
-            await stream.DisposeAsync();
+            client.Dispose();
             return;
         }
 
         try {
-            await using (stream) {
-                while (!ct.IsCancellationRequested) {
-                    var message = await ReadMessageAsync(stream, ct);
-                    if (message is null)
-                        break;
+            while (!ct.IsCancellationRequested && await ReadFrameAsync(stream, ct) is { } frame) {
+                if (Parse(frame) is { } message)
                     HandleHubMessage(message, client);
-                }
             }
         }
         catch (OperationCanceledException) { }
@@ -250,49 +248,23 @@ public partial class MultiboxTools {
         finally {
             lock (_lock)
                 _clients.Remove(client);
-            PushPeers();
+            client.Dispose();
+            if (!ct.IsCancellationRequested)
+                PushPeers();
         }
     }
 
     private void HandleHubMessage(MultiboxMessage message, HubClient client) {
         switch (message) {
-            case HelloMessage hello:
-                client.Pid = hello.Pid;
-                client.Cid = hello.Cid;
-                client.Name = hello.Name;
-                client.WorldId = hello.WorldId;
-                Log($"Registered {client.DisplayName} (CID {hello.Cid})");
-                PushPeers();
-                break;
-
-            case CmdMessage cmd when client.Pid != 0:
-                HubRouteCommand(client.Pid, cmd.TargetPid, cmd.Command);
-                break;
-
-            case ActionMessage action when client.Pid != 0:
-                HubRouteAction(client.Pid, action.TargetPid, action.Action);
-                break;
-
             case StatusMessage status:
-                client.Pid = status.Pid;
-                client.Cid = status.Cid;
-                client.Name = status.Name;
-                client.WorldId = status.WorldId;
-                client.JobId = status.JobId;
-                client.Dead = status.Dead;
-                client.RezReady = status.RezReady;
-                client.VbmDefault = status.VbmDefault;
-                client.VbmAi = status.VbmAi;
-                client.Duty = status.Duty;
+                if (client.SessionId == 0 && status.Snapshot.SessionId != 0)
+                    Log($"Registered {status.Snapshot.DisplayName} (CID {status.Snapshot.Cid}, protocol v{status.Snapshot.Version})");
+                client.Snapshot = status.Snapshot;
                 PushPeers();
                 break;
 
-            case VbmMessage vbm when client.Pid != 0:
-                HubRouteVbm(client.Pid, vbm.TargetPid, vbm.Preset, vbm.Enabled);
-                break;
-
-            case DutyMessage duty when client.Pid != 0:
-                HubRouteDuty(client.Pid, duty.Duty, duty.TargetPid);
+            case RoutedMessage routed when client.SessionId != 0:
+                HubRoute(client.SessionId, routed);
                 break;
         }
     }
@@ -303,13 +275,41 @@ public partial class MultiboxTools {
                 lock (_lock)
                     _clientPeers = [.. peers.Peers.OrderBy(p => p.Name)];
                 break;
-            case ExecMessage exec:
-                ExecuteRemoteCommand(exec.Command);
+            case RoutedMessage routed:
+                RunLocal(routed);
                 break;
-            case RunActionMessage run:
-                ExecuteRemoteAction(run.Action);
+        }
+    }
+
+    private void Dispatch(RoutedMessage message) {
+        if (message.TargetId == _sessionId)
+            RunLocal(message);
+        else if (Config.ActAsHub)
+            HubRoute(_sessionId, message);
+        else
+            WriteHub(message);
+    }
+
+    private void HubRoute(int fromId, RoutedMessage message) {
+        var target = message.TargetId;
+        if (target == _sessionId || (target is null && fromId != _sessionId))
+            RunLocal(message);
+        if (target == _sessionId)
+            return;
+
+        foreach (var client in SnapshotClients().Where(c => c.SessionId != 0 && c.SessionId != fromId && (target is null || c.SessionId == target)))
+            client.Send(message);
+    }
+
+    private void RunLocal(RoutedMessage message) {
+        switch (message) {
+            case CmdMessage cmd:
+                ExecuteRemoteCommand(cmd.Command);
                 break;
-            case RunVbmMessage vbm:
+            case ActionMessage action:
+                ExecuteRemoteAction(action.Action);
+                break;
+            case VbmMessage vbm:
                 TogglePreset(vbm.Preset, vbm.Enabled);
                 break;
             case DutyMessage duty:
@@ -322,14 +322,10 @@ public partial class MultiboxTools {
         if (!Config.ActAsHub)
             return;
 
-        var all = new List<PeerInfo> { LocalSnapshot().ToPeer() };
-        lock (_lock)
-            all.AddRange(_clients.Where(c => c.Pid != 0).Select(c => c.ToPeer()));
-
-        foreach (var client in SnapshotClients().Where(c => c.Pid != 0)) {
-            var peers = all.Where(p => p.Pid != client.Pid).ToList();
-            client.Send(new PeersMessage(peers));
-        }
+        var clients = SnapshotClients().Where(c => c.SessionId != 0).ToList();
+        var all = clients.Select(c => c.Snapshot).Prepend(LocalSnapshot()).ToList();
+        foreach (var client in clients)
+            client.Send(new PeersMessage([.. all.Where(p => p.SessionId != client.SessionId)]));
     }
 
     private List<HubClient> SnapshotClients() {
@@ -348,35 +344,33 @@ public partial class MultiboxTools {
     }
 
     private void WriteHub(MultiboxMessage message) {
-        lock (_lock) {
-            try {
-                if (_hubStream is null)
-                    return;
-                WriteMessage(_hubStream, message);
-            }
-            catch (Exception ex) {
-                Warning(ex, "Failed to send to multibox hub");
-            }
-        }
+        MessageWriter? writer;
+        lock (_lock)
+            writer = _hubWriter;
+        writer?.Send(message);
     }
 
-    private void CloseHubStream() {
+    private void CloseHubStream(bool tcpOnly = false) {
+        MessageWriter? writer;
         lock (_lock) {
-            _hubStream = null;
+            if (tcpOnly && !_hubStreamIsTcp)
+                return;
+            writer = _hubWriter;
+            _hubWriter = null;
             _hubStreamIsTcp = false;
         }
+        writer?.Dispose();
     }
 
-    private static void WriteMessage(Stream stream, MultiboxMessage message) {
+    private static byte[] Frame(MultiboxMessage message) {
         var payload = JsonSerializer.SerializeToUtf8Bytes(message, JsonOptions);
-        Span<byte> length = stackalloc byte[4];
-        BitConverter.TryWriteBytes(length, payload.Length);
-        stream.Write(length);
-        stream.Write(payload);
-        stream.Flush();
+        var frame = new byte[payload.Length + 4];
+        BitConverter.TryWriteBytes(frame, payload.Length);
+        payload.CopyTo(frame, 4);
+        return frame;
     }
 
-    private static async Task<MultiboxMessage?> ReadMessageAsync(Stream stream, CancellationToken ct) {
+    private static async Task<byte[]?> ReadFrameAsync(Stream stream, CancellationToken ct) {
         var lengthBuffer = new byte[4];
         if (!await ReadExactAsync(stream, lengthBuffer, ct))
             return null;
@@ -386,10 +380,17 @@ public partial class MultiboxTools {
             throw new InvalidDataException($"Invalid multibox message length: {length}");
 
         var payload = new byte[length];
-        if (!await ReadExactAsync(stream, payload, ct))
-            return null;
+        return await ReadExactAsync(stream, payload, ct) ? payload : null;
+    }
 
-        return JsonSerializer.Deserialize<MultiboxMessage>(payload, JsonOptions) ?? throw new InvalidDataException("Failed to deserialize multibox message");
+    private MultiboxMessage? Parse(byte[] payload) {
+        try {
+            return JsonSerializer.Deserialize<MultiboxMessage>(payload, JsonOptions);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException) {
+            Debug($"Skipping unreadable message, peer is on another version: {ex.Message}");
+            return null;
+        }
     }
 
     private static async Task<bool> ReadExactAsync(Stream stream, byte[] buffer, CancellationToken ct) {

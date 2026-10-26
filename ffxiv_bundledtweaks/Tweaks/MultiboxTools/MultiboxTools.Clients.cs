@@ -14,61 +14,29 @@ public partial class MultiboxTools {
     private const int StatusIntervalMs = 1500;
     private const uint ClassJobIconOffset = 62100;
 
-    private void DrawHubClients() {
-        var clients = GetHubClients();
-        if (_drawSnap.Cid == 0 && clients.Count == 0) {
-            ImGui.TextColoredWrapped(Colors.Grey, "Waiting for clients...");
-            return;
+    private void DrawPeers(bool hasPeers) {
+        var showSelf = _drawSnap.Cid != 0;
+        if (!hasPeers) {
+            if (Config.ActAsHub)
+                ImGui.TextColoredWrapped(Colors.Grey, "Waiting for clients...");
+            else
+                DrawHubWait();
+            if (!showSelf)
+                return;
         }
-
-        if (clients.Count == 0)
-            ImGui.TextColoredWrapped(Colors.Grey, "Waiting for clients...");
 
         using var table = ImRaii.Table("##MultiboxPeers", 2, ImGuiTableFlags.SizingStretchProp);
         if (!table)
             return;
 
         ImGui.TableSetupColumn("Client", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, GetActionBlockWidth(RowButtonCount(hub: true)));
+        ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, GetActionBlockWidth(RowButtonCount(Config.ActAsHub)));
 
-        if (_drawSnap.Cid != 0)
-            DrawHubRow(_drawSnap.ToPeer(), self: true, _drawSnap.Cid, _drawSnap.WorldId, null);
+        if (showSelf)
+            DrawPeerRow(_drawSnap, self: true, hasPeers);
 
-        foreach (var client in clients)
-            DrawHubRow(client.ToPeer(), self: false, client.Cid, client.WorldId, client);
-    }
-
-    private void DrawHubRow(PeerInfo peer, bool self, ulong cid, ushort worldId, HubClient? client) {
-        ImGui.TableNextRow();
-        ImGui.TableNextColumn();
-        DrawClientLabel(peer, self);
-
-        ImGui.TableNextColumn();
-        DrawRowActions(peer, self, cid, worldId, client);
-    }
-
-    private void DrawClientPeers() {
-        var peers = GetPeers();
-        if (_drawSnap.Cid == 0 && peers.Count == 0) {
-            DrawHubWait();
-            return;
-        }
-
-        if (peers.Count == 0)
-            DrawHubWait();
-
-        using var table = ImRaii.Table("##MultiboxPeers", 2, ImGuiTableFlags.SizingStretchProp);
-        if (!table)
-            return;
-
-        ImGui.TableSetupColumn("Client", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, GetActionBlockWidth(RowButtonCount(hub: false)));
-
-        if (_drawSnap.Cid != 0)
-            DrawClientRow(_drawSnap.ToPeer(), self: true);
-
-        foreach (var peer in peers)
-            DrawClientRow(peer, self: false);
+        foreach (var peer in _drawPeers)
+            DrawPeerRow(peer, self: false, hasPeers);
     }
 
     private void DrawHubWait() {
@@ -78,16 +46,16 @@ public partial class MultiboxTools {
             ImGui.TextColoredWrapped(Colors.Grey, "Waiting for hub...");
     }
 
-    private void DrawClientRow(PeerInfo peer, bool self) {
+    private void DrawPeerRow(ClientSnapshot peer, bool self, bool hasPeers) {
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
         DrawClientLabel(peer, self);
 
         ImGui.TableNextColumn();
-        DrawRowActions(peer, self);
+        DrawRowActions(peer, self, hasPeers);
     }
 
-    private void DrawClientLabel(PeerInfo peer, bool self) {
+    private void DrawClientLabel(ClientSnapshot peer, bool self) {
         if (peer.JobId != 0) {
             ImGui.Icon(ClassJobIconOffset + peer.JobId, new Vector2(GetIconButtonSize().Y));
             ImGui.SameLine();
@@ -99,6 +67,12 @@ public partial class MultiboxTools {
             ImGui.TextColored(Color.Red, displayName);
         else
             ImGui.TextUnformatted(displayName);
+
+        if (peer.Version != MBTVersion) {
+            ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
+            ImGui.Icon(FontAwesomeIcon.ExclamationTriangle, Color.Yellow, $"Running a different {Svc.Interface.Manifest.Name} version (protocol v{peer.Version}, this is v{MBTVersion}).\nUpdate all clients so commands work reliably.");
+        }
 
         if (peer.Dead) {
             ImGui.SameLine();
@@ -121,22 +95,22 @@ public partial class MultiboxTools {
         }
     }
 
-    private void SendHubZone(int? targetPid) {
+    private void SendHubZone(int? targetId) {
         if (GetNearestHubAetheryteName() is not { Length: > 0 } aetheryteName) {
             ModuleMessage("Could not find an aetheryte near the hub.");
             return;
         }
 
-        SendCommand(targetPid, $"/li {aetheryteName}");
+        SendCommand(targetId, $"/li {aetheryteName}");
     }
 
-    private void SendHubWorld(int? targetPid) {
+    private void SendHubWorld(int? targetId) {
         if (GetHubWorldName() is not { Length: > 0 } worldName) {
             ModuleMessage("Could not resolve the hub world.");
             return;
         }
 
-        SendCommand(targetPid, $"/li {worldName}");
+        SendCommand(targetId, $"/li {worldName}");
     }
 
     private static string? GetNearestHubAetheryteName() {
@@ -161,13 +135,8 @@ public partial class MultiboxTools {
     }
 
     private void OnLogin() {
-        _localSnapshot = ReadSnapshot();
         _forceStatus = true;
         _nextStatusTick = 0;
-        if (Config.ActAsHub)
-            PushPeers();
-        else
-            WriteHello();
     }
 
     private void OnFramework(IFramework _) {
@@ -180,19 +149,20 @@ public partial class MultiboxTools {
         lock (_statusLock)
             _localSnapshot = snap;
 
+        if (!changed)
+            return;
+
         if (Config.ActAsHub) {
-            if (!changed)
-                return;
             _forceStatus = false;
             PushPeers();
             return;
         }
 
-        if (!changed || !HubConnected)
+        if (!HubConnected)
             return;
 
         _forceStatus = false;
-        WriteStatus(snap);
+        WriteHub(new StatusMessage(snap));
     }
 
     private ClientSnapshot LocalSnapshot() {
@@ -201,22 +171,26 @@ public partial class MultiboxTools {
     }
 
     private ClientSnapshot ReadSnapshot() {
-        RefreshIdentity();
         var (dead, rezReady) = ReadLife();
         var (vbmDefault, vbmAi) = GetPresetStates();
         bool duty;
         lock (_dutyLock)
             duty = _dutyOverride != null;
-        return new(_pid, _localCid, _localName, _localWorldId, _localWorld, ReadJobId(), dead, rezReady, vbmDefault, vbmAi, duty);
-    }
 
-    private static byte ReadJobId() {
-        var state = IPlayerState.Get();
-        if (state is not { IsLoaded: true })
-            return 0;
+        var snap = ClientSnapshot.Empty with {
+            SessionId = _sessionId,
+            JobId = (byte)IPlayerState.Get().ClassJob.RowId,
+            Dead = dead,
+            RezReady = rezReady,
+            VbmDefault = vbmDefault,
+            VbmAi = vbmAi,
+            Duty = duty,
+        };
 
-        var job = state.ClassJob;
-        return job.IsValid ? (byte)job.RowId : (byte)0;
+        if (IPlayerState.Get() is { IsLoaded: true, ContentId: var cid, CharacterName: { IsEmpty: false } name, HomeWorld: { IsValid: true, RowId: var worldId, Value.Name: var world } })
+            snap = snap with { Cid = cid, Name = name, WorldId = (ushort)worldId, World = world.ToString() };
+
+        return snap;
     }
 
     private static (bool Dead, bool RezReady) ReadLife() {
@@ -227,62 +201,42 @@ public partial class MultiboxTools {
         return (dead, dead && player.ReviveState == ReviveState.Revivable);
     }
 
-    private void WriteStatus(ClientSnapshot snap)
-        => WriteHub(new StatusMessage(snap.Pid, snap.Cid, snap.Name, snap.WorldId, snap.JobId, snap.Dead, snap.RezReady, snap.VbmDefault, snap.VbmAi, snap.Duty));
-
-    private void RefreshIdentity() {
-        if (IPlayerState.Get() is { IsLoaded: true, ContentId: var cid, CharacterName: { IsEmpty: false } name, HomeWorld: { IsValid: true, RowId: var worldId, Value.Name: var world } }) {
-            _localCid = cid;
-            _localName = name;
-            _localWorldId = (ushort)worldId;
-            _localWorld = world.ToString();
-        }
-        else {
-            _localCid = 0;
-            _localName = "Not Logged In";
-            _localWorldId = 0;
-            _localWorld = string.Empty;
-        }
-    }
-
-    private void WriteHello() => WriteHub(new HelloMessage(_pid, _localCid, _localName, _localWorldId));
-
     private void FormParty() {
-        var clients = GetHubClients().Where(c => c.Cid != 0 && !IsInParty(c.Cid)).ToList();
-        if (clients.Count == 0) {
+        var peers = GetPeers().Where(p => p.Cid != 0 && !IsInParty(p.Cid)).ToList();
+        if (peers.Count == 0) {
             Log("Form Party: no inviteable clients");
             return;
         }
 
         _ = IFramework.Get().Run(() => {
             var invited = 0;
-            foreach (var client in clients) {
-                if (TryInviteClient(client))
+            foreach (var peer in peers) {
+                if (TryInviteClient(peer))
                     invited++;
             }
             Log($"Form Party: invited {invited} client(s)");
         });
     }
 
-    private unsafe bool TryInviteClient(HubClient client) {
-        if (client.Cid == 0 || client.Name.IsEmpty || client.WorldId == 0) {
-            Warning($"Cannot invite {client.DisplayName}: missing CID/name/world");
+    private unsafe bool TryInviteClient(ClientSnapshot peer) {
+        if (peer.Cid == 0 || peer.Name.IsEmpty || peer.WorldId == 0) {
+            Warning($"Cannot invite {peer.DisplayName}: missing CID/name/world");
             return false;
         }
 
-        if (IsInParty(client.Cid)) {
-            Log($"Skipping invite for {client.DisplayName}: already in party");
+        if (IsInParty(peer.Cid)) {
+            Log($"Skipping invite for {peer.DisplayName}: already in party");
             return false;
         }
 
         try {
-            InfoProxyPartyInvite.Instance()->InviteToParty(client.Cid, client.Name, client.WorldId);
-            Log($"Invited {client.DisplayName}");
+            InfoProxyPartyInvite.Instance()->InviteToParty(peer.Cid, peer.Name, peer.WorldId);
+            Log($"Invited {peer.DisplayName}");
             return true;
         }
         catch (Exception ex) {
-            Error(ex, $"Failed to invite {client.DisplayName}");
-            ModuleMessage($"Failed to invite {client.DisplayName}");
+            Error(ex, $"Failed to invite {peer.DisplayName}");
+            ModuleMessage($"Failed to invite {peer.DisplayName}");
             return false;
         }
     }
@@ -290,34 +244,23 @@ public partial class MultiboxTools {
     private static bool IsInParty(ulong cid)
         => cid != 0 && IPartyList.Get().Any(p => p.ContentId == cid);
 
-    private List<HubClient> GetHubClients()
-        => [.. SnapshotClients().Where(c => c.Pid != 0).OrderBy(c => c.Name)];
-
-    private List<PeerInfo> GetPeers() {
-        if (Config.ActAsHub) {
-            lock (_lock)
-                return [.. _clients.Where(c => c.Pid != 0).Select(c => c.ToPeer()).OrderBy(p => p.Name)];
+    private List<ClientSnapshot> GetPeers() {
+        lock (_lock) {
+            return Config.ActAsHub
+                ? [.. _clients.Where(c => c.SessionId != 0).Select(c => c.Snapshot).OrderBy(p => p.Name)]
+                : [.. _clientPeers];
         }
-
-        lock (_lock)
-            return [.. _clientPeers];
     }
 
-    private void SendCommand(int? targetPid, string? command, bool remember = false, bool includeSelf = false) {
+    private void SendCommand(int? targetId, string? command, bool remember = false, bool includeSelf = false) {
         var cmd = NormalizeCommand(command);
         if (cmd is null) {
             ModuleMessage("Enter a command starting with /");
             return;
         }
 
-        if (targetPid == _pid) {
-            if (remember)
-                RememberCommand(cmd);
-            ExecuteRemoteCommand(cmd);
-            return;
-        }
-
-        if (!HasPeers()) {
+        var remote = targetId != _sessionId;
+        if (remote && !HasPeers()) {
             ModuleMessage("No other clients connected.");
             return;
         }
@@ -325,74 +268,26 @@ public partial class MultiboxTools {
         if (remember)
             RememberCommand(cmd);
 
-        if (targetPid is null)
-            Log($"Broadcasting: {cmd}");
-        else
-            Log($"Sending to {targetPid}: {cmd}");
+        if (remote)
+            Log(targetId is null ? $"Broadcasting: {cmd}" : $"Sending to {targetId}: {cmd}");
 
-        if (Config.ActAsHub)
-            HubRouteCommand(_pid, targetPid, cmd);
-        else
-            WriteHub(new CmdMessage(targetPid, cmd));
+        Dispatch(new CmdMessage(targetId, cmd));
 
-        if (includeSelf && targetPid is null)
+        if (includeSelf && targetId is null)
             ExecuteRemoteCommand(cmd);
     }
 
-    private void SendAction(int? targetPid, RemoteAction action) {
-        if (targetPid == _pid) {
-            ExecuteRemoteAction(action);
-            return;
-        }
-
-        if (!HasPeers()) {
+    private void SendAction(int? targetId, RemoteAction action) {
+        var remote = targetId != _sessionId;
+        if (remote && !HasPeers()) {
             ModuleMessage("No other clients connected.");
             return;
         }
 
-        if (targetPid is null)
-            Log($"Broadcasting action: {action}");
-        else
-            Log($"Sending {action} to {targetPid}");
+        if (remote)
+            Log(targetId is null ? $"Broadcasting action: {action}" : $"Sending {action} to {targetId}");
 
-        if (Config.ActAsHub)
-            HubRouteAction(_pid, targetPid, action);
-        else
-            WriteHub(new ActionMessage(targetPid, action));
-    }
-
-    private void HubRouteCommand(int fromPid, int? targetPid, string cmd) {
-        if (targetPid is null) {
-            if (fromPid != _pid)
-                ExecuteRemoteCommand(cmd);
-            foreach (var client in SnapshotClients().Where(c => c.Pid != fromPid))
-                client.Send(new ExecMessage(cmd));
-            return;
-        }
-
-        if (targetPid == _pid) {
-            ExecuteRemoteCommand(cmd);
-            return;
-        }
-
-        SnapshotClients().FirstOrDefault(c => c.Pid == targetPid)?.Send(new ExecMessage(cmd));
-    }
-
-    private void HubRouteAction(int fromPid, int? targetPid, RemoteAction action) {
-        if (targetPid is null) {
-            if (fromPid != _pid)
-                ExecuteRemoteAction(action);
-            foreach (var client in SnapshotClients().Where(c => c.Pid != fromPid))
-                client.Send(new RunActionMessage(action));
-            return;
-        }
-
-        if (targetPid == _pid) {
-            ExecuteRemoteAction(action);
-            return;
-        }
-
-        SnapshotClients().FirstOrDefault(c => c.Pid == targetPid)?.Send(new RunActionMessage(action));
+        Dispatch(new ActionMessage(targetId, action));
     }
 
     private void ExecuteRemoteCommand(string cmd) {

@@ -18,14 +18,14 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
     public override string Name => "Multibox Tools";
     public override string Description => $"Connect to other local {Svc.Interface.Manifest.Name} instances and manage them.";
 
-    private readonly int _pid = Random.Shared.Next(1, int.MaxValue);
+    private readonly int _sessionId = Random.Shared.Next(1, int.MaxValue);
     private readonly Lock _lock = new();
     private readonly List<HubClient> _clients = [];
-    private List<PeerInfo> _clientPeers = [];
+    private List<ClientSnapshot> _clientPeers = [];
 
     private readonly Lock _statusLock = new();
     private readonly Lock _dutyLock = new();
-    private ClientSnapshot _localSnapshot = new(0, 0, "Not Logged In", 0, string.Empty, 0, false, false, false, false, false);
+    private ClientSnapshot _localSnapshot = ClientSnapshot.Empty;
     private long _nextStatusTick;
     private volatile bool _forceStatus;
 
@@ -33,23 +33,22 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
     private Task? _networkTask;
     private CancellationTokenSource? _lanCts;
     private Task? _lanTask;
-    private Stream? _hubStream;
+    private MessageWriter? _hubWriter;
     private bool _hubStreamIsTcp;
-    private ulong _localCid;
-    private string _localName = "Not Logged In";
-    private ushort _localWorldId;
-    private string _localWorld = string.Empty;
     private const int CommandHistoryLimit = 3;
     private readonly List<string> _commandHistory = [];
     private string _commandInput = string.Empty;
     private volatile bool _hubMissing;
     private long _hubSearchStart;
-    private ClientSnapshot _drawSnap;
+    private ClientSnapshot _drawSnap = ClientSnapshot.Empty;
+    private List<ClientSnapshot> _drawPeers = [];
     private DutyCommands _dutyDraft = new();
     private DutyCommands? _dutyOverride;
     private uint _dutyTerritory;
 
     public override void OnEnable() {
+        lock (_statusLock)
+            _localSnapshot = ClientSnapshot.Empty with { SessionId = _sessionId };
         DiscoverCommands();
         IClientState.Get().Login += OnLogin;
         IFramework.Get().Update += OnFramework;
@@ -84,6 +83,8 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
 
     public override void DrawConfig() {
         _drawSnap = LocalSnapshot();
+        _drawPeers = GetPeers();
+        var hasPeers = _drawPeers.Count > 0;
 
         ImGui.DrawSection("Connection");
 
@@ -105,7 +106,6 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
 
         var iconBtnSize = GetIconButtonSize();
         var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var hasPeers = (Config.ActAsHub ? GetHubClients().Count : GetPeers().Count) > 0;
 
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - iconBtnSize.X * 2 - spacing * 2);
         if (ImGui.InputTextWithHint("##MultiboxCommand", "/li inn", ref _commandInput, 512, ImGuiInputTextFlags.EnterReturnsTrue))
@@ -118,14 +118,11 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
         ImGui.SameLine();
         DrawCommandHistory();
 
-        DrawCommands(ToolbarContext(hasPeers), beforeSend: null);
+        DrawCommands(new CmdCtx(this, null, Self: false, hasPeers), beforeSend: null);
 
         ImGui.Spacing();
 
-        if (Config.ActAsHub)
-            DrawHubClients();
-        else
-            DrawClientPeers();
+        DrawPeers(hasPeers);
 
         DrawDutySection();
     }
@@ -167,6 +164,8 @@ public partial class MultiboxTools : Tweak<MultiboxToolsConfig> {
         return buttonCount * btn.X + (buttonCount - 1) * spacing + rightPad;
     }
 
-    private bool HasPeers()
-        => (Config.ActAsHub ? GetHubClients().Count : GetPeers().Count) > 0;
+    private bool HasPeers() {
+        lock (_lock)
+            return Config.ActAsHub ? _clients.Any(c => c.SessionId != 0) : _clientPeers.Count > 0;
+    }
 }

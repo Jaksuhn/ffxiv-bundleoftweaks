@@ -80,12 +80,6 @@ public sealed class RelayPayload(MapLinkPayload mapLink, uint worldId, uint? ins
         return result;
     }
 
-    public override bool Equals(object? obj) {
-        if (obj is null) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((RelayPayload)obj);
-    }
-
+    public override bool Equals(object? obj) => this == (obj as RelayPayload);
     public override int GetHashCode() => HashCode.Combine(MapLink, World.RowId, Instance, RelayType);
 }

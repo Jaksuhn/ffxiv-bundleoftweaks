@@ -58,6 +58,13 @@ public partial class MultiboxTools {
     private void DrawClientLabel(ClientSnapshot peer, bool self) {
         if (peer.JobId != 0) {
             ImGui.Icon(ClassJobIconOffset + peer.JobId, new Vector2(GetIconButtonSize().Y));
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                ImGui.SetTooltip("Change gearset");
+            }
+            if (ImGui.IsItemClicked())
+                OpenGearsetMenu(peer, self);
+            DrawGearsetMenu(peer, self);
             ImGui.SameLine();
         }
 
@@ -71,7 +78,7 @@ public partial class MultiboxTools {
         if (peer.Version != MBTVersion) {
             ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
-            ImGui.Icon(FontAwesomeIcon.ExclamationTriangle, Color.Yellow, $"Running a different {Svc.Interface.Manifest.Name} version (protocol v{peer.Version}, this is v{MBTVersion}).\nUpdate all clients so commands work reliably.");
+            ImGui.Icon(FontAwesomeIcon.ExclamationTriangle, Color.Orange, $"Running a different {Svc.Interface.Manifest.Name} version (v{peer.Version} vs v{MBTVersion})");
         }
 
         if (peer.Dead) {

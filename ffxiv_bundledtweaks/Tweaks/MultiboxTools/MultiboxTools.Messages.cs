@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ComplexTweaks.Tweaks;
 
 public partial class MultiboxTools {
-    private const int MBTVersion = 2;
+    private const int MBTVersion = 3;
 
     private enum RemoteAction {
         Leave,
@@ -22,6 +22,9 @@ public partial class MultiboxTools {
     [JsonDerivedType(typeof(ActionMessage), "action")]
     [JsonDerivedType(typeof(VbmMessage), "vbm")]
     [JsonDerivedType(typeof(DutyMessage), "duty")]
+    [JsonDerivedType(typeof(GearsetRequestMessage), "gearsetRequest")]
+    [JsonDerivedType(typeof(GearsetListMessage), "gearsetList")]
+    [JsonDerivedType(typeof(EquipGearsetMessage), "equipGearset")]
     private abstract record MultiboxMessage;
 
     private sealed record StatusMessage(ClientSnapshot Snapshot) : MultiboxMessage;
@@ -32,6 +35,11 @@ public partial class MultiboxTools {
     private sealed record ActionMessage(int? TargetId, RemoteAction Action) : RoutedMessage(TargetId);
     private sealed record VbmMessage(int? TargetId, string Preset, bool Enabled) : RoutedMessage(TargetId);
     private sealed record DutyMessage(int? TargetId, DutyWire? Duty) : RoutedMessage(TargetId);
+    private sealed record GearsetRequestMessage(int? TargetId, int ReplyTo) : RoutedMessage(TargetId);
+    private sealed record GearsetListMessage(int? TargetId, int Owner, List<GearsetInfo> Gearsets) : RoutedMessage(TargetId);
+    private sealed record EquipGearsetMessage(int? TargetId, byte Index, byte JobId) : RoutedMessage(TargetId);
+
+    private sealed record GearsetInfo(byte Index, byte JobId, string Name, short ItemLevel);
 
     private sealed record DutyWire(string? StartCommand, string? EndCommand, bool AutoLeaveOnEnd, int TimeToWait) {
         public DutyCommands ToConfig() => new() {

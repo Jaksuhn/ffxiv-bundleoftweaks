@@ -47,8 +47,10 @@ public partial class MultiboxTools {
         _cts = null;
         _networkTask = null;
 
-        lock (_lock)
+        lock (_lock) {
             _clientPeers = [];
+            _gearsets.Clear();
+        }
     }
 
     private void WaitQuietly(Task? task) {
@@ -314,6 +316,16 @@ public partial class MultiboxTools {
                 break;
             case DutyMessage duty:
                 ApplyDuty(duty.Duty?.ToConfig(), updateDraft: true);
+                break;
+            case GearsetRequestMessage request:
+                _ = IFramework.Get().Run(() => Dispatch(new GearsetListMessage(request.ReplyTo, _sessionId, ReadGearsets())));
+                break;
+            case GearsetListMessage list:
+                lock (_lock)
+                    _gearsets[list.Owner] = list.Gearsets;
+                break;
+            case EquipGearsetMessage equip:
+                _ = IFramework.Get().Run(() => EquipGearset(equip.Index, equip.JobId));
                 break;
         }
     }

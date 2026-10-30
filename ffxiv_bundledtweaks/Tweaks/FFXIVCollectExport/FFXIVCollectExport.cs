@@ -98,15 +98,6 @@ public partial class FFXIVCollectExport : Tweak {
         ImGui.TextColoredWrapped(Colors.Grey, $"Lodestone data last read by FFXIV Collect {Ago(profile.LastParsed)}. Fetched {Ago(profile.Fetched)}.");
 
         DrawTable(sync);
-
-        var missing = sync.Statuses.Values.Sum(s => s.Missing.Count);
-        if (missing > 0) {
-            var categories = sync.Statuses.Count(s => s.Value.Missing.Count > 0);
-            ImGui.TextColoredWrapped(ImGuiColors.DalamudYellow,
-                $"{missing} collectable{(missing == 1 ? "" : "s")} in {categories} collection{(categories == 1 ? "" : "s")} aren't on FFXIV Collect yet. Copy the export below and paste it into the import page to update.");
-        }
-        else
-            ImGui.TextColoredWrapped(Colors.Valid, "FFXIV Collect is up to date with everything readable in game.");
     }
 
     private static void DrawTable(SyncResult sync) {

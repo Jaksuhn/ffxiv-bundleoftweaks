@@ -12,4 +12,5 @@ public abstract class BaseIPC {
     protected static string Kawaii => Dynamis + "kawaii";
     protected static string Veyn => Dynamis + "veyn";
     protected static string Vera => Dynamis + "vera";
+    protected static string Croizat => Dynamis + "croizat";
 }

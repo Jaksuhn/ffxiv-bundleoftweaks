@@ -9,4 +9,5 @@ public enum Ipc {
     Navmesh = 1 << 3,
     Questionable = 1 << 4,
     TextAdvance = 1 << 5,
+    GlamourLog = 1 << 6,
 }

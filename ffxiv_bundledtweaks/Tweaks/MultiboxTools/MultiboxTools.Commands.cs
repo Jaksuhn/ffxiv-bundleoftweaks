@@ -107,6 +107,34 @@ public partial class MultiboxTools {
         }
     }
 
+    private sealed class LootCommand : IMultiboxCommand {
+        private static readonly LootMode[] Modes = [LootMode.Off, LootMode.Need, LootMode.Greed, LootMode.Pass];
+
+        public int Order => 5;
+        public bool HubOnly => false;
+        public bool BeforeSend => true;
+        public FontAwesomeIcon Icon => FontAwesomeIcon.Dice;
+        public string Id => "loot";
+        public string Tooltip(CmdCtx ctx) => ctx.Toolbar ? "LazyLoot mode for all" : Disabled(ctx) ? "LazyLoot not loaded" : "LazyLoot mode";
+        public bool Disabled(CmdCtx ctx) => ctx.Peer is { Loot: LootMode.Unknown };
+        public void Execute(CmdCtx ctx) { }
+
+        public void Draw(CmdCtx ctx, string id) {
+            if (ImGui.IconButton(Icon, id, Tooltip(ctx), disabled: Disabled(ctx)))
+                ImGui.OpenPopup(id);
+
+            using var popup = ImRaii.Popup(id);
+            if (!popup)
+                return;
+
+            foreach (var mode in Modes) {
+                var on = ctx.Peer is { } peer ? peer.Loot == mode : ctx.Host.EveryoneLoot(mode);
+                if (ImGui.MenuItem(mode.ToString(), on))
+                    ctx.Host.SendLoot(ctx.TargetId, mode);
+            }
+        }
+    }
+
     private sealed class InviteCommand : IMultiboxCommand {
         public int Order => 20;
         public bool HubOnly => true;
@@ -132,6 +160,39 @@ public partial class MultiboxTools {
                 ctx.Host.FormParty();
             else
                 _ = IFramework.Get().Run(() => ctx.Host.TryInviteClient(peer));
+        }
+    }
+
+    private sealed class NavCommand : IMultiboxCommand {
+        public int Order => 25;
+        public bool HubOnly => true;
+        public bool BeforeSend => false;
+        public FontAwesomeIcon Icon => FontAwesomeIcon.Running;
+        public string Id => "nav";
+        public string Tooltip(CmdCtx ctx) => ctx.Toolbar ? "All navmesh to controller" : "Navmesh to controller";
+
+        public bool Disabled(CmdCtx ctx)
+            => ctx.Peer is not { } peer ? !ctx.HasPeers : ctx.Self || peer.TerritoryId != IClientState.Get().TerritoryType;
+
+        public void Execute(CmdCtx ctx) { }
+
+        public void Draw(CmdCtx ctx, string id) {
+            if (ImGui.IconButton(Icon, id, Tooltip(ctx), disabled: Disabled(ctx)))
+                ImGui.OpenPopup(id);
+
+            using var popup = ImRaii.Popup(id);
+            if (!popup)
+                return;
+
+            if (ImGui.MenuItem("Walk")) {
+                ctx.Host.SendNav(ctx.TargetId, fly: false);
+                ImGui.CloseCurrentPopup();
+            }
+
+            if (ImGui.MenuItem("Fly")) {
+                ctx.Host.SendNav(ctx.TargetId, fly: true);
+                ImGui.CloseCurrentPopup();
+            }
         }
     }
 

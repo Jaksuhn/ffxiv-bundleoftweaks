@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ComplexTweaks.Tweaks;
 
 public partial class MultiboxTools {
-    private const int MBTVersion = 3;
+    private const int MBTVersion = 4;
 
     private enum RemoteAction {
         Leave,
@@ -25,6 +25,7 @@ public partial class MultiboxTools {
     [JsonDerivedType(typeof(GearsetRequestMessage), "gearsetRequest")]
     [JsonDerivedType(typeof(GearsetListMessage), "gearsetList")]
     [JsonDerivedType(typeof(EquipGearsetMessage), "equipGearset")]
+    [JsonDerivedType(typeof(NavMessage), "nav")]
     private abstract record MultiboxMessage;
 
     private sealed record StatusMessage(ClientSnapshot Snapshot) : MultiboxMessage;
@@ -38,6 +39,7 @@ public partial class MultiboxTools {
     private sealed record GearsetRequestMessage(int? TargetId, int ReplyTo) : RoutedMessage(TargetId);
     private sealed record GearsetListMessage(int? TargetId, int Owner, List<GearsetInfo> Gearsets) : RoutedMessage(TargetId);
     private sealed record EquipGearsetMessage(int? TargetId, byte Index, byte JobId) : RoutedMessage(TargetId);
+    private sealed record NavMessage(int? TargetId, uint TerritoryId, float X, float Y, float Z, bool Fly) : RoutedMessage(TargetId);
 
     private sealed record GearsetInfo(byte Index, byte JobId, string Name, short ItemLevel);
 
@@ -52,8 +54,8 @@ public partial class MultiboxTools {
         public static DutyWire From(DutyCommands config) => new(config.StartCommand, config.EndCommand, config.AutoLeaveOnEnd, config.TimeToWait);
     }
 
-    private sealed record ClientSnapshot(int SessionId, int Version, ulong Cid, string Name, ushort WorldId, string World, byte JobId, bool Dead, bool RezReady, bool VbmDefault, bool VbmAi, bool Duty) {
-        public static readonly ClientSnapshot Empty = new(0, MBTVersion, 0, "Not Logged In", 0, string.Empty, 0, false, false, false, false, false);
+    private sealed record ClientSnapshot(int SessionId, int Version, ulong Cid, string Name, ushort WorldId, string World, byte JobId, bool Dead, bool RezReady, bool VbmDefault, bool VbmAi, bool Duty, ushort CurrentWorldId, uint TerritoryId, bool InCombat, LootMode Loot) {
+        public static readonly ClientSnapshot Empty = new(0, MBTVersion, 0, "Not Logged In", 0, string.Empty, 0, false, false, false, false, false, 0, 0, false, LootMode.Unknown);
 
         [JsonIgnore]
         public string DisplayName => World.IsEmpty ? Name : $"{Name}@{World}";

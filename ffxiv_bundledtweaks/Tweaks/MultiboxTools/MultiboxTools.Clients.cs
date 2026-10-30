@@ -74,11 +74,13 @@ public partial class MultiboxTools {
             ImGui.TextColored(Color.Red, displayName);
         else
             ImGui.TextUnformatted(displayName);
+        if (ImGui.IsItemHovered())
+            DrawLocationTooltip(peer);
 
         if (peer.Version != MBTVersion) {
             ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
-            ImGui.Icon(FontAwesomeIcon.ExclamationTriangle, Color.Orange, $"Running a different {Svc.Interface.Manifest.Name} version (v{peer.Version} vs v{MBTVersion})");
+            ImGui.Icon(FontAwesomeIcon.ExclamationTriangle, Color.Orange, $"Running a different MBT version (v{peer.Version} vs v{MBTVersion})");
         }
 
         if (peer.Dead) {
@@ -100,6 +102,26 @@ public partial class MultiboxTools {
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 ClearDutyFor(peer);
         }
+    }
+
+    private static void DrawLocationTooltip(ClientSnapshot peer) {
+        if (peer.Cid == 0)
+            return;
+
+        using var tooltip = ImRaii.Tooltip();
+        var world = World.GetRowOrNull(peer.CurrentWorldId)?.Name.ToString() ?? "Unknown";
+        ImGui.TextUnformatted(peer.CurrentWorldId == peer.WorldId ? $"World: {world} (home)" : $"World: {world}");
+
+        var zone = TerritoryType.GetRowOrNull(peer.TerritoryId)?.PlaceName.Value.Name.ToString();
+        ImGui.TextUnformatted($"Zone: {(zone is { Length: > 0 } ? zone : "Unknown")}");
+
+        if (peer.InCombat)
+            ImGui.TextColored(Color.Red, "In combat");
+        else
+            ImGui.TextColored(Colors.Grey, "Not in combat");
+
+        if (peer.Loot != LootMode.Unknown)
+            ImGui.TextUnformatted($"LazyLoot: {peer.Loot}");
     }
 
     private void SendHubZone(int? targetId) {
@@ -192,10 +214,13 @@ public partial class MultiboxTools {
             VbmDefault = vbmDefault,
             VbmAi = vbmAi,
             Duty = duty,
+            TerritoryId = IClientState.Get().TerritoryType,
+            InCombat = ICondition.Get()[ConditionFlag.InCombat],
+            Loot = ReadLootMode(),
         };
 
-        if (IPlayerState.Get() is { IsLoaded: true, ContentId: var cid, CharacterName: { IsEmpty: false } name, HomeWorld: { IsValid: true, RowId: var worldId, Value.Name: var world } })
-            snap = snap with { Cid = cid, Name = name, WorldId = (ushort)worldId, World = world.ToString() };
+        if (IPlayerState.Get() is { IsLoaded: true, ContentId: var cid, CharacterName: { IsEmpty: false } name, HomeWorld: { IsValid: true, RowId: var worldId, Value.Name: var world }, CurrentWorld.RowId: var currentWorldId })
+            snap = snap with { Cid = cid, Name = name, WorldId = (ushort)worldId, World = world.ToString(), CurrentWorldId = (ushort)currentWorldId };
 
         return snap;
     }

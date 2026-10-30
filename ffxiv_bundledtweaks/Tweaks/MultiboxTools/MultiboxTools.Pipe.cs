@@ -327,6 +327,9 @@ public partial class MultiboxTools {
             case EquipGearsetMessage equip:
                 _ = IFramework.Get().Run(() => EquipGearset(equip.Index, equip.JobId));
                 break;
+            case NavMessage nav:
+                RunNav(nav);
+                break;
         }
     }
 

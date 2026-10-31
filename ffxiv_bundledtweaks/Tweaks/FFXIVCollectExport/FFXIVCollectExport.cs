@@ -2,6 +2,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -83,11 +84,8 @@ public partial class FFXIVCollectExport : Tweak {
         else if (_syncError != null)
             ImGui.TextColoredWrapped(Colors.Invalid, _syncError);
 
-        if (CurrentSync is not { } sync) {
-            if (!Automation.Running)
-                ImGui.TextColoredWrapped(Colors.Grey, "Refresh to compare FFXIV Collect against your in-game unlocks.");
+        if (CurrentSync is not { } sync)
             return;
-        }
 
         var profile = sync.Profile;
         ImGui.TextUnformatted($"{profile.Name} @ {profile.Server}");
@@ -204,8 +202,10 @@ public partial class FFXIVCollectExport : Tweak {
                 return;
             }
 
-            var live = CollectLive();
+            Status = "Loading beastmaster pets";
+            await RequestXBMPets();
 
+            var live = CollectUnlockStates();
             if (sync) {
                 tweak._syncError = null;
                 try {
@@ -265,6 +265,22 @@ public partial class FFXIVCollectExport : Tweak {
         }
 
         private static Dictionary<string, List<uint>> BuildPayload(Snapshot live) => live.Ids.Where(kv => !live.Unavailable.ContainsKey(kv.Key)).OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value.Order().ToList());
+
+        private async Task RequestXBMPets() {
+            unsafe {
+                var xbm = XBMManager.Instance();
+                if (xbm == null || xbm->State == XBMManager.DataState.Received)
+                    return;
+                if (xbm->State == XBMManager.DataState.None)
+                    GameMain.ExecuteCommand(2421);
+            }
+            await WaitUntil(() => {
+                unsafe {
+                    return XBMManager.Instance()->State == XBMManager.DataState.Received;
+                }
+            }, "PetListLoaded", timeout: TimeSpan.FromSeconds(5), abortOnTimeout: false);
+        }
+
         private static string Label(string key) => Categories.FirstOrDefault(c => c.Key == key)?.Label ?? key;
     }
 }

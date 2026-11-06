@@ -1,5 +1,3 @@
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
-
 namespace ComplexTweaks.Tweaks;
 
 public partial class MultiboxTools {
@@ -30,7 +28,7 @@ public partial class MultiboxTools {
                 if (nav.IsRunning())
                     nav.Stop();
 
-                msg.GoToAsync();
+                msg.MoveTo();
             }
             catch (Exception ex) {
                 Error(ex, "Failed to navmesh to hub");

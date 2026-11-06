@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.Game;
 using System.IO;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -39,7 +40,11 @@ public partial class MultiboxTools {
     private sealed record GearsetRequestMessage(int? TargetId, int ReplyTo) : RoutedMessage(TargetId);
     private sealed record GearsetListMessage(int? TargetId, int Owner, List<GearsetInfo> Gearsets) : RoutedMessage(TargetId);
     private sealed record EquipGearsetMessage(int? TargetId, byte Index, byte JobId) : RoutedMessage(TargetId);
-    private sealed record NavMessage(int? TargetId, uint TerritoryId, float X, float Y, float Z, bool Fly) : RoutedMessage(TargetId);
+    private sealed record NavMessage(int? TargetId, uint TerritoryId, float X, float Y, float Z, bool Fly) : RoutedMessage(TargetId) {
+        public void GoToAsync() => Svc.Automation.Start(TaskBase.From(async t => {
+            await t.MoveTo(TerritoryId, new Vector3(X, Y, Z), Fly ? MovementConfig.Everything : MovementConfig.GroundMove);
+        }, name: "NavMessageGoTo"));
+    }
 
     private sealed record GearsetInfo(byte Index, byte JobId, string Name, short ItemLevel);
 

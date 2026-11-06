@@ -17,6 +17,8 @@ internal unsafe class TestTab : DebugTab {
             ImGui.SetClipboardText(ImGui.GetClipboardText().FromBase64());
         if (ImGui.Button("logout"))
             AgentLobby.Instance()->HandleLogout(false, 60);
+        if (ImGui.Button("invalidate login token"))
+            AgentLobby.Instance()->GameSession.SetString("invalid");
 
         if (ImGui.Button("leave"))
             EventFramework.LeaveCurrentContent(true);

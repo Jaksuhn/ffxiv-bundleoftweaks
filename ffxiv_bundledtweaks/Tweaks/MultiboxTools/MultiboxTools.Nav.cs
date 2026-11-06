@@ -27,21 +27,10 @@ public partial class MultiboxTools {
                     return;
                 }
 
-                var territory = IClientState.Get().TerritoryType;
-                if (territory != msg.TerritoryId) {
-                    Log($"Skipping navmesh: in territory {territory}, hub is in {msg.TerritoryId}");
-                    return;
-                }
-
-                var fly = msg.Fly && Control.CanFly && ICondition.Get()[ConditionFlag.Mounted];
-                if (msg.Fly && !fly)
-                    Log("Cannot fly here or not mounted, walking instead");
-
                 if (nav.IsRunning())
                     nav.Stop();
 
-                if (!nav.PathfindAndMoveTo(new Vector3(msg.X, msg.Y, msg.Z), fly))
-                    ModuleMessage("Could not start navmesh.");
+                msg.GoToAsync();
             }
             catch (Exception ex) {
                 Error(ex, "Failed to navmesh to hub");

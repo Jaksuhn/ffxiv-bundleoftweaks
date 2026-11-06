@@ -261,10 +261,14 @@ public abstract partial class Tweak // Config / Commands
     public virtual void DrawConfig() {
         DrawGeneratedConfig();
         DrawCustomConfig();
+#if DEBUG
+        DrawDebugConfig();
+#endif
         DrawCommands();
     }
 
     protected virtual void DrawCustomConfig() { }
+    protected virtual void DrawDebugConfig() { }
 
     protected void DrawGeneratedConfig() {
         var config = GetConfigObject();

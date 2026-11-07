@@ -25,6 +25,7 @@ internal class AutoEquipXPBoosts : Tweak {
         new ExpItem(33648, 80, 30), // Menphina's earring
         new ExpItem(41081, 90, 30), // Azeyma's earrings
         new ExpItem(44410, 60, 30), // Neophyte's ring
+        new ExpItem(52439, 100, 30), // Halone's earring
     ];
 
     private void CheckForLevelSync(uint classJobId, uint level) {

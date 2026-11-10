@@ -41,28 +41,28 @@ public class ARGlamourLog : ARTweak {
             }
 
             if (targets.HasFlag(GlamourLogStoreTargets.Armoire))
-                await Store(ArmoireHandlerId, "Cabinet", "armoire", selectStringIndex: 0);
+                await Store(ArmoireHandlerId, "Cabinet", selectStringIndex: 0);
             if (targets.HasFlag(GlamourLogStoreTargets.Dresser))
-                await Store(DresserHandlerId, "MiragePrismPrismBox", "glamour dresser");
+                await Store(DresserHandlerId, "MiragePrismPrismBox", selectStringIndex: 0);
         }
 
-        private async Task Store(uint handlerId, string addonName, string label, int? selectStringIndex = null) {
-            using var scope = BeginScope($"Store {label}");
+        private async Task Store(uint handlerId, string addonName, int? selectStringIndex = null) {
+            using var scope = BeginScope($"Store {addonName}");
             var glamourLog = GlamourLogIPC.Get();
 
-            Status = $"Finding {label}";
+            Status = $"Finding {addonName}";
             await WaitUntil(() => FindStorage(handlerId) is not null, "WaitForStorageObject", timeout: TimeSpan.FromSeconds(10));
             var obj = FindStorage(handlerId)!;
 
-            Status = $"Opening {label}";
+            Status = $"Opening {addonName}";
             await InteractWith(obj, () => AtkUnitBase.IsAddonReady(addonName) && glamourLog.ReadyToStore(), selectStringIndex);
             await NextFrame(2);
 
-            Status = $"Storing into {label}";
-            ErrorIf(!glamourLog.EntrustAll(), $"GlamourLog failed to start storing into the {label}");
+            Status = $"Storing into {addonName}";
+            ErrorIf(!glamourLog.EntrustAll(), $"GlamourLog failed to start storing into the {addonName}");
             await WaitWhile(glamourLog.IsBusy, "WaitForGlamourLogStore", timeout: TimeSpan.FromMinutes(2));
 
-            Status = $"Closing {label}";
+            Status = $"Closing {addonName}";
             AtkUnitBase.CloseAddon(addonName);
             await WaitWhile(() => AtkUnitBase.IsAddonReady(addonName), "WaitForStorageClose", timeout: TimeSpan.FromSeconds(10));
             await WaitWhileBusy();

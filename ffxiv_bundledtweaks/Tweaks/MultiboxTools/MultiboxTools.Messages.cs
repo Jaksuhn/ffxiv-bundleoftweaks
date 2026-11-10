@@ -1,4 +1,3 @@
-using FFXIVClientStructs.FFXIV.Client.Game;
 using System.IO;
 using System.Text.Json.Serialization;
 using System.Threading;

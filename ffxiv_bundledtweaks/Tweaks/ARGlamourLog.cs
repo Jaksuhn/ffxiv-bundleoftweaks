@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Objects.Enums;
 using FFXIVClientStructs.FFXIV.Client.Enums;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Threading.Tasks;
 
@@ -12,8 +13,13 @@ public class ARGlamourLog : ARTweak {
 
     private GlamourLogStoreTargets _targets;
 
-    public override void OnCharacterPostProcessStep() {
+    public override unsafe void OnCharacterPostProcessStep() {
         _targets = GlamourLogIPC.Get().HasAnythingToStore();
+        if (_targets.HasFlag(GlamourLogStoreTargets.Dresser) && InventoryManager.Instance()->GetInventoryItemCount(21800) == 0) {
+            Warning("Dresser has items to store but there are no glamour prisms, skipping the dresser.");
+            _targets &= ~GlamourLogStoreTargets.Dresser;
+        }
+
         if (_targets is GlamourLogStoreTargets.None) {
             Log("Skipping post process for character: nothing to store.");
             return;

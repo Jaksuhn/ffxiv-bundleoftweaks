@@ -421,6 +421,15 @@
           "AllaganLib.GameSheets": "[2.2.6, )",
           "LuminaSupplemental.Excel": "[5.1.0, )"
         }
+      },
+      "ffxivclientstructs": {
+        "type": "Project",
+        "dependencies": {
+          "InteropGenerator.Runtime": "[1.0.0, )"
+        }
+      },
+      "interopgenerator.runtime": {
+        "type": "Project"
       }
     }
   }

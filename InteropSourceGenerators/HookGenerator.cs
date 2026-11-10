@@ -113,7 +113,7 @@ internal sealed class HookGenerator : IIncrementalGenerator {
                     var methodSymbol = (IMethodSymbol)context.TargetSymbol;
                     var attr = methodSymbol.GetAttributes()[0];
 
-                    var addressName = $"{attr.AttributeClass!.TypeArguments[0].GetFullyQualifiedName()}.StaticVirtualTablePointer->{methodSymbol.Name}";
+                    var addressName = GetVTableAddress(attr, methodSymbol);
 
                     return new HookInfo(
                         new ClassInfo(
@@ -203,6 +203,14 @@ internal sealed class HookGenerator : IIncrementalGenerator {
 
         context.RegisterSourceOutput(addressHookInfoByClass,
             static (sourceContext, item) => { sourceContext.AddSource($"{item.Key}.AddressHookGenerator.g.cs", RenderHookInfos(item)); });
+    }
+
+    // VTableHook<T>(int) reads T's static vtable; VTableHook<T>(string member) reads the vtable of an interface T inherits, from T.Instance().
+    internal static string GetVTableAddress(AttributeData attr, IMethodSymbol methodSymbol) {
+        var type = attr.AttributeClass!.TypeArguments[0].GetFullyQualifiedName();
+        return attr.ConstructorArguments is [{ Value: string member }]
+            ? $"{type}.Instance()->{member}.VirtualTable->{methodSymbol.Name}"
+            : $"{type}.StaticVirtualTablePointer->{methodSymbol.Name}";
     }
 
     private static ParameterInfo ParseParameter(IParameterSymbol parameterSymbol) => new(

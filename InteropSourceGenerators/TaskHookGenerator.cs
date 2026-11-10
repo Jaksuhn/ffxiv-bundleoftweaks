@@ -88,7 +88,7 @@ internal sealed class TaskHookGenerator : IIncrementalGenerator {
         }
         else if (attrName.Contains("VTableHookAttribute") || attrMetadataName.Contains("VTableHookAttribute")) {
             if (attrClass.TypeArguments.Length > 0)
-                addressName = $"{attrClass.TypeArguments[0].GetFullyQualifiedName()}.StaticVirtualTablePointer->{methodSymbol.Name}";
+                addressName = HookGenerator.GetVTableAddress(attr, methodSymbol);
         }
         else if (attrName.Contains("SigHookAttribute") || attrMetadataName.Contains("SigHookAttribute")) {
             if (attr.ConstructorArguments.Length > 0) {

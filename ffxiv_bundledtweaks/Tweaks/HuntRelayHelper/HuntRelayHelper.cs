@@ -173,7 +173,7 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
 
         ImGui.DrawSection("Chat Message Pattern");
         ImGui.InputText($"##{nameof(Config.ChatMessagePattern)}", ref Config.ChatMessagePattern, 64);
-        ImGuiComponents.HelpMarker("Available tags: <world>, <type>, <flag>");
+        ImGuiComponents.HelpMarker("Available tags: <world>, <type>, <flag>, <datacenter>");
 
         ImGui.DrawSection("Relay Type Configuration");
         foreach (var t in Config.Types.ToList().Select((x, i) => new { Value = x, Index = i })) {
@@ -328,6 +328,9 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
                             sb.Append(Config.Types[(int)RelayTypes.FATE].TypeFormat);
                             break;
                     }
+                    break;
+                case "<datacenter>":
+                    sb.Append(World.DataCenter.Value.Name);
                     break;
                 default:
                     sb.Append(s);

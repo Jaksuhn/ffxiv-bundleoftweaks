@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -23,7 +24,7 @@ public class DTRWorldSwitcher : Tweak {
     private bool _addedCursor;
     private bool _pendingOpen;
     private ushort _currentWorldId;
-    private string _dataCenterName = string.Empty;
+    private ReadOnlySeString _regionName = string.Empty;
 
     public override void OnEnable() {
         IAddonLifecycle.Get().RegisterListener(AddonEvent.PostDraw, "_DTR", SyncClickTarget);
@@ -113,8 +114,8 @@ public class DTRWorldSwitcher : Tweak {
         if (!popup)
             return;
 
-        if (!_dataCenterName.IsEmpty) {
-            ImGui.TextColored(Colors.Grey, _dataCenterName);
+        if (!_regionName.IsEmpty) {
+            ImGui.TextColored(Colors.Grey, _regionName.ToString());
             ImGui.Separator();
         }
 
@@ -129,11 +130,11 @@ public class DTRWorldSwitcher : Tweak {
     }
 
     private bool RefreshWorlds() {
-        if (IPlayerState.Get().CurrentWorld is not { IsValid: true, Value: var current })
+        if (IPlayerState.Get().CurrentWorld is not { IsValid: true, Value: var current, ValueNullable.DataCenter.ValueNullable.Region.ValueNullable.Name: var region })
             return false;
 
         _currentWorldId = (ushort)current.RowId;
-        _dataCenterName = current.DataCenter.IsValid ? current.DataCenter.Value.Name.ToString() : string.Empty;
+        _regionName = region;
         _worlds.Clear();
         foreach (var world in World.Where(w => w.IsPublic && w.DataCenter.RowId == current.DataCenter.RowId)) {
             var name = world.Name.ToString();

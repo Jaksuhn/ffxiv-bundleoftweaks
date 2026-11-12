@@ -291,12 +291,12 @@ public class HuntRelayHelper : Tweak<HuntRelayHelperConfiguration> {
     }
 
     private Lumina.Text.SeStringBuilder BuildRelayMessage(MapLinkPayload MapLink, World World, uint? Instance, uint RelayType, bool removeWorld = false) {
-        var pattern = "(?i)(<flag>|<world>|<type>)";
-        var msg = removeWorld ? Regex.Replace(Config.ChatMessagePattern, @"[^\s]*<world>[^\s]*", "").Replace(@"\s+", " ").Trim() : Config.ChatMessagePattern;
+        var pattern = "(?i)(<flag>|<world>|<type>|<datacenter>)";
+        var msg = removeWorld ? Regex.Replace(Regex.Replace(Config.ChatMessagePattern, @"[^\s]*<world>[^\s]*", "", RegexOptions.IgnoreCase), @"\s+", " ").Trim() : Config.ChatMessagePattern;
         var splitMsg = Regex.Split(msg, pattern);
         var sb = new Lumina.Text.SeStringBuilder();
         foreach (var s in splitMsg) {
-            switch (s) {
+            switch (s.ToLowerInvariant()) {
                 case "<flag>":
                     // Hook PronounModule.Instance()->VirtualTable->ProcessString and decode the Utf8String to check the args here in case they change in the future
                     sb.BeginMacro(Lumina.Text.Payloads.MacroCode.Fixed)

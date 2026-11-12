@@ -1,6 +1,7 @@
 ﻿using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Addon.Events;
 using Dalamud.Game.Addon.Events.EventDataTypes;
+using Dalamud.Game.Text;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -85,7 +86,7 @@ public class DTRWorldSwitcher : Tweak {
         ClearEvents();
     }
 
-    private void OnWorldMouse(AddonEventType type, AddonEventData data) {
+    private unsafe void OnWorldMouse(AddonEventType type, AddonEventData data) {
         switch (type) {
             case AddonEventType.MouseOver:
                 IAddonEventManager.Get().SetCursor(AddonCursorType.Clickable);
@@ -94,7 +95,11 @@ public class DTRWorldSwitcher : Tweak {
                 IAddonEventManager.Get().ResetCursor();
                 break;
             case AddonEventType.MouseClick when InStartingCity():
-                _pendingOpen = true;
+                var mouse = ((AtkEventData*)data.AtkEventDataPointer)->MouseData;
+                if (mouse.ButtonId == 1)
+                    AgentWorldTravel.Instance()->Travel((ushort)IPlayerState.Get().HomeWorld.RowId);
+                else if (mouse.ButtonId == 0)
+                    _pendingOpen = true;
                 break;
         }
     }
@@ -140,6 +145,8 @@ public class DTRWorldSwitcher : Tweak {
             var name = world.Name.ToString();
             if (name.Length == 0)
                 continue;
+            if (world.RowId == IPlayerState.Get().HomeWorld.RowId)
+                name += $" {SeIconChar.Hyadelyn.ToIconString()}";
             _worlds.Add(((ushort)world.RowId, name));
         }
 

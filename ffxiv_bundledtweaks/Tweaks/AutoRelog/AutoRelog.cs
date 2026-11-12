@@ -24,7 +24,7 @@ public partial class AutoRelog : Tweak {
     private static readonly TimeSpan ConfirmTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan LoginTimeout = TimeSpan.FromHours(2); // covers the login queue, which the game re-requests by itself
 
-    private enum WaitResult { Reached, ErrorDialog, CongestionPrompt, TimedOut }
+    private enum WaitResult { Reached, ErrorDialog, CongestionPrompt, TimedOut, LoggedIn }
     private enum AttemptResult { LoggedIn, Retry, Stop }
 
     private ushort? _openErrorRow;
@@ -32,6 +32,7 @@ public partial class AutoRelog : Tweak {
     private bool _authDismissAllowed;
     private bool _congestionPrompt;
     private bool _loggedIn;
+    private bool _sawLoggedOut;
     private bool _tokenRefreshUsed;
     private bool _isFreeTrial;
 
@@ -70,6 +71,7 @@ public partial class AutoRelog : Tweak {
         }
 
         _loggedIn = false;
+        _sawLoggedOut = false;
         _congestionPrompt = false;
         _tokenRefreshUsed = false;
         Automation.Start(AutoTask.From(t => Relog(t, target), nameof(AutoRelog)));
@@ -124,6 +126,7 @@ public partial class AutoRelog : Tweak {
         try {
             for (var attempt = 1; attempt <= MaxAttempts; attempt++) {
                 t.Status = $"Attempt {attempt}/{MaxAttempts}";
+                Information($"Relog attempt {attempt}/{MaxAttempts}");
                 switch (await Attempt(t, target)) {
                     case AttemptResult.LoggedIn:
                         Information("Logged back in");
@@ -153,14 +156,14 @@ public partial class AutoRelog : Tweak {
             screen = await WaitForLobbyScreen(t);
         }
         if (screen != WaitResult.Reached)
-            return EndAttempt(screen);
+            return EndAttempt(screen, "waiting for the title or character select");
 
         if (!IsReady("_CharaSelectListMenu")) // errors while logging in go back to chara select
             SendLobbyEvent(4);
 
         var list = await WaitFor(t, IsCharaListReady, CharaListTimeout);
         if (list != WaitResult.Reached)
-            return EndAttempt(list);
+            return EndAttempt(list, "waiting for the character list");
 
         if (DescribeUnavailable(target) is { } problem) {
             Notify(problem, NotificationType.Warning);
@@ -170,14 +173,20 @@ public partial class AutoRelog : Tweak {
         SelectDisplayedCharacter();
         var confirm = await WaitFor(t, () => IsReady("SelectYesno"), ConfirmTimeout);
         if (confirm != WaitResult.Reached)
-            return EndAttempt(confirm);
+            return EndAttempt(confirm, $"waiting for the login confirmation (lobby temporarily locked: {IsLobbyLocked()})");
         AddonSelectYesno.Yes();
 
         var login = await WaitFor(t, () => _loggedIn, LoginTimeout);
-        return login == WaitResult.Reached ? AttemptResult.LoggedIn : EndAttempt(login);
+        return login == WaitResult.Reached ? AttemptResult.LoggedIn : EndAttempt(login, "waiting to log in");
     }
 
-    private AttemptResult EndAttempt(WaitResult result) {
+    private AttemptResult EndAttempt(WaitResult result, string step) {
+        if (result == WaitResult.LoggedIn) {
+            Information($"Logged in while {step}");
+            return AttemptResult.LoggedIn;
+        }
+        var detail = result == WaitResult.ErrorDialog ? $" (error row {_openErrorRow})" : string.Empty;
+        Information($"Relog attempt ended {step}: {result}{detail}");
         if (result != WaitResult.CongestionPrompt)
             return AttemptResult.Retry;
         Notify("The World is congested and the game is asking whether to continue. Answer it to finish logging in.", NotificationType.Warning);
@@ -195,6 +204,11 @@ public partial class AutoRelog : Tweak {
     private async Task<WaitResult> WaitFor(AutoTask t, Func<bool> reached, TimeSpan timeout) {
         var deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
         while (true) {
+            // set once the queue is over and the zone login starts, so the queue can no longer interrupt
+            if (!IsLoggedIn())
+                _sawLoggedOut = true;
+            else if (_sawLoggedOut)
+                return WaitResult.LoggedIn;
             if (_congestionPrompt)
                 return WaitResult.CongestionPrompt;
             if (_openErrorRow != null && IsReady("Dialogue"))
@@ -253,6 +267,7 @@ public partial class AutoRelog : Tweak {
     }
 
     private async Task ClickErrorUntilClosed(AutoTask t) {
+        Information($"Dismissing the error dialog for row {_openErrorRow}");
         for (var i = 0; i < DismissAttempts && _openErrorRow != null; i++) {
             ClickErrorDialogOk();
             var deadline = Environment.TickCount64 + (long)(ConfirmTimeout / DismissAttempts).TotalMilliseconds;
@@ -263,6 +278,8 @@ public partial class AutoRelog : Tweak {
             Warning($"Error dialog for row {_openErrorRow} didn't close");
     }
 
+    private static unsafe bool IsLoggedIn() => AgentLobby.Instance()->IsLoggedIn;
+    private static unsafe bool IsLobbyLocked() => AgentLobby.Instance()->TemporaryLocked;
     private bool IsOnLobbyScreen() => IsReady("_TitleMenu") || IsReady("_CharaSelectListMenu");
     private static unsafe bool IsCharaListReady() => IsReady("_CharaSelectListMenu") && AgentLobby.Instance()->HoveredCharacterContentId != 0;
     private static unsafe void SelectDisplayedCharacter() => SendLobbyEvent(29, 0, AgentLobby.Instance()->DisplayedCharacterIndex);

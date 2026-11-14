@@ -31,7 +31,7 @@ public class FateToolKitConfig {
     public string DisplayNameFormat = "[{Level}] {Name}";
     [BoolConfig(Description = "Doesn't apply to grind modes")] public bool SwapZones = true;
     [ColorConfig] public Vector4 BarColour = new(0.404f, 0.259f, 0.541f, 1f);
-    [BoolConfig(Description = "When bicolour gemstones reach 1400, use Knightshopper to spend them, then keep running fates.")]
+    [BoolConfig(Description = "When gemstones are >= 1400, use Knightshopper to spend them, then keep running fates.")]
     [Requires(Ipc.Knightshopper)]
     public bool SpendCappedGemstones = false;
 

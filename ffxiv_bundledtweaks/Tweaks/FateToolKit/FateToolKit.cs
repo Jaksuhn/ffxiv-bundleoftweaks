@@ -33,7 +33,7 @@ public class FateToolKitConfig {
     [ColorConfig] public Vector4 BarColour = new(0.404f, 0.259f, 0.541f, 1f);
     [BoolConfig(Description = "When gemstones are >= 1400, use Knightshopper to spend them, then keep running fates.")]
     [Requires(Ipc.Knightshopper)]
-    public bool SpendCappedGemstones = false;
+    public bool SpendGemstones = false;
 
     public Dictionary<FateType, HashSet<uint>> Blacklist = [];
     public HashSet<PublicEvent.FateRule> BlacklistedRules = [];
@@ -108,7 +108,7 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
     internal bool PendingStopWhenSafe { get; set; } // task sets running = false once no CurrentFate and !InCombat
     internal bool GemstoneSpendExhausted { get; set; } // when KS can't spend anything
     public bool CanSpendGemstones
-        => Config.SpendCappedGemstones && !GemstoneSpendExhausted && KnightshopperIPC.Get() is { IsLoaded: true, IsAvailable: true } ks && ks.HasShoppingList(KnightshopperIPC.CurrencyId.BicolorGemstone);
+        => Config.SpendGemstones && !GemstoneSpendExhausted && KnightshopperIPC.Get() is { IsLoaded: true, IsAvailable: true } ks && ks.HasShoppingList(KnightshopperIPC.CurrencyId.BicolorGemstone);
     private List<ZoneItemTarget> ZoneItemTargets { get; set; } = [];
 
     public bool Running {

@@ -31,6 +31,9 @@ public class FateToolKitConfig {
     public string DisplayNameFormat = "[{Level}] {Name}";
     [BoolConfig(Description = "Doesn't apply to grind modes")] public bool SwapZones = true;
     [ColorConfig] public Vector4 BarColour = new(0.404f, 0.259f, 0.541f, 1f);
+    [BoolConfig(Description = "When bicolour gemstones reach 1400, use Knightshopper to spend them, then keep running fates.")]
+    [Requires(Ipc.Knightshopper)]
+    public bool SpendCappedGemstones = false;
 
     public Dictionary<FateType, HashSet<uint>> Blacklist = [];
     public HashSet<PublicEvent.FateRule> BlacklistedRules = [];
@@ -48,7 +51,6 @@ public class FateToolKitConfig {
 /*
  * TODO:
  * identify fate chains and wait around for the next // hacked together. Needs some RE if the client even knows this
- * gemstone spending
  * more dynamic pull sizes. Like if fates have a ton of enemies, they're generally low health and you could just pull them all
  * better handling of new fates spawning on top of you
  * watch gear durability. Either self repair or just stop if I cba
@@ -104,6 +106,9 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
         }
     } = "None";
     internal bool PendingStopWhenSafe { get; set; } // task sets running = false once no CurrentFate and !InCombat
+    internal bool GemstoneSpendExhausted { get; set; } // when KS can't spend anything
+    public bool CanSpendGemstones
+        => Config.SpendCappedGemstones && !GemstoneSpendExhausted && KnightshopperIPC.Get() is { IsLoaded: true, IsAvailable: true } ks && ks.HasShoppingList(KnightshopperIPC.CurrencyId.BicolorGemstone);
     private List<ZoneItemTarget> ZoneItemTargets { get; set; } = [];
 
     public bool Running {
@@ -112,6 +117,7 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
             field = value;
             if (value) {
                 PendingStopWhenSafe = false;
+                GemstoneSpendExhausted = false;
                 ZoneItemTargets = [];
                 CompletedCount = 0;
                 RefreshZoneItemTargets();

@@ -32,6 +32,11 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             BossModIPC.Get().Create(_preset, true);
         try {
             while (!CancelToken.IsCancellationRequested && tweak.Running) {
+                if (ShouldSpendGemstones()) {
+                    await SpendGemstones();
+                    continue;
+                }
+
                 tweak.StopIfNoRemaining();
                 if (tweak.PendingStopWhenSafe && PublicEvent.CurrentFate is null && !ICondition.Get()[ConditionFlag.InCombat]) {
                     tweak.PendingStopWhenSafe = false;
@@ -640,6 +645,68 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         await WaitWhileBusy();
         Log($"Summoning {actions.TargetCompanion.Value.Singular}");
         await TryUntil(() => { unsafe { ActionManager.Instance()->UseAction(ActionType.Companion, id); } }, () => IPlayerState.Get().Minion.RowId == id, "SummonMinion", timeoutSeconds: 5);
+    }
+
+    private bool ShouldSpendGemstones() {
+        if (!GemstoneGrindMode.ShouldSpend) {
+            tweak.GemstoneSpendExhausted = false;
+            return false;
+        }
+
+        return tweak.CanSpendGemstones
+            && Player is { } p && p.Available
+            && PublicEvent.CurrentFate is null
+            && WaitForExpiryFateId is null
+            && !HasTwistOfFate
+            && !ICondition.Get()[ConditionFlag.InCombat]
+            && !ICondition.Get()[ConditionFlag.Unconscious];
+    }
+
+    private async Task SpendGemstones() {
+        using var scope = BeginScope(nameof(SpendGemstones));
+        var ks = KnightshopperIPC.Get();
+
+        DeactivateIntegrations(clearNextFate: true);
+        if (ks.IsBusy) {
+            Status = "Waiting for Knightshopper";
+            await WaitWhile(() => ks.IsBusy, "WaitForKnightshopperIdle");
+        }
+
+        await WaitWhileBusy();
+        (var lastZone, var lastPos) = (Player!.Territory.RowId, Player!.Position);
+
+        var start = ks.Start(KnightshopperIPC.CurrencyId.BicolorGemstone);
+        if (!start.Started) {
+            Warning($"Knightshopper did not start ({start.Result}): {start.Message}");
+            tweak.GemstoneSpendExhausted = true;
+            return;
+        }
+
+        Status = "Spending gemstones";
+        Log($"Knightshopper operation {start.OperationId} started");
+        KnightshopperIPC.PurchaseStatus result = default;
+        var finished = false;
+        try {
+            await WaitUntil(() => finished = (result = ks.GetStatus(start.OperationId)).IsFinished, "WaitForKnightshopper", checkFrequency: 1000);
+        }
+        finally {
+            if (!finished)
+                ks.Cancel(start.OperationId);
+        }
+
+        Log($"Knightshopper finished: {result.State} {result.Message}");
+        if (result.State is not KnightshopperIPC.PurchaseState.Succeeded)
+            Warning($"Knightshopper {result.State}: {result.Message}");
+
+        // list ran but it wasn't set to perpetual spending or something so we still have more to spend. Don't retry spending
+        if (GemstoneGrindMode.ShouldSpend)
+            tweak.GemstoneSpendExhausted = true;
+
+        await WaitUntil(() => Player is { Available: true } && GameMain.IsTerritoryLoaded && !Player.IsBusy, "WaitForPlayerFree");
+        if (Player!.Territory.RowId != lastZone) {
+            await TeleportTo(lastZone, lastPos);
+            await UseAethernet(lastZone, lastPos);
+        }
     }
 
     private void HandleIntegrations() {

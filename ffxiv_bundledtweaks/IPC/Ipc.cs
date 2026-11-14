@@ -10,4 +10,5 @@ public enum Ipc {
     Questionable = 1 << 4,
     TextAdvance = 1 << 5,
     GlamourLog = 1 << 6,
+    Knightshopper = 1 << 7,
 }

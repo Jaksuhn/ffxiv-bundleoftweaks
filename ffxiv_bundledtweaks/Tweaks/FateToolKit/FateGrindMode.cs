@@ -14,6 +14,7 @@ public interface IFateGrindRunState {
     int CompletedCount { get; }
     int? RunUntilCompleted { get; }
     int? RemainingUntilCompleted { get; }
+    bool CanSpendGemstones { get; }
 }
 
 internal readonly record struct FateSwapZoneActions(uint? EquipItemId, RowRef<Companion> TargetCompanion);
@@ -145,14 +146,17 @@ public sealed class GemstoneGrindMode : IFateGrindMode {
         return unlocked.Where(r => r.ExVersion.RowId == topEx).Select(r => r.RowId).ToHashSet();
     }
 
-    public bool IsComplete(IFateGrindRunState _) => GetGemstoneRemaining() == 0;
+    public bool IsComplete(IFateGrindRunState state) => IsCapped && !state.CanSpendGemstones;
 
-    public string? GetRemainingDisplay(IFateGrindRunState _) {
+    public string? GetRemainingDisplay(IFateGrindRunState state) {
         var remaining = GetGemstoneRemaining();
-        return remaining > 0 ? $"{remaining} left" : null;
+        return remaining > 0 ? $"{remaining} left" : state.CanSpendGemstones ? "Capped (spending)" : null;
     }
 
     public IEnumerable<ZoneItemTarget>? GetZoneItemTargets(IFateGrindRunState? state = null) => null;
+    internal static bool IsCapped => GetGemstoneRemaining() == 0;
+    private const uint SpendThreshold = 1400; // since a bonus fate w/ forlorn bonus can reward a ton, don't want to potentially waste those
+    internal static unsafe bool ShouldSpend => CurrencyManager.Instance()->GetItemCount(BicolorGemstone) >= SpendThreshold;
     private static unsafe uint GetGemstoneRemaining() => CurrencyManager.Instance()->GetItemCountRemaining(BicolorGemstone);
 }
 

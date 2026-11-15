@@ -1,4 +1,5 @@
 using clib;
+using ComplexTweaks.Tasks;
 using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using System.Threading;
@@ -49,6 +50,9 @@ public sealed class Plugin(IDalamudPluginInterface dalamud) : IAsyncDalamudPlugi
                         t.StopAutomation();
                     foreach (var t in TweakService.Get().Tweaks.OfType<ARTweak>())
                         t.AutoRetainer.FinishCharacterPostProcess();
+                    break;
+                case "task":
+                    TaskRegistry.Run(@params.FirstOrDefault() ?? "", string.Join(' ', @params.Skip(1)));
                     break;
                 case "leave":
                     EventFramework.LeaveCurrentContent(true);

@@ -18,7 +18,7 @@ public partial class Commands : Tweak<CommandsConfiguration> {
     internal void OnCommandKillFlag(string _, string arguments) => Svc.Automation.Start(new KillFlag(arguments));
 }
 
-public sealed class KillFlag(string world) : TaskBase {
+public class KillFlag(string world) : TaskBase {
     private const float HUNT_DETECTION_RADIUS = 25.0f;
     private const float LOS_SEARCH_RADIUS = 5.0f;
     private const int LOS_SEARCH_POSITIONS = 8;
@@ -29,6 +29,10 @@ public sealed class KillFlag(string world) : TaskBase {
         if (!world.IsEmpty && IDataManager.Get().FindRow<World>(r => r.Name.ToString().Contains(world, StringComparison.OrdinalIgnoreCase)) is { RowId: var id })
             await HandleWorldTravel((ushort)id);
 
+        await MoveToFlagAndKill();
+    }
+
+    protected async Task MoveToFlagAndKill() {
         await MoveToFlag(MovementConfig.Default.WithOptions(MovementOptions.Mount | (IPlayerState.Get().MapFlag.TerritoryId != 180 ? MovementOptions.Fly : MovementOptions.None)).WithTolerance(5f));
         using var stop = new OnDispose(() => BossModIPC.Get().ClearActive());
         await Kill();

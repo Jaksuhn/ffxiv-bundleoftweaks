@@ -25,7 +25,10 @@ public sealed class SonarKiller : KillFlag {
             Log($"Next hunt: {hunt.Name} [{hunt.TerritoryId}] {hunt.Position}");
             SetFlag(hunt);
             try {
-                await MoveToFlagAndKill();
+                if (!await MoveToFlagAndKill()) {
+                    Log($"{hunt.Name} not found at flag, removing from Sonar");
+                    SonarReader.Remove(hunt.Key);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException) {
                 Warning($"Skipping {hunt.Name}: {ex.Message}");

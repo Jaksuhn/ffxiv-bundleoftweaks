@@ -32,10 +32,11 @@ public class KillFlag(string world) : TaskBase {
         await MoveToFlagAndKill();
     }
 
-    protected async Task MoveToFlagAndKill() {
+    // ret val is whether or not it killed the mob
+    protected async Task<bool> MoveToFlagAndKill() {
         await MoveToFlag(MovementConfig.Default.WithOptions(MovementOptions.Mount | (IPlayerState.Get().MapFlag.TerritoryId != 180 ? MovementOptions.Fly : MovementOptions.None)).WithTolerance(5f));
         using var stop = new OnDispose(() => BossModIPC.Get().ClearActive());
-        await Kill();
+        return await Kill();
     }
 
     private async Task HandleWorldTravel(ushort worldId) {
@@ -61,7 +62,7 @@ public class KillFlag(string world) : TaskBase {
         await WaitUntilTerritory(IPlayerState.Get().HomeAetheryte.Value.Territory.RowId);
     }
 
-    private async Task Kill() {
+    private async Task<bool> Kill() {
         using var scope = BeginScope(nameof(Kill));
         var target = FindHuntTarget();
         if (target is { }) {
@@ -72,10 +73,10 @@ public class KillFlag(string world) : TaskBase {
             Status = $"Waiting for {target.Name} to die";
             await TargetDead(target);
             BossModIPC.Get().ClearActive();
+            return true;
         }
-        else {
-            Log("No hunt found.");
-        }
+        Log("No hunt found.");
+        return false;
     }
 
     private IGameObject? FindHuntTarget()

@@ -40,6 +40,12 @@ public static class SonarReader {
         return result;
     }
 
+    public static bool Remove(string key) {
+        if (GetPluginInstance() is not { } plugin) return false;
+        var data = Get(Get(Get(Get(plugin, "Client"), "Trackers"), "Hunts"), "Data")!;
+        return data.GetType().GetMethod("Remove", [typeof(string)])?.Invoke(data, [key]) is true;
+    }
+
     private static object? GetRankView(object views, string rank) {
         if (Get(views, "HuntsByRank") is not IEnumerable byRank) return null;
         foreach (var kv in byRank) {

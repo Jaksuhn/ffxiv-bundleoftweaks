@@ -22,6 +22,7 @@ public sealed class AutoRetainerIPC : BaseIPC, IPluginService, IDisposable {
     private readonly ICallGateSubscriber<ulong, OfflineCharacterData> _getOfflineCharacterData;
     private readonly ICallGateSubscriber<Dictionary<ulong, HashSet<string>>> _getEnabledRetainers;
     private readonly ICallGateSubscriber<uint, bool> _isItemProtected;
+    private readonly ICallGateSubscriber<object> _gcEnqueueInitiation;
     private readonly ICallGateSubscriber<object>? _onCharacterAdditionalTask;
     private readonly ICallGateSubscriber<string, object>? _onCharacterReadyForPostprocess;
     private readonly ICallGateSubscriber<string, object>? _requestCharacterPostProcess;
@@ -45,6 +46,7 @@ public sealed class AutoRetainerIPC : BaseIPC, IPluginService, IDisposable {
         _getOfflineCharacterData = Svc.Interface.GetIpcSubscriber<ulong, OfflineCharacterData>("AutoRetainer.GetOfflineCharacterData");
         _getEnabledRetainers = Svc.Interface.GetIpcSubscriber<Dictionary<ulong, HashSet<string>>>("AutoRetainer.PluginState.GetEnabledRetainers");
         _isItemProtected = Svc.Interface.GetIpcSubscriber<uint, bool>("AutoRetainer.PluginState.IsItemProtected");
+        _gcEnqueueInitiation = Svc.Interface.GetIpcSubscriber<object>("AutoRetainer.GC.EnqueueInitiation");
 
         if (suffix is null)
             return;
@@ -80,6 +82,13 @@ public sealed class AutoRetainerIPC : BaseIPC, IPluginService, IDisposable {
         => _getEnabledRetainers.HasFunction ? _getEnabledRetainers.InvokeFunc() : null;
 
     public bool IsItemProtected(uint itemId) => _isItemProtected.HasFunction && _isItemProtected.InvokeFunc(itemId);
+
+    public bool EnqueueGCInitiation() {
+        if (!_gcEnqueueInitiation.HasAction)
+            return false;
+        _gcEnqueueInitiation.InvokeAction();
+        return true;
+    }
 
     public void RequestCharacterPostprocess() {
         if (_requestCharacterPostProcess?.HasAction == true) {

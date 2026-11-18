@@ -5,7 +5,7 @@ using System.Reflection;
 namespace ComplexTweaks.Tasks.SonarKiller;
 
 public static class SonarReader {
-    public readonly record struct HuntEntry(string Key, string Name, string Rank, int Level, uint WorldId, uint TerritoryId, uint InstanceId, Vector3 Position, bool Alive);
+    public readonly record struct HuntEntry(string Key, string Name, string Rank, int Level, uint WorldId, uint TerritoryId, uint InstanceId, Vector3 Position, bool Alive, double LastSeen);
     public static bool IsLoaded => Svc.Interface.InstalledPlugins.Any(p => p.InternalName == _internalName && p.IsLoaded);
 
     private const string _internalName = "SonarPlugin";
@@ -22,7 +22,8 @@ public static class SonarReader {
         if (view is null || Get(Get(view, "Data"), "States") is not IEnumerable states) return result;
 
         foreach (var kv in states) {
-            var relay = Get(Get(kv, "Value"), "Relay");
+            var state = Get(kv, "Value");
+            var relay = Get(state, "Relay");
             var info = Get(relay, "Info");
             var coords = Get(relay, "Coords")!; // SonarVector3: X/Y horizontal, Z height
             var ct = coords.GetType();
@@ -35,7 +36,8 @@ public static class SonarReader {
                 TerritoryId: (uint)Get(relay, "ZoneId")!,
                 InstanceId: (uint)Get(relay, "InstanceId")!,
                 Position: new Vector3((float)ct.GetField("X")!.GetValue(coords)!, (float)ct.GetField("Z")!.GetValue(coords)!, (float)ct.GetField("Y")!.GetValue(coords)!),
-                Alive: (uint)Get(relay, "CurrentHp")! != 0));
+                Alive: (uint)Get(relay, "CurrentHp")! != 0,
+                LastSeen: (double)Get(state, "LastSeen")!));
         }
         return result;
     }

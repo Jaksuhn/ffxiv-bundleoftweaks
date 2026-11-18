@@ -43,15 +43,12 @@ public sealed class SonarKiller : KillFlag {
         var world = IPlayerState.Get().CurrentWorld.RowId;
         var dataCenter = IPlayerState.Get().CurrentWorld.Value.DataCenter.RowId;
         var territory = IClientState.Get().TerritoryType;
-        var pos = IObjectTable.Get().LocalPlayer?.Position ?? default;
         return SonarReader.GetHunts("A")
             .Where(h => h.Alive && h.Level <= maxLevel && !attempted.Contains(h.Key))
             .Where(h => World.GetRow(h.WorldId).DataCenter.RowId == dataCenter)
             .OrderBy(h => h.WorldId != world)
-            .ThenBy(h => h.WorldId)
-            .ThenBy(h => h.TerritoryId != territory)
-            .ThenBy(h => h.TerritoryId)
-            .ThenBy(h => Vector3.DistanceSquared(h.Position, pos))
+            .ThenBy(h => !(h.WorldId == world && h.TerritoryId == territory))
+            .ThenByDescending(h => h.LastSeen)
             .Cast<SonarReader.HuntEntry?>()
             .FirstOrDefault();
     }

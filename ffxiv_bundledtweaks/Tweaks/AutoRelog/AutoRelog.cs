@@ -14,7 +14,7 @@ public partial class AutoRelog : Tweak {
     public override string Name => "Auto Relog";
     public override string Description => "Logs back in to your last character after a disconnect.";
 
-    private const int MaxAttempts = 3;
+    private const int MaxAttempts = 100;
     private const int RetryDelayMs = 3000;
     private const int PollIntervalFrames = 10;
     private const int DismissAttempts = 3;

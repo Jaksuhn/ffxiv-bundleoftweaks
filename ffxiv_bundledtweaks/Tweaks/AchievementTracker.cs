@@ -88,22 +88,17 @@ public class AchievementTrackerWindow(AchievementTracker tweak) : Window($"Achie
         if (ImGui.Selectable("(None)", selectedAchievement == null))
             selectedAchievement = null;
 
-        foreach (var achv in Sheets.Achievement.Where(x => !x.Name.ToString().IsEmpty && x.Name.ToString().Contains(_search, StringComparison.CurrentCultureIgnoreCase))) {
+        var tracked = tweak.Config.Achievements.Select(a => a.ID).ToHashSet();
+        foreach (var achv in Sheets.Achievement.Where(x => !tracked.Contains(x.RowId) && !x.Name.ToString().IsEmpty && x.Name.ToString().Contains(_search, StringComparison.CurrentCultureIgnoreCase))) {
             using var _ = ImRaii.PushId($"###achievement{achv.RowId}");
-            var selected = ImGui.Selectable($"{achv.Name}", achv.RowId == selectedAchievement?.RowId);
-
-            if (selected) {
-                if (!tweak.Config.Achievements.Any(a => a.ID == achv.RowId)) {
-                    tweak.Config.Achievements.Add(new AchievementTracker.Achv {
-                        ID = achv.RowId,
-                        Name = achv.Name.ToString(),
-                        Description = Sheets.Achievement.GetRowOrNull(achv.RowId)?.Description.ToString() ?? string.Empty,
-                        Points = Sheets.Achievement.GetRowOrNull(achv.RowId)?.Points ?? 0
-                    });
-                    tweak.RequestUpdate(achv.RowId);
-                }
-                selectedAchievement = null;
-                _search = string.Empty;
+            if (ImGui.Selectable($"{achv.Name}", false, ImGuiSelectableFlags.DontClosePopups)) {
+                tweak.Config.Achievements.Add(new AchievementTracker.Achv {
+                    ID = achv.RowId,
+                    Name = achv.Name.ToString(),
+                    Description = achv.Description.ToString(),
+                    Points = achv.Points
+                });
+                tweak.RequestUpdate(achv.RowId);
             }
         }
     }
@@ -121,7 +116,7 @@ public class AchievementTrackerWindow(AchievementTracker tweak) : Window($"Achie
                 .ToList();
 
             if (categories.Count == 0) {
-                DrawAchievementsList(tweak.Config.Achievements);
+                DrawAchievementsList([.. tweak.Config.Achievements]);
                 return;
             }
 

@@ -262,7 +262,10 @@ public partial class MultiboxTools {
         }
 
         try {
-            InfoProxyPartyInvite.Instance()->InviteToParty(peer.Cid, peer.Name, peer.WorldId);
+            if (!InfoProxyPartyInvite.Invite(peer.Cid, peer.Name, peer.WorldId, peer.CurrentWorldId)) {
+                Warning($"Failed to invite {peer.DisplayName}");
+                return false;
+            }
             Log($"Invited {peer.DisplayName}");
             return true;
         }
@@ -274,7 +277,7 @@ public partial class MultiboxTools {
     }
 
     private static bool IsInParty(ulong cid)
-        => cid != 0 && IPartyList.Get().Any(p => p.ContentId == cid);
+        => InfoProxyPartyInvite.IsInParty(cid);
 
     private List<ClientSnapshot> GetPeers() {
         lock (_lock) {

@@ -2,6 +2,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
+using Lumina.Excel.Sheets;
 
 namespace ComplexTweaks.Tweaks;
 
@@ -205,6 +206,22 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
     /// <summary>True when the current mode defines its own zones; territory selector is disabled to avoid confusion.</summary>
     internal bool ModeSuppliesSwapZones => GetCurrentMode().GetAllowedZones() != null;
 
+    private static Dictionary<uint, (byte Min, byte Max)> ZoneFateLevels => field ??= BuildZoneFateLevels();
+
+    private static Dictionary<uint, (byte Min, byte Max)> BuildZoneFateLevels() {
+        var result = new Dictionary<uint, (byte Min, byte Max)>();
+        foreach (var fate in Fate.Where(f => f.ClassJobLevel > 0)) {
+            var level = fate.ClassJobLevel;
+            if (Level.GetRowOrNull(fate.Location) is not { Territory.RowId: var territoryId and not 0 })
+                continue;
+            result[territoryId] = result.TryGetValue(territoryId, out var range) ? (Math.Min(range.Min, level), Math.Max(range.Max, level)) : (level, level);
+        }
+        return result;
+    }
+
+    internal bool IsZoneInLevelRange(uint territoryId)
+        => GetCurrentMode() is not NoneGrindMode || !ZoneFateLevels.TryGetValue(territoryId, out var range) || range.Max >= Config.MinLevel && range.Min <= Config.MaxLevel;
+
     /// <summary>Next zone to swap to; prefers zones where a mode item target is not yet met (e.g. relic atma).</summary>
     internal uint? GetNextPreferredSwapZone(uint currentTerritoryId)
         => ZoneItemTargets.Count > 0 && ZoneItemTargets.Where(t => !t.IsComplete).Select(t => t.TerritoryId).Distinct().ToList() is { Count: > 0 } incomplete
@@ -246,7 +263,7 @@ public class FateToolKit : Tweak<FateToolKitConfig, FateToolKitWindow>, IFateGri
     private int _selectedZoneRotation = -1;
 
     private List<uint> GetOrderedSwapZones(IReadOnlySet<uint> pool) {
-        var distinct = pool.Where(id => id != 0).Distinct().ToList();
+        var distinct = pool.Where(id => id != 0 && IsZoneInLevelRange(id)).Distinct().ToList();
         return distinct.Count == 0 ? [] : [.. distinct.OrderBy(id => id)];
     }
 

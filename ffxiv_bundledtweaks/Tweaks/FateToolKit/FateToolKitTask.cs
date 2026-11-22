@@ -587,7 +587,13 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
         var hasEffectiveZones = tweak.GetEffectiveSwapZones() is { Count: > 0 } || tweak.HasSelectedSwapZones;
         if (!HasTwistOfFate && (hasEffectiveZones || tweak.Config.SwapZones)) {
             using var scope = BeginScope("SwapZones");
-            var destination = tweak.GetNextPreferredSwapZone(Player.Territory.RowId) ?? GetNextAchievementZone() ?? GetRandomSameExpacZone();
+            var destination = tweak.GetNextPreferredSwapZone(Player.Territory.RowId) ?? GetNextAchievementZone() ?? GetRandomZoneInLevelRange();
+            if (destination is null) {
+                Status = $"No zones with fates in level range [{tweak.Config.MinLevel}, {tweak.Config.MaxLevel}]";
+                await Mount();
+                await NextFrame(60);
+                return;
+            }
             if (destination == Player.Territory.RowId) {
                 Status = HasSkippedFatesOnly ? "Waiting for another fate (current target unreachable)" : "Waiting for fates in selected zones";
                 await Mount();
@@ -597,8 +603,8 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
 
             var fromTerritoryId = Player.Territory.RowId;
             await Mount();
-            await TeleportTo(destination, Vector3.Zero);
-            await ApplySwapZoneActions(fromTerritoryId, destination);
+            await TeleportTo(destination.Value, Vector3.Zero);
+            await ApplySwapZoneActions(fromTerritoryId, destination.Value);
         }
         else {
             using var scope = BeginScope("WaitForFates");
@@ -823,11 +829,13 @@ internal sealed class FateGrind(FateToolKit tweak) : TaskBase {
             ? agent->Tabs[currentTabIndex].Zones.ToArray()
             : agent->Tabs.ToArray().SelectMany(tab => tab.Zones.ToArray());
 
-        return zones.FirstOrNull(zone => zone.NeededFates - zone.FateProgress > 0)?.TerritoryTypeId;
+        return zones.FirstOrNull(zone => zone.NeededFates - zone.FateProgress > 0 && tweak.IsZoneInLevelRange(zone.TerritoryTypeId))?.TerritoryTypeId;
     }
 
-    private uint GetRandomSameExpacZone() {
-        var rows = TerritoryType.Where(x => x.IsInUse && x.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && x.ExVersion.RowId == Player.Territory.Value.ExVersion.RowId && !x.IsPvpZone);
-        return rows[new Random().Next(rows.Length)].RowId;
+    private uint? GetRandomZoneInLevelRange() {
+        var rows = TerritoryType.Where(x => x.IsInUse && x.TerritoryIntendedUse.Value.StructsEnum is TerritoryIntendedUse.Overworld && !x.IsPvpZone && tweak.IsZoneInLevelRange(x.RowId));
+        var currentExpac = Player.Territory.Value.ExVersion.RowId;
+        var candidates = rows.Where(x => x.ExVersion.RowId == currentExpac).ToArray() is { Length: > 0 } sameExpac ? sameExpac : rows;
+        return candidates.Length > 0 ? candidates[Random.Shared.Next(candidates.Length)].RowId : null;
     }
 }

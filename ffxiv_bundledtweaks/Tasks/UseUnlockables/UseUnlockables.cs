@@ -4,7 +4,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using System.Threading.Tasks;
 
-namespace ComplexTweaks.Tasks;
+namespace ComplexTweaks.Tasks.UseUnlockables;
 
 [RunnableTask]
 public sealed class UseUnlockables : TaskBase {

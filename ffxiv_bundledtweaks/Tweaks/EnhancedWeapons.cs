@@ -55,7 +55,9 @@ public unsafe partial class EnhancedWeapons : Tweak<EnhancedWeaponsConfiguration
         if (Config.UseEmotes && UIState.Instance()->IsEmoteUnlocked(emote) && EmoteManager.Instance()->CanExecuteEmote(emote)) {
             var option = new EmoteController.PlayEmoteOption { TargetId = 0xE0000000, DisableLogMessage = true };
             AgentEmote.Instance()->ExecuteEmote(emote, &option, false, false);
-            return 1;
+            // emote only toggles the weapon if the animation started, which doesn't work while moving
+            if (state->IsUnsheathed == draw)
+                return 1;
         }
         return RequestToggleWeaponHook.Original(state, drawArg);
     }
